@@ -1,189 +1,240 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { site } from "@/lib/site";
+import { planNames, site } from "@/lib/site";
 import SectionHeader from "./figma/SectionHeader";
+import Button from "./ui/Button";
+import CopyEmail from "./ui/CopyEmail";
 
-const types = ["Landing page", "Strona firmowa", "Sklep", "Portfolio", "Inne"];
-const budgets = ["200–500 zł", "500–1000 zł", "1000–2000 zł", "2000+ zł"];
+type Status = { state: "idle" | "sending" | "sent" | "error"; message?: string };
 
-function Chips({ name, options, value, onChange }: { name: string; options: string[]; value: string; onChange: (v: string) => void }) {
+const ease = [0.16, 1, 0.3, 1] as const;
+
+const input =
+  "peer w-full rounded-2xl border border-white/[0.08] bg-white/[0.025] px-4 pt-6 pb-2 text-[15px] text-ink outline-none transition-all duration-300 placeholder:text-transparent hover:border-white/[0.14] focus:border-sel/70 focus:bg-sel/[0.04] focus:shadow-[0_0_0_4px_rgb(13_153_255/0.12)]";
+const floating =
+  "pointer-events-none absolute left-4 text-[15px] text-muted transition-all duration-200 peer-focus:top-2.5 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:text-sel peer-[:not(:placeholder-shown)]:top-2.5 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px]";
+
+function Field({ name, label, type = "text", required, autoComplete }: { name: string; label: string; type?: string; required?: boolean; autoComplete?: string }) {
   return (
-    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={name}>
-      {options.map((o) => (
-        <button
-          key={o}
-          type="button"
-          role="radio"
-          aria-checked={value === o}
-          onClick={() => onChange(o)}
-          className={`rounded-lg border px-3 py-2 text-sm transition-all ${
-            value === o ? "border-sel bg-sel/15 text-ink" : "border-line bg-white/[0.03] text-muted hover:border-white/20 hover:text-ink"
-          }`}
-        >
-          {o}
-        </button>
-      ))}
-    </div>
+    <label className="relative block">
+      <input name={name} type={type} required={required} autoComplete={autoComplete} placeholder={label} className={`${input} h-14`} />
+      <span className={`${floating} top-1/2 -translate-y-1/2`}>{label}</span>
+    </label>
   );
 }
 
-const field =
-  "w-full rounded-lg border border-line bg-white/[0.03] px-3 py-2.5 text-sm text-ink placeholder:text-muted/60 outline-none transition-colors focus:border-sel focus:bg-sel/5";
+function SuccessCheck() {
+  return (
+    <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden>
+      <motion.circle
+        cx="36"
+        cy="36"
+        r="33"
+        fill="rgb(10 207 131 / 0.1)"
+        stroke="#0acf83"
+        strokeWidth="2"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.8, ease }}
+      />
+      <motion.path
+        d="M23 37l9 9 17-19"
+        fill="none"
+        stroke="#0acf83"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ delay: 0.5, duration: 0.5, ease }}
+      />
+    </svg>
+  );
+}
 
 export default function Contact() {
-  const [type, setType] = useState(types[0]);
-  const [budget, setBudget] = useState(budgets[0]);
-  const [sent, setSent] = useState(false);
+  const [plan, setPlan] = useState(planNames[1]);
+  const [status, setStatus] = useState<Status>({ state: "idle" });
+  const [sender, setSender] = useState("");
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Kliknięcie "Wybieram …" w cenniku zaznacza pakiet w formularzu.
+  useEffect(() => {
+    const onPlan = (e: Event) => setPlan((e as CustomEvent<string>).detail);
+    window.addEventListener("afto:plan", onPlan);
+    return () => window.removeEventListener("afto:plan", onPlan);
+  }, []);
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const d = new FormData(e.currentTarget);
-    // Bez backendu: otwiera klienta poczty z gotową wiadomością.
-    // Podłącz np. Formspree / Resend, jeśli chcesz wysyłkę bezpośrednio ze strony.
-    const body = [
-      `Imię: ${d.get("name")}`,
-      `E-mail: ${d.get("email")}`,
-      `Rodzaj strony: ${type}`,
-      `Budżet: ${budget}`,
-      "",
-      `${d.get("message")}`,
-    ].join("\n");
-    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent(`Zapytanie: ${type}`)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    const form = e.currentTarget;
+    const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    setStatus({ state: "sending" });
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...d, plan }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Nie udało się wysłać wiadomości.");
+      setSender(d.name?.split(" ")[0] ?? "");
+      setStatus({ state: "sent" });
+      form.reset();
+    } catch (err) {
+      setStatus({ state: "error", message: err instanceof Error ? err.message : "Nie udało się wysłać wiadomości." });
+    }
   };
 
   return (
-    <section id="kontakt" className="relative border-t border-line">
-      <div className="mx-auto grid max-w-6xl gap-14 px-5 py-28 sm:py-36 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
-        <div>
+    <section id="kontakt" className="relative overflow-hidden">
+      <div className="pointer-events-none absolute top-1/2 right-0 h-[700px] w-[700px] translate-x-1/3 -translate-y-1/2 rounded-full bg-comp/10 blur-[140px]" aria-hidden />
+      <div className="relative mx-auto grid max-w-6xl gap-14 px-4 py-32 sm:px-5 sm:py-40 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+        <div className="flex flex-col">
           <SectionHeader
-            index="04"
-            frame="Kontakt"
-            title={
-              <>
-                Zróbmy stronę, która <span className="text-gradient font-serif font-normal italic">sprzedaje</span>.
-              </>
-            }
-            lead="Opisz krótko, czego potrzebujesz. Odpiszę z wyceną i propozycją terminu — bez zobowiązań."
+            index="05"
+            label="Kontakt"
+            title="Zróbmy stronę, która"
+            accent="sprzedaje."
+            lead="Napisz kilka zdań o swoim biznesie. Odpowiem z konkretną wyceną i terminem — bez zobowiązań."
           />
 
-          <div className="space-y-3">
-            <a href={`mailto:${site.email}`} className="group flex items-center justify-between rounded-2xl border border-line bg-panel p-5 transition-colors hover:border-sel">
+          <div className="mt-12 space-y-3">
+            <CopyEmail />
+            <a
+              href={`tel:${site.phone.replace(/\s/g, "")}`}
+              className="hairline surface group flex items-center justify-between rounded-2xl px-5 py-4 transition-colors hover:bg-white/[0.04]"
+            >
               <span>
-                <span className="block font-mono text-[11px] text-muted">E-mail</span>
-                <span className="text-lg font-medium">{site.email}</span>
+                <span className="block font-mono text-[11px] text-dim">Telefon</span>
+                <span className="text-[17px]">{site.phone}</span>
               </span>
-              <span className="text-xl text-muted transition-transform group-hover:translate-x-1 group-hover:text-sel">→</span>
-            </a>
-            <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="group flex items-center justify-between rounded-2xl border border-line bg-panel p-5 transition-colors hover:border-sel">
-              <span>
-                <span className="block font-mono text-[11px] text-muted">Telefon</span>
-                <span className="text-lg font-medium">{site.phone}</span>
-              </span>
-              <span className="text-xl text-muted transition-transform group-hover:translate-x-1 group-hover:text-sel">→</span>
+              <span className="text-muted transition-transform duration-500 ease-out-expo group-hover:translate-x-1 group-hover:text-ink">→</span>
             </a>
           </div>
 
-          {/* Komentarz w stylu Figmy */}
-          <motion.div
-            className="mt-8 flex max-w-sm gap-3"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 18 }}
-          >
-            <span className="grid size-9 shrink-0 place-items-center rounded-full rounded-bl-sm bg-comp font-display text-sm font-semibold text-white">
-              {site.brand[0].toUpperCase()}
+          <div className="mt-8 flex items-center gap-3 text-sm text-muted">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-fig-green opacity-70" />
+              <span className="relative inline-flex size-2 rounded-full bg-fig-green" />
             </span>
-            <div className="rounded-2xl rounded-tl-sm border border-line bg-panel px-4 py-3 text-sm">
-              <p className="mb-0.5 text-xs">
-                <span className="font-medium">{site.brand}</span> <span className="text-muted">· teraz</span>
-              </p>
-              <p className="text-muted">{site.responseTime}. Pierwsza konsultacja jest zawsze bezpłatna 🙂</p>
-            </div>
-          </motion.div>
+            {site.responseTime} · pierwsza konsultacja gratis
+          </div>
         </div>
 
-        {/* Formularz jako panel właściwości */}
         <motion.div
-          className="relative"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 1, ease }}
         >
           <div className="mb-2 flex items-center justify-between font-mono text-[11px] text-muted">
-            <span># Formularz / Zapytanie</span>
-            <span>Auto layout</span>
+            <span>
+              # Formularz <span className="text-dim">/ Nowe zapytanie</span>
+            </span>
+            <span className="text-dim">Auto layout</span>
           </div>
-          <div className="rounded-2xl border border-line bg-panel p-5 shadow-2xl shadow-black/40 sm:p-7">
+          <div className="beam hairline relative rounded-[28px] bg-surface/80 p-5 shadow-[0_50px_100px_-40px_rgb(0_0_0/0.9)] backdrop-blur-xl sm:p-8">
             <AnimatePresence mode="wait">
-              {sent ? (
+              {status.state === "sent" ? (
                 <motion.div
                   key="ok"
-                  className="flex min-h-[420px] flex-col items-center justify-center text-center"
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  className="flex min-h-[520px] flex-col items-center justify-center text-center"
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, ease }}
                 >
-                  <span className="mb-5 grid size-16 place-items-center rounded-2xl bg-fig-green/15 text-3xl text-fig-green">✓</span>
-                  <h3 className="font-display text-2xl font-semibold tracking-tight">Prawie gotowe!</h3>
-                  <p className="mt-2 max-w-xs text-sm text-muted">
-                    Otworzyłem Twoją pocztę z gotową wiadomością — wystarczy kliknąć „Wyślij”. Jeśli nic się nie otworzyło, napisz na {site.email}.
+                  <SuccessCheck />
+                  <h3 className="mt-6 font-display text-3xl font-medium tracking-[-0.04em]">Dziękuję{sender ? `, ${sender}` : ""}!</h3>
+                  <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-muted">
+                    Wiadomość dotarła. Odezwę się w ciągu 24h z wyceną i propozycją terminu.
                   </p>
-                  <button type="button" onClick={() => setSent(false)} className="mt-6 text-sm text-sel hover:underline">
-                    Wróć do formularza
-                  </button>
+                  <div className="mt-8">
+                    <Button variant="ghost" onClick={() => setStatus({ state: "idle" })}>
+                      Wyślij kolejne zapytanie
+                    </Button>
+                  </div>
                 </motion.div>
               ) : (
-                <motion.form key="form" onSubmit={submit} className="space-y-5" exit={{ opacity: 0 }}>
+                <motion.form key="form" onSubmit={submit} className="space-y-4" exit={{ opacity: 0, y: -10 }}>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1.5 block text-xs text-muted">Imię</span>
-                      <input name="name" required autoComplete="name" placeholder="Jan" className={field} />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1.5 block text-xs text-muted">E-mail</span>
-                      <input name="email" type="email" required autoComplete="email" placeholder="jan@firma.pl" className={field} />
-                    </label>
+                    <Field name="name" label="Imię" required autoComplete="name" />
+                    <Field name="email" label="E-mail" type="email" required autoComplete="email" />
                   </div>
-                  <div>
-                    <span className="mb-1.5 block text-xs text-muted">Rodzaj strony</span>
-                    <Chips name="Rodzaj strony" options={types} value={type} onChange={setType} />
+                  <Field name="phone" label="Telefon (opcjonalnie)" type="tel" autoComplete="tel" />
+
+                  <div className="pt-1">
+                    <p className="mb-2.5 text-[13px] text-muted">Pakiet</p>
+                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Pakiet">
+                      {planNames.map((o) => (
+                        <button
+                          key={o}
+                          type="button"
+                          role="radio"
+                          aria-checked={plan === o}
+                          onClick={() => setPlan(o)}
+                          className={`relative rounded-full px-4 py-2 text-sm transition-colors duration-300 ${plan === o ? "text-white" : "text-muted hover:text-ink"}`}
+                        >
+                          {plan === o && (
+                            <motion.span
+                              layoutId="plan-chip"
+                              className="absolute inset-0 rounded-full bg-sel/20 shadow-[inset_0_0_0_1px_rgb(13_153_255/0.7)]"
+                              transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                            />
+                          )}
+                          {plan !== o && <span className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.09)]" />}
+                          <span className="relative">{o}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <span className="mb-1.5 block text-xs text-muted">Budżet</span>
-                    <Chips name="Budżet" options={budgets} value={budget} onChange={setBudget} />
-                  </div>
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs text-muted">Wiadomość</span>
-                    <textarea
-                      name="message"
-                      required
-                      rows={4}
-                      placeholder="Czym się zajmujesz i czego potrzebujesz?"
-                      className={`${field} resize-none`}
-                    />
+
+                  <label className="relative block">
+                    <textarea name="message" required minLength={10} rows={5} placeholder="Wiadomość" className={`${input} resize-none pt-7`} />
+                    <span className={`${floating} top-4`}>Czym się zajmujesz i czego potrzebujesz?</span>
                   </label>
-                  <label className="flex items-start gap-2.5 text-xs text-muted">
-                    <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-[var(--color-sel)]" />
+
+                  {/* honeypot */}
+                  <input name="company" tabIndex={-1} autoComplete="off" className="absolute -left-[9999px] size-px opacity-0" aria-hidden />
+
+                  <label className="flex cursor-pointer items-start gap-3 pt-1 text-[13px] leading-relaxed text-muted">
+                    <input type="checkbox" required className="peer sr-only" />
+                    <span className="mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-md shadow-[inset_0_0_0_1px_rgb(255_255_255/0.2)] transition-colors peer-checked:bg-sel peer-checked:shadow-none peer-focus-visible:ring-2 peer-focus-visible:ring-sel/60 [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
+                      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+                        <path d="M2.2 5.2l1.8 1.8 3.8-4" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
                     <span>
                       Akceptuję{" "}
-                      <Link href="/polityka-prywatnosci" className="text-ink underline underline-offset-2 hover:text-sel">
+                      <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4 hover:decoration-sel">
                         politykę prywatności
                       </Link>{" "}
                       i zgadzam się na kontakt w sprawie zapytania.
                     </span>
                   </label>
-                  <button
-                    type="submit"
-                    className="group relative w-full overflow-hidden rounded-xl bg-sel py-4 font-medium text-white transition-transform active:scale-[0.98]"
-                  >
-                    <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                    Wyślij zapytanie →
-                  </button>
+
+                  <AnimatePresence>
+                    {status.state === "error" && (
+                      <motion.p
+                        className="rounded-xl bg-fig-red/10 px-4 py-3 text-[13px] text-fig-coral"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        role="alert"
+                      >
+                        {status.message} Napisz bezpośrednio:{" "}
+                        <a href={`mailto:${site.email}`} className="underline underline-offset-2">
+                          {site.email}
+                        </a>
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+
+                  <Button type="submit" size="lg" arrow disabled={status.state === "sending"} className="mt-2 w-full justify-between pl-6">
+                    {status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}
+                  </Button>
                 </motion.form>
               )}
             </AnimatePresence>

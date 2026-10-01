@@ -1,165 +1,269 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView } from "motion/react";
-import { extras, plans } from "@/lib/site";
 import SectionHeader from "./figma/SectionHeader";
-import ScrollLink from "./figma/ScrollLink";
+import SpotlightCard from "./ui/SpotlightCard";
+import { FadeUp } from "./ui/Reveal";
 
-function Price({ value }: { value: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  useEffect(() => {
-    if (!inView) return;
-    const c = animate(0, value, {
-      duration: 1.4,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => ref.current && (ref.current.textContent = Math.round(v).toLocaleString("pl-PL")),
-    });
-    return () => c.stop();
-  }, [inView, value]);
-  return <span ref={ref}>0</span>;
-}
-
-function SelectionCorners() {
+function CardText({ title, text, tag }: { title: string; text: string; tag: string }) {
   return (
-    <motion.span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 border border-fig-red"
-      initial={{ opacity: 0, scale: 1.1 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-    >
-      {["-left-1 -top-1", "-right-1 -top-1", "-left-1 -bottom-1", "-right-1 -bottom-1"].map((p) => (
-        <span key={p} className={`absolute ${p} size-2 border border-fig-red bg-white`} />
-      ))}
-    </motion.span>
+    <div className="relative">
+      <p className="mb-3 font-mono text-[11px] text-dim">{tag}</p>
+      <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl">{title}</h3>
+      <p className="mt-2 max-w-md text-[15px] leading-relaxed text-pretty text-muted">{text}</p>
+    </div>
   );
 }
 
-function Diamond({ className = "" }: { className?: string }) {
+/* ---------- Wizualizacje ---------- */
+
+function FigmaVisual() {
+  const swatches = ["#0d99ff", "#9747ff", "#ff7262", "#0acf83", "#ffcd29", "#ededef"];
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" className={className} aria-hidden>
-      <path d="M6 0l2.5 2.5L6 5 3.5 2.5zM6 7l2.5 2.5L6 12 3.5 9.5zM2.5 3.5L5 6 2.5 8.5 0 6zM9.5 3.5L12 6 9.5 8.5 7 6z" fill="currentColor" />
-    </svg>
+    <div className="relative grid h-full grid-cols-[1fr_1.1fr] gap-3">
+      <div className="space-y-3">
+        <div className="rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+          <p className="mb-2 font-mono text-[10px] text-dim">Kolory</p>
+          <div className="grid grid-cols-6 gap-1.5">
+            {swatches.map((c, i) => (
+              <motion.span
+                key={c}
+                className="aspect-square rounded-md ring-1 ring-white/10"
+                style={{ background: c }}
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 + i * 0.06, type: "spring", stiffness: 300, damping: 18 }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-end justify-between rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+          <span className="font-display text-5xl leading-none font-medium tracking-[-0.06em]">Aa</span>
+          <span className="text-right font-mono text-[10px] leading-relaxed text-dim">
+            Geist
+            <br />
+            Medium · 64
+          </span>
+        </div>
+      </div>
+      <div className="relative rounded-xl border border-dashed border-comp/50 p-3">
+        <span className="absolute -top-2.5 left-3 bg-surface px-1.5 font-mono text-[10px] text-comp">◆ Przycisk</span>
+        <div className="flex h-full flex-col justify-center gap-2.5">
+          {[
+            ["Primary", "bg-white text-black"],
+            ["Blue", "bg-sel text-white"],
+            ["Ghost", "bg-white/[0.06] text-ink shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]"],
+          ].map(([n, c], i) => (
+            <motion.div
+              key={n}
+              className={`relative flex h-8 items-center justify-center rounded-full text-[11px] font-medium ${c}`}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 + i * 0.1, duration: 0.6 }}
+            >
+              {n}
+              {i === 1 && (
+                <span className="absolute -inset-[3px] border border-sel">
+                  <span className="absolute -right-8 top-1/2 -translate-y-1/2 rounded-[3px] bg-[#f24e8e] px-1 font-mono text-[9px] text-white">16</span>
+                </span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CubeVisual() {
+  const faces = [
+    "rotateY(0deg)",
+    "rotateY(90deg)",
+    "rotateY(180deg)",
+    "rotateY(-90deg)",
+    "rotateX(90deg)",
+    "rotateX(-90deg)",
+  ];
+  return (
+    <div className="grid h-full place-items-center [perspective:600px]">
+      <div className="relative size-24 [transform-style:preserve-3d] [animation:cube_14s_linear_infinite]">
+        {faces.map((f, i) => (
+          <span
+            key={i}
+            className="absolute inset-0 rounded-2xl border border-white/20 backdrop-blur-sm"
+            style={{
+              transform: `${f} translateZ(48px)`,
+              background: `linear-gradient(135deg, ${["#36b5ff55", "#9b6bff55", "#ff7a6b55", "#0acf8355", "#ffcd2955", "#ffffff22"][i]}, transparent)`,
+            }}
+          />
+        ))}
+      </div>
+      <style>{`@keyframes cube{to{transform:rotateX(360deg) rotateY(720deg)}}`}</style>
+    </div>
+  );
+}
+
+const code = [
+  [["text-fig-purple", "export default "], ["text-sel", "function "], ["text-ink", "Strona"], ["text-muted", "() {"]],
+  [["text-muted", "  return "], ["text-fig-coral", "<Hero "], ["text-fig-green", "efekt"], ["text-muted", "="], ["text-fig-yellow", '"wow" '], ["text-fig-coral", "/>"]],
+  [["text-muted", "}"]],
+];
+
+function CodeVisual() {
+  return (
+    <div className="h-full rounded-xl bg-black/40 p-4 font-mono text-[12px] leading-6 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+      <div className="mb-3 flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="size-2 rounded-full bg-white/15" />
+        ))}
+      </div>
+      {code.map((line, i) => (
+        <motion.p
+          key={i}
+          className="whitespace-nowrap"
+          initial={{ opacity: 0, x: -10 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 + i * 0.25 }}
+        >
+          <span className="mr-3 text-dim">{i + 1}</span>
+          {line.map(([c, t], j) => (
+            <span key={j} className={c}>
+              {t}
+            </span>
+          ))}
+          {i === code.length - 1 && <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-sel" />}
+        </motion.p>
+      ))}
+    </div>
+  );
+}
+
+function DevicesVisual() {
+  return (
+    <div className="flex h-full items-end justify-center gap-3">
+      {[
+        ["w-[46%] aspect-[16/10]", "Desktop"],
+        ["w-[24%] aspect-[3/4]", "Tablet"],
+        ["w-[14%] aspect-[9/19]", "Mobile"],
+      ].map(([c, n], i) => (
+        <motion.div
+          key={n}
+          className={`${c} relative rounded-lg bg-white/[0.03] p-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]`}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 + i * 0.12, duration: 0.7 }}
+        >
+          <div className="h-[22%] rounded-[3px] bg-gradient-to-r from-sel/60 to-comp/60" />
+          <div className="mt-1 h-[6%] w-3/4 rounded-full bg-white/15" />
+          <div className="mt-1 h-[6%] w-1/2 rounded-full bg-white/10" />
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 font-mono text-[9px] text-dim">{n}</span>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function Gauge() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    const c = animate(0, 100, { duration: 1.8, ease: [0.16, 1, 0.3, 1], onUpdate: (n) => setV(Math.round(n)) });
+    return () => c.stop();
+  }, [inView]);
+  const r = 42;
+  const len = 2 * Math.PI * r;
+  return (
+    <div ref={ref} className="flex h-full items-center justify-center gap-6">
+      <div className="relative size-28">
+        <svg viewBox="0 0 100 100" className="size-full -rotate-90">
+          <circle cx="50" cy="50" r={r} fill="none" stroke="rgb(255 255 255 / 0.06)" strokeWidth="6" />
+          <circle
+            cx="50"
+            cy="50"
+            r={r}
+            fill="none"
+            stroke="#0acf83"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={len}
+            strokeDashoffset={len * (1 - v / 100)}
+          />
+        </svg>
+        <span className="absolute inset-0 grid place-items-center font-display text-3xl font-medium tracking-tight text-fig-green tabular-nums">{v}</span>
+      </div>
+      <ul className="space-y-2 font-mono text-[11px] text-muted">
+        {["Wydajność", "SEO", "Dostępność"].map((l) => (
+          <li key={l} className="flex items-center gap-2">
+            <span className="size-1.5 rounded-full bg-fig-green" />
+            {l}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 export default function Services() {
   return (
-    <section id="uslugi" className="relative mx-auto max-w-6xl px-5 py-28 sm:py-36">
+    <section id="uslugi" className="relative mx-auto max-w-6xl px-4 py-32 sm:px-5 sm:py-40">
       <SectionHeader
         index="03"
-        frame="Usługi i ceny"
+        label="Usługi"
         align="center"
-        title={
-          <>
-            Efekt wow <span className="font-serif font-normal italic">nie musi</span> kosztować fortuny.
-          </>
-        }
-        lead="Przejrzyste pakiety, stała cena i zero ukrytych kosztów. Wybierz start, resztę dopasujemy razem."
+        title="Wszystko, czego potrzebuje"
+        accent="Twoja marka."
+        lead="Od pierwszego szkicu w Figmie po stronę, która ładuje się w mgnieniu oka. Jedna osoba, pełna odpowiedzialność."
+        className="mb-16"
       />
 
-      {/* Duża cena z linijkami pomiaru jak w Figmie (Alt + hover) */}
-      <motion.div
-        className="relative mx-auto mb-20 flex w-fit flex-col items-center"
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <span className="mb-2 font-mono text-xs text-muted">strona internetowa już od</span>
-        <div className="relative px-6">
-          <span className="font-display text-[clamp(5rem,20vw,11rem)] leading-none font-semibold tracking-[-0.06em]">
-            <Price value={200} />
-            <span className="ml-2 font-serif text-[0.45em] font-normal tracking-normal text-fig-coral italic">zł</span>
-          </span>
-          <SelectionCorners />
-          <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded bg-fig-red px-1.5 py-px font-mono text-[10px] whitespace-nowrap text-white">
-            stała cena · 0 ukrytych kosztów
-          </span>
-        </div>
-      </motion.div>
-
-      {/* Zestaw komponentów — fioletowa przerywana ramka */}
-      <div className="relative rounded-3xl border border-dashed border-comp/60 p-3 sm:p-5">
-        <span className="absolute -top-3 left-6 flex items-center gap-1.5 bg-canvas px-2 font-mono text-[11px] text-comp">
-          <Diamond /> Pakiety
-        </span>
-        <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
-          {plans.map((p, i) => (
-            <motion.div
-              key={p.name}
-              className={`group relative flex flex-col rounded-2xl border p-6 transition-colors sm:p-8 ${
-                p.featured ? "border-sel bg-gradient-to-b from-sel/15 to-panel" : "border-line bg-panel hover:border-white/20"
-              }`}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -6 }}
-            >
-              {p.featured && (
-                <span className="absolute -top-3 right-6 rounded-full bg-sel px-3 py-1 text-[11px] font-medium text-white">
-                  Najczęściej wybierany
-                </span>
-              )}
-              <div className="flex items-center gap-2 font-mono text-[11px] text-comp">
-                <Diamond /> Pakiet={p.name}
-              </div>
-              <h3 className="mt-4 font-display text-2xl font-semibold tracking-tight">{p.name}</h3>
-              <p className="text-sm text-muted">{p.note}</p>
-              <p className="mt-6 flex items-baseline gap-1.5">
-                <span className="text-sm text-muted">od</span>
-                <span className="font-display text-5xl font-semibold tracking-tighter">
-                  <Price value={p.price} />
-                </span>
-                <span className="text-lg text-muted">zł</span>
-              </p>
-              <p className="mt-1 font-mono text-[11px] text-muted">⏱ realizacja {p.time}</p>
-              <ul className="mt-6 flex-1 space-y-2.5 border-t border-line pt-6 text-sm">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2.5">
-                    <span className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded ${p.featured ? "bg-sel" : "bg-white/10"}`}>
-                      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
-                        <path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <ScrollLink
-                to="kontakt"
-                className={`mt-8 block rounded-xl py-3.5 text-center text-sm font-medium transition-transform active:scale-95 ${
-                  p.featured ? "bg-sel text-white hover:brightness-110" : "bg-white/[0.06] hover:bg-white/10"
-                }`}
-              >
-                Wybieram {p.name}
-              </ScrollLink>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-12 text-center">
-        <p className="mb-4 font-mono text-xs text-muted">Dodatkowo realizuję</p>
-        <ul className="flex flex-wrap justify-center gap-2">
-          {extras.map((e, i) => (
-            <motion.li
-              key={e}
-              className="rounded-full border border-line bg-panel px-4 py-2 text-sm"
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-            >
-              {e}
-            </motion.li>
-          ))}
-        </ul>
-        <p className="mt-8 text-xs text-muted/70">Podane ceny są cenami startowymi — ostateczna kwota zależy od zakresu projektu.</p>
+      <div className="grid gap-4 lg:grid-cols-6">
+        <FadeUp className="lg:col-span-4">
+          <SpotlightCard className="flex h-full flex-col gap-8 rounded-3xl p-6 sm:p-8 md:flex-row md:items-end">
+            <CardText tag="01 — Design" title="Projekt UI/UX w Figmie" text="Widzisz każdy piksel swojej strony, zanim powstanie kod. Spójny system kolorów, typografii i komponentów." />
+            <div className="h-56 w-full shrink-0 md:w-[52%]">
+              <FigmaVisual />
+            </div>
+          </SpotlightCard>
+        </FadeUp>
+        <FadeUp className="lg:col-span-2" delay={0.1}>
+          <SpotlightCard className="flex h-full flex-col justify-between gap-8 rounded-3xl p-6 sm:p-8">
+            <div className="h-40">
+              <CubeVisual />
+            </div>
+            <CardText tag="02 — Motion" title="Animacje 3D i WebGL" text="Ruch, który przyciąga uwagę i prowadzi wzrok prosto do przycisku „Kup”." />
+          </SpotlightCard>
+        </FadeUp>
+        <FadeUp className="lg:col-span-2">
+          <SpotlightCard className="flex h-full flex-col justify-between gap-8 rounded-3xl p-6 sm:p-8">
+            <div className="h-40">
+              <CodeVisual />
+            </div>
+            <CardText tag="03 — Kod" title="Next.js i React" text="Nowoczesny, szybki kod — ten sam, którego używają największe marki." />
+          </SpotlightCard>
+        </FadeUp>
+        <FadeUp className="lg:col-span-2" delay={0.1}>
+          <SpotlightCard className="flex h-full flex-col justify-between gap-8 rounded-3xl p-6 sm:p-8">
+            <div className="h-40 pb-5">
+              <DevicesVisual />
+            </div>
+            <CardText tag="04 — Responsywność" title="Idealna na każdym ekranie" text="Większość klientów wejdzie z telefonu. Projektuję mobile-first." />
+          </SpotlightCard>
+        </FadeUp>
+        <FadeUp className="lg:col-span-2" delay={0.2}>
+          <SpotlightCard className="flex h-full flex-col justify-between gap-8 rounded-3xl p-6 sm:p-8">
+            <div className="h-40">
+              <Gauge />
+            </div>
+            <CardText tag="05 — SEO" title="Szybkość i widoczność w Google" text="Optymalizuję pod wynik 90+ w Google Lighthouse, żeby klienci Cię znaleźli." />
+          </SpotlightCard>
+        </FadeUp>
       </div>
     </section>
   );

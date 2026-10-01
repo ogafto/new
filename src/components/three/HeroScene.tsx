@@ -7,34 +7,35 @@ import { Environment, Float, Lightformer, MeshTransmissionMaterial, RoundedBox }
 
 type Kind = "torus" | "box" | "sphere" | "cone" | "knot" | "capsule" | "ico";
 
+type Finish = "glossy" | "chrome" | "iridescent" | "glass";
+
 type ShapeDef = {
   kind: Kind;
   color: string;
+  finish: Finish;
   // pozycja jako ułamek połowy szerokości/wysokości widoku
   fx: number;
   fy: number;
   z: number;
   scale: number;
-  glass?: boolean;
   delay: number;
 };
 
 const desktop: ShapeDef[] = [
-  { kind: "torus", color: "#ff7262", fx: -0.74, fy: 0.42, z: -0.5, scale: 0.8, delay: 0 },
-  { kind: "box", color: "#a259ff", fx: 0.78, fy: 0.5, z: -0.8, scale: 1, delay: 0.1 },
-  { kind: "sphere", color: "#1abcfe", fx: 0.7, fy: -0.5, z: 0.2, scale: 0.62, delay: 0.2 },
-  { kind: "cone", color: "#0acf83", fx: -0.68, fy: -0.52, z: 0.4, scale: 0.72, delay: 0.3 },
-  { kind: "knot", color: "#ffffff", fx: 0.5, fy: 0.08, z: -2.6, scale: 0.85, glass: true, delay: 0.15 },
-  { kind: "capsule", color: "#ffcd29", fx: -0.3, fy: 0.84, z: -2.2, scale: 0.42, delay: 0.25 },
-  { kind: "ico", color: "#f24e1e", fx: 0.18, fy: -0.86, z: -1.6, scale: 0.4, delay: 0.35 },
+  { kind: "torus", color: "#ffffff", finish: "iridescent", fx: -0.76, fy: 0.4, z: -0.4, scale: 0.9, delay: 0 },
+  { kind: "box", color: "#7b5cff", finish: "glossy", fx: 0.8, fy: 0.46, z: -0.8, scale: 0.95, delay: 0.1 },
+  { kind: "sphere", color: "#d9d9df", finish: "chrome", fx: 0.72, fy: -0.48, z: 0.2, scale: 0.62, delay: 0.2 },
+  { kind: "cone", color: "#ff6f5e", finish: "glossy", fx: -0.7, fy: -0.5, z: 0.3, scale: 0.66, delay: 0.3 },
+  { kind: "knot", color: "#ffffff", finish: "glass", fx: 0.98, fy: 0.04, z: -1.8, scale: 0.7, delay: 0.15 },
+  { kind: "capsule", color: "#2aa8ff", finish: "glossy", fx: -0.34, fy: 0.86, z: -2.2, scale: 0.4, delay: 0.25 },
+  { kind: "ico", color: "#d9d9df", finish: "chrome", fx: 0.5, fy: -0.88, z: -1.6, scale: 0.34, delay: 0.35 },
 ];
 
 const mobile: ShapeDef[] = [
-  { kind: "torus", color: "#ff7262", fx: -0.62, fy: 0.62, z: -0.5, scale: 0.7, delay: 0 },
-  { kind: "box", color: "#a259ff", fx: 0.7, fy: 0.72, z: -1, scale: 0.8, delay: 0.1 },
-  { kind: "sphere", color: "#1abcfe", fx: 0.72, fy: -0.74, z: 0, scale: 0.55, delay: 0.2 },
-  { kind: "cone", color: "#0acf83", fx: -0.66, fy: -0.78, z: 0.3, scale: 0.6, delay: 0.3 },
-  { kind: "capsule", color: "#ffcd29", fx: 0.05, fy: 0.9, z: -2.5, scale: 0.35, delay: 0.25 },
+  { kind: "torus", color: "#ffffff", finish: "iridescent", fx: -0.64, fy: 0.66, z: -0.5, scale: 0.7, delay: 0 },
+  { kind: "box", color: "#7b5cff", finish: "glossy", fx: 0.7, fy: 0.74, z: -1, scale: 0.75, delay: 0.1 },
+  { kind: "sphere", color: "#d9d9df", finish: "chrome", fx: 0.74, fy: -0.78, z: 0, scale: 0.55, delay: 0.2 },
+  { kind: "cone", color: "#ff6f5e", finish: "glossy", fx: -0.68, fy: -0.8, z: 0.3, scale: 0.55, delay: 0.3 },
 ];
 
 function Geometry({ kind }: { kind: Kind }) {
@@ -57,15 +58,17 @@ function Geometry({ kind }: { kind: Kind }) {
 }
 
 function Material({ def, lowPower }: { def: ShapeDef; lowPower: boolean }) {
-  return (
-    <>
-      {def.glass && !lowPower ? (
+  switch (def.finish) {
+    case "glass":
+      return lowPower ? (
+        <meshPhysicalMaterial color="#ffffff" transmission={1} thickness={0.6} roughness={0.05} ior={1.4} />
+      ) : (
         <MeshTransmissionMaterial
           samples={6}
           resolution={512}
           thickness={0.6}
-          roughness={0.05}
-          chromaticAberration={0.25}
+          roughness={0.04}
+          chromaticAberration={0.3}
           anisotropicBlur={0.1}
           distortion={0.2}
           distortionScale={0.4}
@@ -74,19 +77,25 @@ function Material({ def, lowPower }: { def: ShapeDef; lowPower: boolean }) {
           backside
           color="#ffffff"
         />
-      ) : (
+      );
+    case "chrome":
+      return <meshPhysicalMaterial color={def.color} metalness={1} roughness={0.12} clearcoat={1} clearcoatRoughness={0.05} />;
+    case "iridescent":
+      return (
         <meshPhysicalMaterial
           color={def.color}
-          roughness={def.glass ? 0.05 : 0.18}
-          metalness={0.05}
+          metalness={0.6}
+          roughness={0.12}
           clearcoat={1}
-          clearcoatRoughness={0.08}
-          transmission={def.glass ? 1 : 0}
-          thickness={def.glass ? 0.5 : 0}
+          clearcoatRoughness={0.05}
+          iridescence={1}
+          iridescenceIOR={1.6}
+          iridescenceThicknessRange={[200, 900]}
         />
-      )}
-    </>
-  );
+      );
+    default:
+      return <meshPhysicalMaterial color={def.color} roughness={0.2} metalness={0.1} clearcoat={1} clearcoatRoughness={0.06} />;
+  }
 }
 
 function Shape({ def, ready, pointer, lowPower }: { def: ShapeDef; ready: boolean; pointer: React.RefObject<THREE.Vector2>; lowPower: boolean }) {
@@ -179,6 +188,8 @@ export default function HeroScene({ ready, active }: { ready: boolean; active: b
           <Lightformer form="circle" intensity={2} rotation-y={Math.PI / 2} position={[-5, -1, -1]} scale={2} />
           <Lightformer form="circle" intensity={2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={8} />
           <Lightformer form="ring" color="#1abcfe" intensity={6} onUpdate={(self) => self.lookAt(0, 0, 0)} position={[10, 10, 0]} scale={10} />
+          <Lightformer form="rect" color="#9747ff" intensity={5} onUpdate={(self) => self.lookAt(0, 0, 0)} position={[-10, -4, 2]} scale={[6, 10, 1]} />
+          <Lightformer form="ring" color="#ff7262" intensity={3} onUpdate={(self) => self.lookAt(0, 0, 0)} position={[-8, 8, -4]} scale={6} />
         </group>
       </Environment>
     </Canvas>

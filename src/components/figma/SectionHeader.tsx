@@ -1,50 +1,54 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Words } from "../ui/Reveal";
 
 type Props = {
   index: string;
-  frame: string;
-  title: React.ReactNode;
+  label: string;
+  title: string;
+  accent?: string; // słowo pisane kursywą z gradientem, doklejane na końcu tytułu
   lead?: string;
   align?: "left" | "center";
+  className?: string;
 };
 
-// Nagłówek sekcji podpisany jak ramka w Figmie: "# 02 — Proces".
-export default function SectionHeader({ index, frame, title, lead, align = "left" }: Props) {
+// Nagłówek sekcji: etykieta jak nazwa ramki w Figmie + tytuł odsłaniany słowo po słowie.
+export default function SectionHeader({ index, label, title, accent, lead, align = "left", className = "" }: Props) {
   const center = align === "center";
   return (
-    <div className={`mb-12 sm:mb-16 ${center ? "mx-auto text-center" : ""} max-w-3xl`}>
+    <div className={`max-w-3xl ${center ? "mx-auto text-center" : ""} ${className}`}>
       <motion.div
-        className={`mb-5 flex items-center gap-2 font-mono text-xs text-muted ${center ? "justify-center" : ""}`}
-        initial={{ opacity: 0, x: -10 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5 }}
+        className={`mb-6 inline-flex items-center gap-2.5 rounded-full py-1 pr-3 pl-1 font-mono text-[11px] tracking-wide text-muted uppercase hairline`}
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.6 }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" className="text-sel" aria-hidden>
-          <path d="M3 0v12M9 0v12M0 3h12M0 9h12" stroke="currentColor" strokeWidth="1.2" />
-        </svg>
-        <span className="text-sel">{index}</span>
-        <span>—</span>
-        <span>{frame}</span>
+        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-ink">{index}</span>
+        {label}
       </motion.div>
-      <motion.h2
-        className="font-display text-4xl leading-[1.02] font-semibold tracking-tighter text-balance sm:text-6xl"
-        initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-        whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {title}
-      </motion.h2>
+      <h2 className="font-display text-[clamp(2.4rem,5.6vw,4.6rem)] leading-[1] font-medium tracking-[-0.045em] text-balance">
+        <Words text={title} className="text-silver" />
+        {accent && (
+          <motion.span
+            className="text-accent inline-block pr-1 font-serif font-normal tracking-[-0.02em] italic"
+            initial={{ opacity: 0, y: "0.3em", filter: "blur(12px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ delay: title.split(" ").length * 0.05 + 0.05, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {accent}
+          </motion.span>
+        )}
+      </h2>
       {lead && (
         <motion.p
-          className={`mt-5 max-w-xl text-base text-pretty text-muted sm:text-lg ${center ? "mx-auto" : ""}`}
-          initial={{ opacity: 0, y: 20 }}
+          className={`mt-6 max-w-xl text-[17px] leading-relaxed text-pretty text-muted ${center ? "mx-auto" : ""}`}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ delay: 0.15, duration: 0.7 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ delay: 0.2, duration: 0.8 }}
         >
           {lead}
         </motion.p>

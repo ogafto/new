@@ -23,7 +23,7 @@ const assets = [
 const colors = [
   { name: "Ink", hex: BRAND.ink },
   { name: "Black", hex: BRAND.black },
-  { name: "Cobalt", hex: BRAND.accent },
+  { name: "Violet", hex: BRAND.accent },
 ];
 
 export default function BrandPage() {
@@ -31,7 +31,7 @@ export default function BrandPage() {
     <>
       <Navbar />
       <main className="mx-auto max-w-[1320px] px-5 pt-40 pb-28 sm:px-8">
-        <p className="eyebrow">Brand</p>
+        <p className="kicker">Brand</p>
         <h1 className="h-display mt-6 text-[clamp(2.8rem,6vw,5.4rem)]">Logo i materiały</h1>
         <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-muted">
           Monogram „af.” i logotyp „afto.” rysowane jedną linią na wspólnej siatce. Pobierz SVG (wektor, do druku i edycji) albo PNG (gotowy do social mediów).

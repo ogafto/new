@@ -1,13 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Funnel_Display, Funnel_Sans, Instrument_Serif } from "next/font/google";
+import { Host_Grotesk } from "next/font/google";
 import Providers from "@/components/Providers";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const funnelDisplay = Funnel_Display({ variable: "--font-funnel-display", subsets: ["latin", "latin-ext"] });
-const funnelSans = Funnel_Sans({ variable: "--font-funnel-sans", subsets: ["latin", "latin-ext"] });
-// używany tylko w makietach realizacji
-const instrument = Instrument_Serif({ variable: "--font-instrument", subsets: ["latin", "latin-ext"], weight: "400", style: ["normal", "italic"] });
+const host = Host_Grotesk({ variable: "--font-host", subsets: ["latin", "latin-ext"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -30,12 +27,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b0d",
+  themeColor: "#07070a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pl" className={`${funnelDisplay.variable} ${funnelSans.variable} ${instrument.variable}`}>
+    <html lang="pl" className={host.variable}>
       <body>
         <Providers>{children}</Providers>
       </body>

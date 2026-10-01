@@ -9,7 +9,7 @@ export default function LegalPage({ title, sections }: { title: string; sections
     <>
       <Navbar />
       <main className="mx-auto max-w-[1320px] px-5 pt-40 pb-28 sm:px-8">
-        <p className="eyebrow">Dokumenty</p>
+        <p className="kicker">Dokumenty</p>
         <h1 className="h-display mt-6 text-[clamp(2.8rem,6vw,5.4rem)]">{title}</h1>
         <p className="mt-4 text-[15px] text-muted">Aktualizacja: {site.legal.updated}</p>
 

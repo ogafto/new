@@ -6,21 +6,21 @@ import { motion, useMotionValue, useSpring } from "motion/react";
 
 export function Arrow({ className = "" }: { className?: string }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden>
-      <path d="M4.5 11.5l7-7M5.5 4.5h6v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={className} aria-hidden>
+      <path d="M3.5 10.5l7-7M4.5 3.5h6v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// Delikatne "przyciąganie" elementu przez kursor
-export function Magnetic({ children, strength = 0.25, className = "" }: { children: React.ReactNode; strength?: number; className?: string }) {
+// Delikatne "przyciąganie" przez kursor
+export function Magnetic({ children, strength = 0.22 }: { children: React.ReactNode; strength?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const x = useSpring(useMotionValue(0), { stiffness: 220, damping: 16 });
-  const y = useSpring(useMotionValue(0), { stiffness: 220, damping: 16 });
+  const x = useSpring(useMotionValue(0), { stiffness: 200, damping: 16 });
+  const y = useSpring(useMotionValue(0), { stiffness: 200, damping: 16 });
   return (
     <motion.div
       ref={ref}
-      className={`inline-flex ${className}`}
+      className="inline-flex"
       style={{ x, y }}
       onPointerMove={(e) => {
         if (e.pointerType !== "mouse" || !ref.current) return;
@@ -43,14 +43,12 @@ type Props = {
   href?: string;
   onClick?: () => void;
   type?: "button" | "submit";
-  variant?: "accent" | "ghost" | "light";
-  arrow?: boolean;
+  variant?: "primary" | "outline";
   className?: string;
   disabled?: boolean;
 };
 
-// Przycisk: tekst przewija się w górę, strzałka wylatuje i wraca
-export default function Button({ children, href, onClick, type = "button", variant = "accent", arrow = true, className = "", disabled }: Props) {
+export default function Button({ children, href, onClick, type = "button", variant = "primary", className = "", disabled }: Props) {
   const cls = `group btn btn-${variant} ${disabled ? "pointer-events-none opacity-60" : ""} ${className}`;
   const inner = (
     <>
@@ -58,8 +56,8 @@ export default function Button({ children, href, onClick, type = "button", varia
         <span>{children}</span>
         <span aria-hidden>{children}</span>
       </span>
-      {arrow && (
-        <span className="arrow-swap">
+      {variant === "primary" && (
+        <span className="dot">
           <Arrow />
           <Arrow />
         </span>

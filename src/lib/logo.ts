@@ -7,7 +7,7 @@
 export const BRAND = {
   ink: "#F2F1EC",
   black: "#0B0B0D",
-  accent: "#4A63FF",
+  accent: "#8B6CFF",
 };
 
 const S = 5; // grubość linii

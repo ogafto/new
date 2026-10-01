@@ -1,30 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #e6e6e3;
-  --color-ink: #0b0b0c;
-  --color-muted: #77777c;
-  --color-line: rgb(0 0 0 / 0.08);
-  --color-sel: #0d99ff;
-  --color-comp: #9747ff;
-  --color-measure: #f24822;
-  --color-ok: #14ae5c;
+  --color-bg: #0a0a0a;
+  --color-bg-2: #111110;
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.22);
+  --color-ink: #edede9;
+  --color-muted: #8c8c87;
+  --color-dim: #5a5a56;
+  --color-accent: #ff5b22;
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-ui: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --animate-marquee: marquee 40s linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html {
-  background: var(--color-canvas);
+  background: var(--color-bg);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -40,7 +47,7 @@ html.lenis body {
 }
 
 body {
-  background: var(--color-canvas);
+  background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
   overflow-x: clip;
@@ -48,125 +55,94 @@ body {
 }
 
 ::selection {
-  background: var(--color-sel);
-  color: white;
+  background: var(--color-accent);
+  color: #0a0a0a;
 }
 
 @layer components {
-  /* Płótno z kropkami jak w edytorze */
-  .canvas-dots {
-    background-color: var(--color-canvas);
-    background-image: radial-gradient(rgb(0 0 0 / 0.14) 1px, transparent 1.3px);
-    background-size: 24px 24px;
+  /* Etykieta techniczna */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  /* Panele interfejsu (pasek górny, narzędzia, menu) */
-  .ui-panel {
-    background: #fff;
-    border-radius: 12px;
-    font-family: var(--font-ui);
-    box-shadow:
-      0 0 0 1px rgb(0 0 0 / 0.06),
-      0 1px 2px rgb(0 0 0 / 0.06),
-      0 10px 28px -10px rgb(0 0 0 / 0.16);
+  /* Nagłówki w stylu plakatu: wąskie, wersaliki */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-stretch: 78%;
+    letter-spacing: -0.02em;
+    line-height: 0.86;
   }
 
-  .ui-btn-blue {
+  /* Litery rysowane samą linią */
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--stroke, var(--color-ink));
+  }
+
+  /* Przycisk: tekst | komórka ze strzałką */
+  .btn-line {
+    position: relative;
     display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 6px;
-    background: var(--color-sel);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: 13px;
+    align-items: stretch;
+    height: 56px;
+    font-size: 15px;
     font-weight: 500;
-    transition: background-color 0.15s;
+    letter-spacing: -0.005em;
+    transition: background-color 0.3s, color 0.3s;
   }
-  .ui-btn-blue:hover {
-    background: #0a87e3;
+  .btn-line > .t {
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
   }
-
-  .ui-icon {
+  .btn-line > .a {
+    position: relative;
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 7px;
-    color: #2c2c2e;
-    transition: background-color 0.15s;
+    width: 56px;
+    overflow: hidden;
+    border-left: 1px solid currentColor;
   }
-  .ui-icon:hover {
-    background: rgb(0 0 0 / 0.05);
+  .btn-line > .a > svg {
+    transition: transform 0.55s var(--ease-out-expo);
   }
-  .ui-icon[aria-pressed="true"] {
-    background: var(--color-sel);
-    color: #fff;
+  .btn-line > .a > svg + svg {
+    position: absolute;
+    transform: translate(-160%, 160%);
   }
-
-  /* Kolory zależne od ramki (--fg ustawia ramka) */
-  .fg-70 {
-    color: color-mix(in srgb, var(--fg) 70%, transparent);
+  .btn-line:hover > .a > svg:first-child {
+    transform: translate(160%, -160%);
   }
-  .fg-55 {
-    color: color-mix(in srgb, var(--fg) 55%, transparent);
+  .btn-line:hover > .a > svg + svg {
+    transform: translate(0, 0);
   }
-  .fg-40 {
-    color: color-mix(in srgb, var(--fg) 40%, transparent);
+  .btn-accent {
+    background: var(--color-accent);
+    color: #0a0a0a;
   }
-  .line-fg {
-    border-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  .btn-accent:hover {
+    background: var(--color-ink);
   }
-  .bg-fg-5 {
-    background: color-mix(in srgb, var(--fg) 5%, transparent);
+  .btn-ghost {
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
   }
-
-  /* Przyciski w treści ramek */
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    height: 56px;
-    padding: 0 28px;
-    border-radius: 999px;
-    font-size: 17px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    transition:
-      transform 0.5s var(--ease-out-expo),
-      background-color 0.3s,
-      color 0.3s;
-  }
-  .pill:active {
-    transform: scale(0.97);
-  }
-  .pill-solid {
-    background: var(--fg);
-    color: var(--bg);
-  }
-  .pill-line {
-    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--fg) 28%, transparent);
-  }
-  .pill-line:hover {
-    box-shadow: inset 0 0 0 1.5px var(--fg);
-  }
-  .pill .arr {
-    display: inline-block;
-    transition: transform 0.5s var(--ease-out-expo);
-  }
-  .pill:hover .arr {
-    transform: translateX(4px);
+  .btn-ghost:hover {
+    box-shadow: inset 0 0 0 1px var(--color-ink);
   }
 
-  /* Podkreślenie rysowane od lewej */
   .link-u {
-    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1.5px no-repeat;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
     transition: background-size 0.5s var(--ease-out-expo);
   }
   .link-u:hover {
-    background-size: 100% 1.5px;
+    background-size: 100% 1px;
   }
 }
 

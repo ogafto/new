@@ -8,7 +8,7 @@ export const site = {
   role: "Grafika komputerowa & web design",
   email: "kontakt@afto.works",
   phone: "+48 000 000 000",
-  location: "Polska · zdalnie",
+  location: "Polska — zdalnie",
   timezone: "Europe/Warsaw",
   responseTime: "Odpowiadam w ciągu 24 godzin",
   socials: [
@@ -25,200 +25,157 @@ export const site = {
   },
 };
 
-export type MockTheme = "coffee" | "gym" | "dental" | "photo";
-
-export type Project = {
-  name: string;
-  slug: string;
-  category: string;
-  year: string;
-  description: string;
-  scope: string[];
-  theme: MockTheme;
-  palette: string[];
-  fonts: { name: string; className: string }[];
-  // kolory ramki (artboardu) z projektem
-  bg: string;
-  fg: string;
-};
-
-export const projects: Project[] = [
-  {
-    name: "Ziarno",
-    slug: "ziarno",
-    category: "Kawiarnia — landing page",
-    year: "2026",
-    description: "Ciepły, apetyczny landing z menu, mapą i rezerwacją stolika. Zaprojektowany pod szybkie decyzje na telefonie.",
-    scope: ["Projekt UI", "Next.js", "Animacje"],
-    theme: "coffee",
-    palette: ["#2B1D14", "#C8763A", "#E4D5C3", "#F3EBE0"],
-    fonts: [
-      { name: "Instrument Serif", className: "font-serif italic" },
-      { name: "Archivo", className: "font-display" },
-    ],
-    bg: "#EFE8DD",
-    fg: "#2B1D14",
-  },
-  {
-    name: "Volt Gym",
-    slug: "volt",
-    category: "Siłownia — strona firmowa",
-    year: "2026",
-    description: "Energetyczna identyfikacja i strona z grafikiem zajęć, cennikiem karnetów i elementami 3D.",
-    scope: ["Branding", "3D / WebGL", "SEO"],
-    theme: "gym",
-    palette: ["#0C0C0C", "#D4FF3A", "#3AFF9C", "#F2F2F2"],
-    fonts: [
-      { name: "Archivo Expanded", className: "font-display font-black uppercase [font-stretch:125%]" },
-      { name: "JetBrains Mono", className: "font-mono" },
-    ],
-    bg: "#101010",
-    fg: "#F2F2F2",
-  },
-  {
-    name: "Nova Dental",
-    slug: "nova",
-    category: "Klinika — strona z rezerwacjami",
-    year: "2025",
-    description: "Spokojny design, który buduje zaufanie. Rezerwacja wizyt online i przejrzysty cennik zabiegów.",
-    scope: ["UI/UX", "CMS", "Rezerwacje"],
-    theme: "dental",
-    palette: ["#0F2E33", "#14B8A6", "#E2F3F1", "#F6FBFB"],
-    fonts: [
-      { name: "Archivo", className: "font-display font-semibold" },
-      { name: "Inter", className: "font-ui" },
-    ],
-    bg: "#E4EFEC",
-    fg: "#0F2E33",
-  },
-  {
-    name: "Atelier Mira",
-    slug: "mira",
-    category: "Fotograf — portfolio",
-    year: "2025",
-    description: "Edytorialowe portfolio, w którym zdjęcia grają pierwsze skrzypce. Galeria z płynnymi przejściami.",
-    scope: ["Art direction", "Galeria", "Motion"],
-    theme: "photo",
-    palette: ["#111111", "#3B342C", "#8A7A68", "#EAE6DF"],
-    fonts: [
-      { name: "Instrument Serif", className: "font-serif" },
-      { name: "Archivo Narrow", className: "font-display [font-stretch:70%]" },
-    ],
-    bg: "#171615",
-    fg: "#EAE6DF",
-  },
+export const nav = [
+  { href: "#prace", label: "Prace" },
+  { href: "#proces", label: "Proces" },
+  { href: "#kontakt", label: "Kontakt" },
 ];
 
-export const steps = [
-  { title: "Rozmowa", time: "Dzień 1", text: "Opowiadasz o firmie i celu strony. Ja słucham i zadaję pytania, które oszczędzą nam poprawek." },
-  { title: "Wycena", time: "Dzień 1–2", text: "Dostajesz stałą cenę i termin na piśmie. Bez ukrytych kosztów." },
-  { title: "Projekt w Figmie", time: "Dzień 2–5", text: "Widzisz swoją stronę, zanim powstanie kod. Klikalny prototyp, dwie rundy poprawek." },
-  { title: "Kodowanie", time: "Dzień 5–9", text: "Przenoszę projekt piksel w piksel do Next.js. Animacje, responsywność, SEO." },
-  { title: "Publikacja", time: "Dzień 10", text: "Strona ląduje na Twojej domenie. Przekazuję dostępy i zostaję na 30 dni wsparcia." },
-];
+/* ---------- Usługi (ceny minimalne — dostosuj) ---------- */
 
-/*
- * Konfigurator usług (ramka "Usługi").
- * Ceny poza "Strona internetowa od 200 zł" są przykładowe — dostosuj do swojego cennika.
- */
-export type ServiceProp =
-  | { type: "select"; key: string; label: string; options: { label: string; price: number }[] }
-  | { type: "bool"; key: string; label: string; price: number };
+export type ServiceId = "www" | "shop" | "brand" | "ui";
 
-export type Service = {
-  id: string;
-  name: string;
-  short: string;
-  description: string;
-  deliverables: string[];
-  time: string;
-  base: number;
-  props: ServiceProp[];
-};
-
-export const services: Service[] = [
+export const services: { id: ServiceId; name: string; plural: string; price: number; time: string; description: string }[] = [
   {
-    id: "web",
+    id: "www",
     name: "Strona internetowa",
-    short: "Strona www",
-    description: "Od wizytówki po rozbudowaną stronę firmową. Projekt w Figmie, kod w Next.js, pełna responsywność.",
-    deliverables: ["Projekt graficzny w Figmie", "Wersja mobilna i desktopowa", "Podstawowe SEO i analityka", "Publikacja na Twojej domenie"],
-    time: "3–14 dni",
-    base: 200,
-    props: [
-      {
-        type: "select",
-        key: "pages",
-        label: "Podstrony",
-        options: [
-          { label: "1", price: 0 },
-          { label: "do 5", price: 490 },
-          { label: "do 10", price: 990 },
-        ],
-      },
-      { type: "bool", key: "motion", label: "Animacje premium", price: 300 },
-      { type: "bool", key: "webgl", label: "Elementy 3D / WebGL", price: 500 },
-      { type: "bool", key: "cms", label: "Panel do edycji treści", price: 400 },
-      { type: "bool", key: "shop", label: "Sklep lub rezerwacje", price: 800 },
-    ],
+    plural: "Strony",
+    price: 200,
+    time: "od 3 dni",
+    description: "Wizytówka, landing lub strona firmowa. Projekt, kod i publikacja.",
   },
   {
-    id: "ui",
-    name: "Projekt UI/UX",
-    short: "UI/UX",
-    description: "Makiety i klikalny prototyp w Figmie — gotowe do wdrożenia przez Ciebie lub Twój zespół.",
-    deliverables: ["Plik Figma z komponentami", "Klikalny prototyp", "Wersje mobilne", "Przekazanie dla programisty"],
-    time: "3–10 dni",
-    base: 150,
-    props: [
-      {
-        type: "select",
-        key: "screens",
-        label: "Ekrany",
-        options: [
-          { label: "do 3", price: 0 },
-          { label: "do 8", price: 350 },
-          { label: "10+", price: 750 },
-        ],
-      },
-      { type: "bool", key: "system", label: "Design system", price: 300 },
-      { type: "bool", key: "proto", label: "Prototyp z animacjami", price: 150 },
-    ],
+    id: "shop",
+    name: "Sklep internetowy",
+    plural: "Sklepy",
+    price: 800,
+    time: "od 10 dni",
+    description: "Sklep z koszykiem i płatnościami online, gotowy do sprzedaży.",
   },
   {
     id: "brand",
     name: "Identyfikacja wizualna",
-    short: "Branding",
-    description: "Logo i spójny wygląd marki, który od pierwszego kontaktu buduje zaufanie.",
-    deliverables: ["Logo w wersjach i kolorach", "Paleta i typografia", "Pliki do druku i internetu", "Mini-przewodnik użycia"],
-    time: "5–14 dni",
-    base: 300,
-    props: [
-      { type: "bool", key: "book", label: "Księga znaku", price: 250 },
-      { type: "bool", key: "print", label: "Wizytówki i papier firmowy", price: 150 },
-      { type: "bool", key: "social", label: "Szablony social media", price: 200 },
-    ],
+    plural: "Identyfikacja",
+    price: 300,
+    time: "od 5 dni",
+    description: "Logo, kolory, typografia i materiały, które budują rozpoznawalność.",
   },
   {
-    id: "graphic",
-    name: "Grafika & social media",
-    short: "Grafika",
-    description: "Posty, banery, okładki i materiały reklamowe — spójne z Twoją marką i gotowe do publikacji.",
-    deliverables: ["Grafiki w formatach pod platformy", "Pliki źródłowe", "Wersje do reklam", "Spójny styl serii"],
-    time: "2–7 dni",
-    base: 100,
-    props: [
-      {
-        type: "select",
-        key: "pack",
-        label: "Pakiet",
-        options: [
-          { label: "5", price: 0 },
-          { label: "15", price: 200 },
-          { label: "30", price: 450 },
-        ],
-      },
-      { type: "bool", key: "anim", label: "Wersje animowane", price: 150 },
-    ],
+    id: "ui",
+    name: "Projekt UI/UX",
+    plural: "UI/UX",
+    price: 250,
+    time: "od 3 dni",
+    description: "Makiety i klikalny prototyp aplikacji lub strony w Figmie.",
   },
+];
+
+export const serviceName = (id: ServiceId) => services.find((s) => s.id === id)!.name;
+
+/* ---------- Prace ---------- */
+
+export type MockTheme = "coffee" | "gym" | "dental" | "photo" | "shop" | "brand" | "ui";
+
+export type Project = {
+  name: string;
+  slug: string;
+  category: ServiceId;
+  year: string;
+  client: string;
+  description: string;
+  scope: string[];
+  palette: string[];
+  theme: MockTheme; // makieta CSS, dopóki nie ma zrzutu ekranu
+  image?: string; // np. "/prace/ziarno.jpg" — wrzuć plik do /public/prace, a podmieni makietę
+};
+
+// Przykładowe realizacje — podmień na swoje. Nowa praca = nowy obiekt w tablicy.
+export const projects: Project[] = [
+  {
+    name: "Ziarno",
+    slug: "ziarno",
+    category: "www",
+    year: "2026",
+    client: "Kawiarnia speciality",
+    description: "Ciepły landing z menu, mapą i rezerwacją stolika. Zaprojektowany pod szybkie decyzje na telefonie.",
+    scope: ["Projekt UI", "Next.js", "Animacje"],
+    palette: ["#2B1D14", "#C8763A", "#E4D5C3", "#F3EBE0"],
+    theme: "coffee",
+  },
+  {
+    name: "Forma Store",
+    slug: "forma",
+    category: "shop",
+    year: "2026",
+    client: "Marka odzieżowa",
+    description: "Minimalistyczny sklep z produktami w roli głównej. Szybki koszyk i płatności jednym kliknięciem.",
+    scope: ["E-commerce", "Płatności", "SEO"],
+    palette: ["#111111", "#F4F1EC", "#D9D3C7", "#B4502E"],
+    theme: "shop",
+  },
+  {
+    name: "Volt Gym",
+    slug: "volt",
+    category: "www",
+    year: "2026",
+    client: "Siłownia 24/7",
+    description: "Energetyczna strona z grafikiem zajęć, cennikiem karnetów i elementami 3D.",
+    scope: ["Strona firmowa", "3D", "CMS"],
+    palette: ["#0C0C0C", "#D4FF3A", "#3AFF9C", "#F2F2F2"],
+    theme: "gym",
+  },
+  {
+    name: "Halny",
+    slug: "halny",
+    category: "brand",
+    year: "2025",
+    client: "Browar rzemieślniczy",
+    description: "Identyfikacja inspirowana górskim wiatrem: znak, paleta, etykiety i materiały do social mediów.",
+    scope: ["Logo", "Księga znaku", "Etykiety"],
+    palette: ["#1D2B24", "#E8E2D0", "#C9822B", "#7A9A84"],
+    theme: "brand",
+  },
+  {
+    name: "Pulse",
+    slug: "pulse",
+    category: "ui",
+    year: "2025",
+    client: "Aplikacja fitness",
+    description: "Panel i aplikacja mobilna do śledzenia treningów. Design system i klikalny prototyp.",
+    scope: ["UI/UX", "Design system", "Prototyp"],
+    palette: ["#0E1116", "#5B8CFF", "#FF6B6B", "#E9EDF5"],
+    theme: "ui",
+  },
+  {
+    name: "Nova Dental",
+    slug: "nova",
+    category: "www",
+    year: "2025",
+    client: "Klinika stomatologiczna",
+    description: "Spokojny design, który buduje zaufanie. Rezerwacja wizyt online i przejrzysty cennik.",
+    scope: ["Strona", "Rezerwacje", "UI"],
+    palette: ["#0F2E33", "#14B8A6", "#E2F3F1", "#F6FBFB"],
+    theme: "dental",
+  },
+  {
+    name: "Atelier Mira",
+    slug: "mira",
+    category: "www",
+    year: "2025",
+    client: "Fotograf",
+    description: "Edytorialowe portfolio, w którym zdjęcia grają pierwsze skrzypce.",
+    scope: ["Portfolio", "Galeria", "Motion"],
+    palette: ["#111111", "#3B342C", "#8A7A68", "#EAE6DF"],
+    theme: "photo",
+  },
+];
+
+/* ---------- Proces zamówienia ---------- */
+
+export const steps = [
+  { title: "Wybierasz usługę", time: "2 minuty", text: "Zaznaczasz, czego potrzebujesz, i piszesz kilka zdań o firmie." },
+  { title: "Rozmowa i wycena", time: "do 24 h", text: "Odzywam się z pytaniami. Dostajesz stałą cenę i termin na piśmie." },
+  { title: "Projekt", time: "2–5 dni", text: "Widzisz projekt, zanim powstanie kod. Dwie rundy poprawek w cenie." },
+  { title: "Realizacja", time: "3–7 dni", text: "Koduję, testuję na telefonach i komputerach, optymalizuję pod Google." },
+  { title: "Start", time: "dzień 10", text: "Publikuję i przekazuję wszystko. 30 dni wsparcia gratis." },
 ];

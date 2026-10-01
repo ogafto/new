@@ -1,25 +1,14 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Portfolio from "@/components/Portfolio";
-import Process from "@/components/Process";
-import Services from "@/components/Services";
-import Pricing from "@/components/Pricing";
-import Contact from "@/components/Contact";
-import Footer from "@/components/Footer";
+import CanvasProvider from "@/components/canvas/CanvasProvider";
+import World from "@/components/canvas/World";
+import TopBar from "@/components/chrome/TopBar";
+import Toolbar from "@/components/chrome/Toolbar";
 
 export default function Home() {
   return (
-    <>
-      <Navbar />
-      <main>
-        <Hero />
-        <Portfolio />
-        <Process />
-        <Services />
-        <Pricing />
-        <Contact />
-      </main>
-      <Footer />
-    </>
+    <CanvasProvider>
+      <TopBar />
+      <World />
+      <Toolbar />
+    </CanvasProvider>
   );
 }

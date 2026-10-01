@@ -13,7 +13,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <ReactLenis root options={{ lerp: 0.1, anchors: { offset: -72 } }}>
+    <ReactLenis root options={{ lerp: 0.1 }}>
       <MotionConfig reducedMotion="user">
         <LoadedContext.Provider value={loaded}>
           <Loader onDone={() => setLoaded(true)} />

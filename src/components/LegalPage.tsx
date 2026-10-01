@@ -1,51 +1,55 @@
 import Link from "next/link";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import { site } from "@/lib/site";
+import Mark from "./chrome/Mark";
 
 export type LegalSection = { title: string; items: string[] };
 
-export default function LegalPage({ index, title, sections }: { index: string; title: string; sections: LegalSection[] }) {
+// Dokument jako biała ramka A4 na płótnie.
+export default function LegalPage({ title, sections }: { title: string; sections: LegalSection[] }) {
   return (
-    <>
-      <Navbar />
-      <main className="relative overflow-hidden px-4 pt-40 pb-28 sm:px-5">
-        <div
-          className="grid-lines pointer-events-none absolute inset-x-0 top-0 h-[70vh] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_30%,transparent_100%)]"
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[900px] -translate-x-1/2 rounded-full bg-sel/15 blur-[120px]" aria-hidden />
+    <div className="canvas-dots min-h-screen px-3 pt-3 pb-24 sm:px-6">
+      <header className="flex items-center justify-between">
+        <Link href="/" className="ui-panel flex h-12 items-center gap-2.5 pr-4 pl-1.5 text-[13px] hover:bg-black/[0.02]">
+          <Mark className="size-8" />
+          <span className="font-semibold">{site.domain}</span>
+          <span className="text-black/40">/ {title}</span>
+        </Link>
+        <Link href="/" className="ui-btn-blue">
+          ← Wróć do pliku
+        </Link>
+      </header>
 
-        <article className="relative mx-auto max-w-3xl">
-          <Link href="/" className="group inline-flex items-center gap-2 font-mono text-[11px] text-muted transition-colors hover:text-ink">
-            <span className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-1">←</span> Wróć na stronę główną
-          </Link>
-          <p className="mt-12 font-mono text-[11px] tracking-wide text-muted uppercase">{index}</p>
-          <h1 className="text-silver mt-4 font-display text-5xl leading-none font-medium tracking-[-0.05em] sm:text-7xl">{title}</h1>
-          <p className="mt-5 text-sm text-muted">
-            Ostatnia aktualizacja: {site.legal.updated} · {site.domain}
+      <div className="mx-auto mt-16 max-w-[820px]">
+        <div className="mb-2 flex justify-between font-ui text-[11px] text-muted">
+          <span className="text-sel">{title}</span>
+          <span className="font-mono">A4 · 210 × 297</span>
+        </div>
+        <article className="bg-white px-6 py-12 shadow-[0_1px_3px_rgb(0_0_0/0.08)] sm:px-16 sm:py-20">
+          <p className="font-ui text-[13px] text-muted">
+            {site.domain} · aktualizacja: {site.legal.updated}
           </p>
-
-          <div className="mt-14 space-y-4">
+          <h1 className="mt-4 font-display text-5xl leading-none font-semibold tracking-[-0.045em] sm:text-7xl" style={{ fontStretch: "106%" }}>
+            {title}
+          </h1>
+          <div className="mt-14 space-y-12">
             {sections.map((s, i) => (
-              <section key={s.title} className="hairline surface rounded-3xl p-6 sm:p-8">
-                <h2 className="flex items-baseline gap-3 font-display text-xl font-medium tracking-[-0.02em] sm:text-2xl">
-                  <span className="font-mono text-xs text-sel">§{i + 1}</span>
-                  {s.title}
-                </h2>
-                <ol className="mt-5 list-decimal space-y-3 pl-5 text-[15px] leading-relaxed text-muted marker:font-mono marker:text-xs marker:text-dim">
-                  {s.items.map((it, j) => (
-                    <li key={j} className="pl-1">
-                      {it}
-                    </li>
-                  ))}
-                </ol>
+              <section key={s.title} className="grid gap-4 sm:grid-cols-[80px_1fr]">
+                <span className="font-mono text-[13px] text-sel">§ {i + 1}</span>
+                <div>
+                  <h2 className="font-display text-2xl font-semibold tracking-[-0.03em]">{s.title}</h2>
+                  <ol className="mt-4 list-decimal space-y-2.5 pl-5 text-[16px] leading-relaxed text-black/70 marker:font-mono marker:text-[12px] marker:text-black/35">
+                    {s.items.map((it, j) => (
+                      <li key={j} className="pl-1">
+                        {it}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </section>
             ))}
           </div>
         </article>
-      </main>
-      <Footer />
-    </>
+      </div>
+    </div>
   );
 }

@@ -1,11 +1,11 @@
 import { Resend } from "resend";
-import { planNames, site } from "@/lib/site";
+import { site } from "@/lib/site";
 
 type Payload = {
   name: string;
   email: string;
   phone: string;
-  plan: string;
+  topic: string;
   message: string;
 };
 
@@ -36,12 +36,11 @@ function validate(body: Record<string, unknown>): Payload | string {
     name: str(body.name, 80),
     email: str(body.email, 160),
     phone: str(body.phone, 30),
-    plan: str(body.plan, 40),
+    topic: str(body.topic, 300),
     message: str(body.message, 3000),
   };
   if (data.name.length < 2) return "Podaj imię.";
   if (!EMAIL_RE.test(data.email)) return "Podaj poprawny adres e-mail.";
-  if (!(planNames as readonly string[]).includes(data.plan)) data.plan = "Nie wiem jeszcze";
   if (data.message.length < 10) return "Wiadomość jest za krótka (min. 10 znaków).";
   return data;
 }
@@ -56,11 +55,11 @@ function emailHtml(d: Payload) {
   <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e4e4e7">
     <div style="background:#060607;padding:24px 28px;color:#fff">
       <div style="font-size:12px;color:#8b8b94;letter-spacing:.08em;text-transform:uppercase">${site.domain}</div>
-      <div style="font-size:22px;margin-top:6px">Nowe zapytanie — ${escapeHtml(d.plan)}</div>
+      <div style="font-size:22px;margin-top:6px">Nowe zapytanie od ${escapeHtml(d.name)}</div>
     </div>
     <div style="padding:20px 28px">
       <table style="width:100%;border-collapse:collapse">
-        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Pakiet", d.plan)}
+        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Konfiguracja", d.topic)}
       </table>
       <div style="margin-top:12px;padding:16px;background:#f4f4f5;border-radius:12px;color:#111;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(d.message)}</div>
       <p style="color:#8b8b94;font-size:12px;margin-top:20px">Kliknij „Odpowiedz”, aby napisać bezpośrednio do klienta.</p>
@@ -76,9 +75,9 @@ async function sendResend(d: Payload) {
     from: process.env.CONTACT_FROM || `${site.domain} <formularz@${site.domain}>`,
     to: process.env.CONTACT_TO || site.email,
     replyTo: d.email,
-    subject: `Nowe zapytanie: ${d.plan} — ${d.name}`,
+    subject: `Nowe zapytanie — ${d.name}`,
     html: emailHtml(d),
-    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nPakiet: ${d.plan}\n\n${d.message}`,
+    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nKonfiguracja: ${d.topic || "—"}\n\n${d.message}`,
   });
   if (error) throw new Error(`Resend: ${error.message}`);
   return true;
@@ -96,12 +95,13 @@ async function sendDiscord(d: Payload) {
       allowed_mentions: { parse: [] },
       embeds: [
         {
-          title: `📩 Nowe zapytanie — ${d.plan}`,
+          title: `💬 Nowy komentarz — ${d.name}`,
           color: 0x0d99ff,
           fields: [
             { name: "Imię", value: d.name, inline: true },
             { name: "E-mail", value: d.email, inline: true },
             { name: "Telefon", value: d.phone || "—", inline: true },
+            ...(d.topic ? [{ name: "Konfiguracja", value: d.topic.slice(0, 1024) }] : []),
             { name: "Wiadomość", value: d.message.slice(0, 1024) },
           ],
           footer: { text: site.domain },

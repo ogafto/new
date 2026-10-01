@@ -3,7 +3,7 @@ import LegalPage, { type LegalSection } from "@/components/LegalPage";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `Regulamin — ${site.brand}`,
+  title: "Regulamin",
   description: "Regulamin świadczenia usług projektowania i tworzenia stron internetowych.",
 };
 
@@ -79,5 +79,5 @@ const sections: LegalSection[] = [
 ];
 
 export default function Regulamin() {
-  return <LegalPage index="Dokumenty / Regulamin" title="Regulamin" sections={sections} />;
+  return <LegalPage title="Regulamin" sections={sections} />;
 }

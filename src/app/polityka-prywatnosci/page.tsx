@@ -3,7 +3,7 @@ import LegalPage, { type LegalSection } from "@/components/LegalPage";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `Polityka prywatności — ${site.brand}`,
+  title: "Polityka prywatności",
   description: "Zasady przetwarzania danych osobowych i plików cookies.",
 };
 
@@ -58,5 +58,5 @@ const sections: LegalSection[] = [
 ];
 
 export default function PolitykaPrywatnosci() {
-  return <LegalPage index="Dokumenty / Prywatność" title="Polityka prywatności" sections={sections} />;
+  return <LegalPage title="Polityka prywatności" sections={sections} />;
 }

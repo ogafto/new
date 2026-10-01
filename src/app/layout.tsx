@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Archivo, Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import Providers from "@/components/Providers";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const geist = Geist({ variable: "--font-geist", subsets: ["latin", "latin-ext"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin", "latin-ext"] });
+const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin", "latin-ext"], axes: ["wdth"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin", "latin-ext"] });
+const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin", "latin-ext"] });
 const instrument = Instrument_Serif({
   variable: "--font-instrument",
   subsets: ["latin", "latin-ext"],
@@ -16,25 +17,16 @@ const instrument = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.domain} — Strony internetowe od 200 zł | Figma + Next.js`,
+    default: `${site.domain} — grafika komputerowa & web design`,
     template: `%s — ${site.domain}`,
   },
   description:
-    "Premium strony internetowe, które sprzedają. Projekt w Figmie, kod w Next.js, animacje 3D i pełna responsywność. Ceny od 200 zł.",
-  keywords: [
-    "strona internetowa",
-    "tania strona internetowa",
-    "strona internetowa od 200 zł",
-    "projektowanie stron",
-    "web design",
-    "landing page",
-    "Next.js",
-    "Figma",
-  ],
+    "Projektuję i koduję strony internetowe, identyfikacje wizualne i grafikę. Strony, których nie da się przewinąć obojętnie — projekt w Figmie, kod w Next.js.",
+  keywords: ["web design", "projektowanie stron", "strona internetowa", "grafik komputerowy", "identyfikacja wizualna", "projekt UI/UX", "Figma", "Next.js"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: `${site.domain} — ${site.tagline}`,
-    description: "Premium strony internetowe, które sprzedają. Od 200 zł.",
+    title: `${site.domain} — strony, których nie da się przewinąć obojętnie`,
+    description: "Grafika komputerowa & web design. Projekt w Figmie, kod w Next.js.",
     url: site.url,
     siteName: site.domain,
     locale: "pl_PL",
@@ -43,15 +35,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060607",
+  themeColor: "#e6e6e3",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pl" className={`${geist.variable} ${geistMono.variable} ${instrument.variable} antialiased`}>
+    <html lang="pl" className={`${archivo.variable} ${inter.variable} ${jetbrains.variable} ${instrument.variable}`}>
       <body>
         <Providers>{children}</Providers>
-        <div className="grain" aria-hidden />
       </body>
     </html>
   );

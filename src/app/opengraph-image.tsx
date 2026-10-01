@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { site } from "@/lib/site";
 
-export const alt = `${site.domain} — Strony internetowe, które sprzedają. Od 200 zł.`;
+export const alt = `${site.domain} — strony, których nie da się przewinąć obojętnie`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -13,42 +13,38 @@ export default function Image() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: 72,
-          background: "radial-gradient(circle at 50% 0%, #10233a 0%, #060607 60%)",
-          color: "#ededef",
+          padding: 48,
+          background: "#E6E6E3",
+          backgroundImage: "radial-gradient(rgba(0,0,0,0.14) 1.5px, transparent 1.5px)",
+          backgroundSize: "28px 28px",
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30 }}>
-          <div style={{ display: "flex", width: 48, height: 48, borderRadius: 12, background: "#16161a", alignItems: "center", justifyContent: "center", gap: 4 }}>
-            <div style={{ width: 14, height: 14, borderRadius: 7, background: "#ff7262" }} />
-            <div style={{ width: 14, height: 14, borderRadius: 4, background: "#a259ff" }} />
+        <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, color: "#77777C", marginBottom: 10 }}>
+            <span>Start</span>
+            <span>1440 × 840</span>
           </div>
-          {site.domain}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 92, letterSpacing: -4, lineHeight: 1 }}>Strony, które</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 28, marginTop: 12 }}>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 92,
-                letterSpacing: -4,
-                lineHeight: 1,
-                padding: "4px 18px",
-                border: "2px solid #0d99ff",
-                color: "#7cc8ff",
-              }}
-            >
-              sprzedają.
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              background: "#0B0B0C",
+              color: "#F4F4F2",
+              padding: 56,
+            }}
+          >
+            <div style={{ display: "flex", fontSize: 26 }}>{site.domain}</div>
+            <div style={{ display: "flex", flexDirection: "column", fontSize: 76, letterSpacing: -3, lineHeight: 1 }}>
+              <span>Strony, których nie da się</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 8 }}>
+                <span>przewinąć</span>
+                <span style={{ display: "flex", border: "3px solid #0D99FF", padding: "0 14px" }}>obojętnie.</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 28, color: "#8b8b94" }}>
-          <div style={{ display: "flex" }}>Figma · Next.js · Animacje 3D</div>
-          <div style={{ display: "flex", color: "#ededef" }}>od 200 zł</div>
         </div>
       </div>
     ),

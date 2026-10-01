@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useMotionTemplate, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
+import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
 import { steps } from "@/lib/site";
 import { DesignArt, DirectionArt, LaunchArt, TalkArt } from "./process/Illustrations";
 import Button, { Magnetic } from "./ui/Button";
@@ -82,7 +82,7 @@ function Copy({ i, align = "left" }: { i: number; align?: "left" | "right" }) {
         {s.points.map((pt, k) => (
           <motion.li
             key={pt}
-            className="flex items-center gap-2 rounded-full border border-line-2 bg-bg/40 py-1.5 pr-3.5 pl-2 text-[13px] text-muted backdrop-blur"
+            className="flex items-center gap-2 rounded-full border border-line-2 bg-bg/60 py-1.5 pr-3.5 pl-2 text-[13px] text-muted"
             initial={{ opacity: 0, y: 10, scale: 0.85 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: "-10%" }}
@@ -174,66 +174,72 @@ function useEnter() {
   };
 }
 
-/* ---------- 1. Kapsuła: rozsuwa się od środka ---------- */
-function Capsule({ children }: { children: React.ReactNode }) {
+/* ---------- 1. Dymek: wyskakuje z „ogonka” ---------- */
+function Bubble({ children }: { children: React.ReactNode }) {
   const { ref, p } = useEnter();
-  const clip = useTransform(p, (v) => `inset(0% ${48 - v * 48}% 0% ${48 - v * 48}% round 999px)`);
+  const scale = useTransform(p, [0, 1], [0.55, 1]);
+  const rotate = useTransform(p, [0, 1], [-8, 0]);
+  const opacity = useTransform(p, [0, 0.4], [0, 1]);
   const { rx, ry, bind } = useTilt();
   return (
     <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative">
-      <motion.div style={{ clipPath: clip }} className="relative aspect-[2.1/1] w-full overflow-hidden rounded-full bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_50%,rgb(139_108_255/0.12),transparent)]" />
-        {children}
+      <motion.div style={{ scale, rotate, opacity, originX: 0.08, originY: 1 }} className="relative will-change-transform">
+        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-[36px] rounded-bl-[10px] bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08),0_40px_100px_-40px_rgb(139_108_255/0.4)] sm:aspect-[4/3]">
+          <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_10%,rgb(139_108_255/0.12),transparent)]" />
+          {children}
+        </div>
+        {/* ogonek dymka */}
+        <svg viewBox="0 0 40 30" className="absolute -bottom-[22px] left-0 h-[30px] w-[40px]" aria-hidden>
+          <path d="M0 0h28C22 10 12 22 0 28z" fill="var(--color-surface)" />
+          <path d="M28 0C22 10 12 22 0 28" stroke="rgba(255,255,255,0.08)" fill="none" />
+        </svg>
       </motion.div>
     </motion.div>
   );
 }
 
-/* ---------- 2. Koło: rośnie jak soczewka, wokół krążą pierścienie ---------- */
+/* ---------- 2. Koło: wjeżdża z obrotem, wokół krążą pierścienie ---------- */
 function Circle({ children }: { children: React.ReactNode }) {
   const { ref, p } = useEnter();
-  const clip = useTransform(p, (v) => `circle(${v * 50}% at 50% 50%)`);
-  const rotate = useTransform(p, [0, 1], [-60, 0]);
-  const counter = useTransform(rotate, (r) => -r * 2);
+  const scale = useTransform(p, [0, 1], [0.4, 1]);
+  const opacity = useTransform(p, [0, 0.35], [0, 1]);
+  const rotate = useTransform(p, [0, 1], [-90, 0]);
+  const counter = useTransform(rotate, (r) => -r * 1.5);
   const { rx, ry, bind } = useTilt();
   return (
-    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative mx-auto aspect-square w-full max-w-[520px]">
-      <motion.span style={{ rotate }} className="absolute -inset-4 rounded-full border border-dashed border-white/10" aria-hidden />
-      <motion.span style={{ rotate: counter }} className="absolute -inset-9 rounded-full border border-accent/15" aria-hidden>
+    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative mx-auto aspect-square w-full max-w-[500px]">
+      <motion.span style={{ rotate, opacity }} className="absolute -inset-4 rounded-full border border-dashed border-white/10" aria-hidden />
+      <motion.span style={{ rotate: counter, opacity }} className="absolute -inset-9 rounded-full border border-accent/15" aria-hidden>
         <span className="absolute top-1/2 -left-1 size-2 rounded-full bg-accent-2 shadow-[0_0_12px_#b4a2ff]" />
       </motion.span>
-      <motion.div style={{ clipPath: clip }} className="absolute inset-0 overflow-hidden rounded-full bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
+      <motion.div style={{ scale, opacity }} className="absolute inset-0 overflow-hidden rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)] will-change-transform">
         {children}
       </motion.div>
     </motion.div>
   );
 }
 
-/* ---------- 3. Łuk: wyrasta od dołu ---------- */
-function Arch({ children }: { children: React.ReactNode }) {
+/* ---------- 3. Bez ramki: znak rysuje się prosto na stronie ---------- */
+function Open({ children }: { children: React.ReactNode }) {
   const { ref, p } = useEnter();
-  const clip = useTransform(p, (v) => `inset(${(1 - v) * 100}% 0% 0% 0% round 999px 999px 32px 32px)`);
+  const y = useTransform(p, [0, 1], [60, 0]);
   const { rx, ry, bind } = useTilt();
   return (
-    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative mx-auto w-full max-w-[440px]">
-      <motion.div style={{ clipPath: clip }} className="relative aspect-[3/4] overflow-hidden rounded-t-full rounded-b-[32px] bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
-        <div className="absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_30%,rgb(139_108_255/0.14),transparent)]" />
-        {children}
-      </motion.div>
+    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, y, transformPerspective: 1100 }} {...bind} className="relative mx-auto aspect-square w-full max-w-[520px]">
+      {children}
     </motion.div>
   );
 }
 
-/* ---------- 4. Kadr kinowy: otwiera się jak przesłona ---------- */
+/* ---------- 4. Kadr kinowy: rozciąga się na szerokość ---------- */
 function Cinema({ children }: { children: React.ReactNode }) {
   const { ref, p } = useEnter();
-  const clip = useTransform(p, (v) => `inset(${(1 - v) * 40}% ${(1 - v) * 10}% ${(1 - v) * 40}% ${(1 - v) * 10}% round ${40 - v * 8}px)`);
-  const scale = useTransform(p, [0, 1], [1.25, 1]);
+  const scaleX = useTransform(p, [0, 1], [0.78, 1]);
+  const scaleY = useTransform(p, [0, 1], [0.6, 1]);
+  const opacity = useTransform(p, [0, 0.4], [0, 1]);
   return (
-    <motion.div ref={ref} style={{ clipPath: clip }} className="relative aspect-[4/5] w-full overflow-hidden rounded-[32px] bg-surface sm:aspect-[16/9] lg:aspect-[21/9]">
-      <motion.div style={{ scale }} className="absolute inset-0">
-        {children}
-      </motion.div>
+    <motion.div ref={ref} style={{ scaleX, scaleY, opacity }} className="relative aspect-square w-full overflow-hidden rounded-[32px] bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] will-change-transform sm:aspect-[16/9] lg:aspect-[21/9]">
+      {children}
     </motion.div>
   );
 }
@@ -323,16 +329,13 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
           <stop offset="0.6" stopColor="#b4a2ff" />
           <stop offset="1" stopColor="#efe9ff" />
         </linearGradient>
-        <filter id="beam-blur" x="-50%" y="-5%" width="200%" height="110%">
-          <feGaussianBlur stdDeviation="5" />
-        </filter>
         <radialGradient id="head-g">
           <stop offset="0" stopColor="#c9b8ff" stopOpacity="0.9" />
           <stop offset="1" stopColor="#8b6cff" stopOpacity="0" />
         </radialGradient>
       </defs>
       <path ref={base} d={geo.d} stroke="rgba(255,255,255,0.1)" strokeWidth="1.2" strokeDasharray="2 7" strokeLinecap="round" />
-      <path ref={glow} d={geo.d} stroke="url(#beam-g)" strokeWidth="8" strokeOpacity="0.5" filter="url(#beam-blur)" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
+      <path ref={glow} d={geo.d} stroke="url(#beam-g)" strokeWidth="9" strokeOpacity="0.14" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
       <path ref={lit} d={geo.d} stroke="url(#beam-g)" strokeWidth="2" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
       <g ref={head} opacity="0">
         <circle r="26" fill="url(#head-g)" />
@@ -353,21 +356,13 @@ export default function Process() {
     target: head,
     offset: ["start 85%", "end 45%"],
   });
-  // światło w tle wędruje razem z czytaniem
-  const { scrollYProgress: sp } = useScroll({
-    target: track,
-    offset: ["start end", "end start"],
-  });
-  const spot = useTransform(sp, (v) => `${v * 100}%`);
-  const bg = useMotionTemplate`radial-gradient(45% 22% at 50% ${spot}, rgb(139 108 255 / 0.08), transparent)`;
-
   return (
     <section id="proces" aria-labelledby="proces-title" className="relative overflow-x-clip pt-32 pb-16 lg:pt-44 lg:pb-24">
       <div ref={head} className="relative mx-auto max-w-[1400px] px-5 text-center sm:px-10">
         <motion.p className="kicker justify-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
           Proces
         </motion.p>
-        <h2 id="proces-title" className="h-display mx-auto mt-7 max-w-[1100px] text-[clamp(3rem,8vw,7.6rem)]">
+        <h2 id="proces-title" className="h-display mx-auto mt-7 max-w-[1100px] text-[clamp(2.6rem,6.2vw,5.8rem)]">
           <FillText text="Od pierwszej rozmowy" progress={hp} className="block" />
           <FillText text="do premiery." progress={hp} className="block text-accent-2" />
         </h2>
@@ -383,7 +378,6 @@ export default function Process() {
       </div>
 
       <div ref={track} className="relative mx-auto mt-24 max-w-[1280px] px-5 sm:px-10 lg:mt-32">
-        <motion.div className="pointer-events-none absolute -inset-x-[20vw] inset-y-0" style={{ background: bg }} aria-hidden />
         <Beam track={track} nodes={nodes} />
 
         {/* 01 — kapsuła z falami rozmowy */}
@@ -392,9 +386,9 @@ export default function Process() {
           <div className="relative z-20 md:pr-20">
             <Copy i={0} />
           </div>
-          <Capsule>
+          <Bubble>
             <TalkArt />
-          </Capsule>
+          </Bubble>
         </div>
 
         {/* 02 — koło z polem kierunków */}
@@ -416,9 +410,9 @@ export default function Process() {
           <div className="relative z-20 md:pr-28">
             <Copy i={2} align="right" />
           </div>
-          <Arch>
+          <Open>
             <DesignArt />
-          </Arch>
+          </Open>
         </div>
 
         {/* 04 — kadr kinowy ze startem strony */}
@@ -426,11 +420,15 @@ export default function Process() {
           <Node i={3} register={register} className="top-6 left-[22px] md:-top-12 md:left-1/2" />
           <Cinema>
             <LaunchArt />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-bg/95 via-bg/55 to-transparent" />
-            <div className="absolute inset-x-6 bottom-6 sm:inset-x-10 sm:bottom-10 lg:max-w-[560px]">
+            <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[linear-gradient(to_right,rgb(7_7_10/0.85),transparent_55%)]" />
+
+            <div className="absolute inset-x-10 bottom-10 hidden sm:block lg:max-w-[560px]">
               <Copy i={3} />
             </div>
           </Cinema>
+          <div className="mt-10 sm:hidden">
+            <Copy i={3} />
+          </div>
         </div>
       </div>
 

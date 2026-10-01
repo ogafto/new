@@ -212,6 +212,18 @@ body {
   animation: beam 7s linear infinite;
   pointer-events: none;
 }
+@keyframes ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-14deg); }
+  40% { transform: rotate(12deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(5deg); }
+}
+@keyframes globe {
+  to {
+    transform: translateX(-50%);
+  }
+}
 @keyframes beam {
   to {
     --beam: 360deg;

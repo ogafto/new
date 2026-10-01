@@ -4,6 +4,7 @@ import { useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useLoaded } from "../Providers";
+import { projects } from "@/lib/site";
 import Button, { Magnetic } from "../ui/Button";
 
 const LogoScene = dynamic(() => import("./LogoScene"), { ssr: false });
@@ -48,25 +49,49 @@ export default function Hero() {
           </Line>
         </h1>
 
-        <div className="mt-10 flex flex-col justify-between gap-8 border-t border-line pt-8 lg:flex-row lg:items-end">
-          <motion.p
-            className="max-w-[460px] text-[17px] leading-relaxed text-muted"
+        <div className="mt-10 flex flex-col justify-between gap-10 border-t border-line pt-8 lg:flex-row lg:items-end">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8, duration: 1, ease }}>
+            <p className="max-w-[440px] text-[17px] leading-relaxed text-muted">
+              Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla marek, które chcą być zapamiętane.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Magnetic>
+                <Button href="#kontakt">Wyceń projekt</Button>
+              </Magnetic>
+              <Magnetic>
+                <Button href="#realizacje" variant="outline">
+                  Realizacje
+                </Button>
+              </Magnetic>
+            </div>
+          </motion.div>
+
+          {/* ostatnie realizacje — miniatury rozsuwają się po najechaniu */}
+          <motion.a
+            href="#realizacje"
+            className="group hidden items-center gap-5 md:flex"
             initial={{ opacity: 0, y: 16 }}
             animate={show ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8, duration: 1, ease }}
+            transition={{ delay: 1, duration: 1, ease }}
           >
-            Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla marek, które chcą być zapamiętane.
-          </motion.p>
-          <motion.div className="flex flex-wrap gap-3" initial={{ opacity: 0, y: 16 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.9, duration: 1, ease }}>
-            <Magnetic>
-              <Button href="#kontakt">Wyceń projekt</Button>
-            </Magnetic>
-            <Magnetic>
-              <Button href="#realizacje" variant="outline">
-                Realizacje
-              </Button>
-            </Magnetic>
-          </motion.div>
+            <span className="text-right text-[14px] leading-snug text-muted transition-colors group-hover:text-ink">
+              Ostatnie
+              <br />
+              realizacje
+            </span>
+            <span className="flex">
+              {projects.slice(0, 4).map((p, i) => (
+                <span
+                  key={p.slug}
+                  className="relative -ml-8 block h-[78px] w-[104px] overflow-hidden rounded-[12px] ring-1 ring-white/15 transition-all duration-700 ease-out-expo first:ml-0 group-hover:-ml-1"
+                  style={{ zIndex: 4 - i, transform: `rotate(${(i - 1.5) * 3}deg)` }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.image} alt="" className="size-full object-cover object-top" />
+                </span>
+              ))}
+            </span>
+          </motion.a>
         </div>
       </motion.div>
     </section>

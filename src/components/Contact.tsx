@@ -209,10 +209,10 @@ export default function Contact() {
                   disabled={status.state === "sending"}
                   className="group relative mt-8 flex h-[68px] w-full items-center justify-between overflow-hidden rounded-full bg-ink pr-2 pl-8 text-[17px] font-medium text-bg disabled:opacity-60"
                 >
-                  <span className="absolute inset-0 origin-left scale-x-0 rounded-full bg-accent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
+                  <span className="absolute inset-0 bg-accent [clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:inset(0_0_0_0)]" />
                   <span className="relative transition-colors duration-500 group-hover:text-white">{status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
-                  <span className="relative grid size-[52px] place-items-center overflow-hidden rounded-full bg-bg text-ink transition-transform duration-700 ease-out-expo group-hover:rotate-45">
-                    <Arrow className="size-4" />
+                  <span className="relative grid size-[52px] place-items-center rounded-full bg-bg text-ink">
+                    <Arrow className="size-4 transition-transform duration-500 ease-out-expo group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </span>
                 </button>
               </motion.form>

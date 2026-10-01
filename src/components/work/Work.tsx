@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { projects, serviceName, services, type Project, type ServiceId } from "@/lib/site";
 import { FadeUp, Heading } from "../ui/Reveal";
 import { Arrow } from "../ui/Button";
@@ -11,37 +11,32 @@ type Filter = "all" | ServiceId;
 const ease = [0.16, 1, 0.3, 1] as const;
 const PAGE = 7;
 
-// Karta = zdjęcie. Podpis leży na zdjęciu, obraz lekko "płynie" przy przewijaniu.
-export function ProjectCard({ p, wide = false, priority = false }: { p: Project; wide?: boolean; priority?: boolean }) {
-  const ref = useRef<HTMLAnchorElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["-6%", "6%"]);
-
+// Karta realizacji: duże zdjęcie + podpis pod spodem
+export function ProjectCard({ p, wide = false }: { p: Project; wide?: boolean }) {
   return (
-    <Link ref={ref} href={`/realizacje/${p.slug}`} className="group relative block overflow-hidden rounded-[24px] bg-surface" aria-label={`${p.name} — ${serviceName(p.category)}`}>
-      <div className={`relative ${wide ? "aspect-[4/3] md:aspect-[21/9]" : "aspect-[4/3]"}`}>
-        <motion.img
+    <Link href={`/realizacje/${p.slug}`} className="group block" aria-label={`${p.name} — ${serviceName(p.category)}`}>
+      <div className={`relative overflow-hidden rounded-[20px] bg-surface ${wide ? "aspect-[4/3] md:aspect-[2/1]" : "aspect-[4/3]"}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={p.image}
           alt=""
-          loading={priority ? "eager" : "lazy"}
-          className="absolute inset-x-0 -top-[7%] h-[114%] w-full object-cover transition-transform duration-[1.4s] ease-out-expo group-hover:scale-[1.04]"
-          style={{ y }}
+          loading="lazy"
+          className="absolute inset-0 size-full object-cover object-top transition-transform duration-[1.2s] ease-out-expo group-hover:scale-[1.035]"
         />
-        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgb(7_7_10/0.85),rgb(7_7_10/0.15)_45%,transparent_70%)]" />
-        <span className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/10 ring-inset" />
-
-        <span className="absolute top-5 left-5 rounded-full bg-black/35 px-3 py-1.5 text-[13px] text-white/85 backdrop-blur-md">{serviceName(p.category)}</span>
-        <span className="absolute top-5 right-5 grid size-11 scale-75 place-items-center rounded-full bg-white text-bg opacity-0 transition-all duration-500 ease-out-expo group-hover:scale-100 group-hover:opacity-100">
-          <Arrow />
-        </span>
-
-        <span className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-6 sm:inset-x-8 sm:bottom-7">
-          <span>
-            <span className="h-display block text-[30px] text-white transition-transform duration-700 ease-out-expo group-hover:-translate-y-1 sm:text-[40px]">{p.name}</span>
-            <span className="mt-1.5 block text-[14px] text-white/65">{p.client}</span>
-          </span>
-          <span className="text-[14px] text-white/55 tabular-nums">{p.year}</span>
-        </span>
+        <span className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-white/[0.08] ring-inset" />
+      </div>
+      <div className="mt-5 flex items-start justify-between gap-6">
+        <div>
+          <h3 className="flex items-center gap-2 text-[22px] font-medium tracking-[-0.02em] sm:text-[26px]">
+            {p.name}
+            <Arrow className="size-4 -translate-x-2 opacity-0 transition-all duration-500 ease-out-expo group-hover:translate-x-0 group-hover:opacity-100" />
+          </h3>
+          <p className="mt-1 text-[15px] text-muted">{p.client}</p>
+        </div>
+        <p className="pt-1.5 text-right text-[14px] text-muted">
+          {serviceName(p.category)}
+          <span className="block text-dim">{p.year}</span>
+        </p>
       </div>
     </Link>
   );
@@ -94,7 +89,7 @@ export default function Work() {
         </FadeUp>
       </div>
 
-      <ul className="grid gap-5 md:grid-cols-2 lg:gap-6">
+      <ul className="grid gap-x-6 gap-y-14 md:grid-cols-2 lg:gap-x-8 lg:gap-y-20">
         <AnimatePresence mode="popLayout">
           {visible.map((p, i) => {
             const wide = i === 0 && filter === "all";

@@ -83,7 +83,7 @@ function Backdrop() {
     c.width = c.height = 256;
     const ctx = c.getContext("2d")!;
     const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    g.addColorStop(0, "rgba(139,108,255,0.14)");
+    g.addColorStop(0, "rgba(139,108,255,0.1)");
     g.addColorStop(0.5, "rgba(90,60,200,0.06)");
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
@@ -190,7 +190,7 @@ function Monogram({ ready, mobile }: { ready: boolean; mobile: boolean }) {
           temporalDistortion={0.05}
           backside
           backsideThickness={2}
-          color="#ece8ff"
+          color="#ffffff"
           background={new THREE.Color("#07070a")}
         />
       </mesh>
@@ -210,7 +210,7 @@ export default function LogoScene({ ready, active }: { ready: boolean; active: b
       <Monogram ready={ready} mobile={mobile} />
       <Environment resolution={256}>
         <Lightformer form="rect" intensity={4} color="#ffffff" position={[25, 30, 30]} scale={[30, 4, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
-        <Lightformer form="rect" intensity={2.5} color="#8b6cff" position={[-35, 0, 20]} scale={[6, 60, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
+        <Lightformer form="rect" intensity={3} color="#ffffff" position={[-35, 0, 20]} scale={[6, 60, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
         <Lightformer form="rect" intensity={2} color="#ffffff" position={[0, -30, 25]} scale={[50, 3, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
       </Environment>
       <EffectComposer multisampling={0}>

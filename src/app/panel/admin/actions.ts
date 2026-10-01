@@ -6,6 +6,8 @@ import InviteEmail from "@/emails/InviteEmail";
 import { one, run, type Invite } from "@/lib/db";
 import { id, inviteCode, normalizeCode, sha256 } from "@/lib/auth/crypto";
 import { requireAdmin } from "@/lib/auth/session";
+import { isAdminEmail } from "@/lib/auth/admin";
+import { live } from "@/lib/analytics";
 import { baseUrl, sendMail } from "@/lib/mail";
 
 const INVITE_DAYS = 7;
@@ -26,6 +28,7 @@ export async function createInvite(_: InviteState, form: FormData): Promise<Invi
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const name = String(form.get("name") ?? "").trim().slice(0, 80) || null;
   if (!EMAIL.test(email)) return { error: "Podaj poprawny adres e-mail." };
+  if (isAdminEmail(email)) return { error: "To adres administratora." };
   if (await one("SELECT 1 FROM users WHERE email = ? AND verified_at IS NOT NULL", [email])) return { error: "Ten adres ma już konto." };
 
   const now = Date.now();
@@ -41,7 +44,7 @@ export async function createInvite(_: InviteState, form: FormData): Promise<Invi
     now + INVITE_DAYS * 86_400_000,
   ]);
   const sent = await mailInvite(email, name, code);
-  revalidatePath("/panel/admin");
+  revalidatePath("/panel/admin/klienci");
   return { ok: true, code, email, mailed: sent.ok, dev: sent.dev };
 }
 
@@ -57,14 +60,14 @@ export async function resendInvite(inviteId: string): Promise<InviteState> {
     inviteId,
   ]);
   const sent = await mailInvite(inv.email, inv.name, code);
-  revalidatePath("/panel/admin");
+  revalidatePath("/panel/admin/klienci");
   return { ok: true, code, email: inv.email, mailed: sent.ok, dev: sent.dev };
 }
 
 export async function revokeInvite(inviteId: string) {
   await requireAdmin();
   await run("UPDATE invites SET revoked_at = ? WHERE id = ? AND used_at IS NULL", [Date.now(), inviteId]);
-  revalidatePath("/panel/admin");
+  revalidatePath("/panel/admin/klienci");
 }
 
 export async function updateClient(userId: string, form: FormData) {
@@ -72,6 +75,19 @@ export async function updateClient(userId: string, form: FormData) {
   const stage = Math.max(0, Math.min(4, Number(form.get("stage")) || 0));
   const project = String(form.get("project") ?? "").trim().slice(0, 80) || null;
   await run("UPDATE users SET stage = ?, project = ? WHERE id = ? AND role = 'client'", [stage, project, userId]);
-  revalidatePath("/panel/admin");
+  revalidatePath("/panel/admin", "layout");
   revalidatePath("/panel");
+}
+
+export async function deleteClient(userId: string) {
+  await requireAdmin();
+  await run("DELETE FROM users WHERE id = ? AND role = 'client'", [userId]);
+  await run("UPDATE cms_sites SET owner_id = NULL WHERE owner_id = ?", [userId]);
+  revalidatePath("/panel/admin", "layout");
+}
+
+// licznik „teraz na stronie” w górnym pasku
+export async function liveCount() {
+  await requireAdmin();
+  return live();
 }

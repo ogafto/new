@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useLoaded } from "../Providers";
 import { useCovering } from "../Transition";
-import { projects } from "@/lib/site";
+import type { Project } from "@/lib/site";
 import Button, { Magnetic } from "../ui/Button";
 
 const LogoScene = dynamic(() => import("./LogoScene"), { ssr: false });
@@ -21,7 +21,7 @@ function Line({ children, i, show }: { children: React.ReactNode; i: number; sho
   );
 }
 
-export default function Hero() {
+export default function Hero({ recent }: { recent: Project[] }) {
   const show = useLoaded();
   // po przejściu z podstrony scena 3D startuje dopiero, gdy kurtyna zjedzie (bez szarpania animacji)
   const covering = useCovering();
@@ -89,7 +89,7 @@ export default function Hero() {
               projekty
             </span>
             <span className="flex">
-              {projects.slice(0, 4).map((p, i) => (
+              {recent.map((p, i) => (
                 <span
                   key={p.slug}
                   className="relative -ml-8 block h-[78px] w-[104px] overflow-hidden rounded-[12px] ring-1 ring-white/15 transition-all duration-700 ease-out-expo first:ml-0 group-hover:-ml-1"

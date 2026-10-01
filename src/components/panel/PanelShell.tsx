@@ -1,93 +1,232 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { logout } from "@/app/konto/actions";
+import { liveCount } from "@/app/panel/admin/actions";
 import { Mark, Wordmark } from "../brand/Logo";
+import { ease, Icon, ICONS } from "./kit";
 
-type U = { name: string; email: string; role: "client" | "admin" };
+export type Note = { id: string; kind: "deadline" | "inquiry"; title: string; text: string; href: string; urgent: boolean };
+type Props = { user: { name: string; email: string }; admin: boolean; notes: Note[]; counts: { inquiries: number }; sites: { id: string; name: string }[]; children: React.ReactNode };
 
-const icons = {
-  home: "M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z",
-  users: "M16 19v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M9.5 10a3 3 0 100-6 3 3 0 000 6zM21 19v-1a4 4 0 00-3-3.87M15.5 4.13a3 3 0 010 5.74",
-  mail: "M3 6.5A1.5 1.5 0 014.5 5h15A1.5 1.5 0 0121 6.5v11a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5zM3.5 6l8.5 7 8.5-7",
-  site: "M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5",
-};
+function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) {
+  if (admin)
+    return [
+      {
+        group: "Przegląd",
+        links: [
+          { href: "/panel/admin", label: "Kokpit", icon: ICONS.home },
+          { href: "/panel/admin/analityka", label: "Analityka", icon: ICONS.chart },
+          { href: "/panel/admin/kalendarz", label: "Kalendarz", icon: ICONS.calendar },
+        ],
+      },
+      {
+        group: "Klienci",
+        links: [
+          { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
+          { href: "/panel/admin/klienci", label: "Klienci i zaproszenia", icon: ICONS.users },
+          { href: "/panel/admin/strony", label: "Strony klientów", icon: ICONS.layers },
+        ],
+      },
+      {
+        group: "Treści",
+        links: [
+          { href: "/panel/admin/portfolio", label: "Portfolio", icon: ICONS.grid },
+          { href: "/panel/admin/marka", label: "Marka i logo", icon: ICONS.brand },
+        ],
+      },
+    ];
+  return [
+    {
+      group: "Twój panel",
+      links: [
+        { href: "/panel", label: "Przegląd", icon: ICONS.home },
+        ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers })),
+      ],
+    },
+  ];
+}
 
-function Icon({ d }: { d: string }) {
+function Live() {
+  const [n, setN] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const tick = () =>
+      liveCount()
+        .then((v) => alive && setN(v))
+        .catch(() => {});
+    tick();
+    const t = setInterval(tick, 20000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
   return (
-    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
+    <Link href="/panel/admin/analityka" className="flex items-center gap-2 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] text-muted transition-colors hover:text-ink" title="Osoby na stronie w ostatnich 5 minutach">
+      <span className="relative flex size-2">
+        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
+        <span className="relative size-2 rounded-full bg-emerald-400" />
+      </span>
+      <span className="tabular-nums">{n ?? "–"}</span>
+      <span className="hidden sm:inline">na stronie</span>
+    </Link>
   );
 }
 
-export default function PanelShell({ user, children }: { user: U; children: React.ReactNode }) {
+function Bell({ notes }: { notes: Note[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    addEventListener("mousedown", close);
+    return () => removeEventListener("mousedown", close);
+  }, [open]);
+  const urgent = notes.some((n) => n.urgent);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="relative grid size-10 place-items-center rounded-full border border-line-2 text-muted transition-colors hover:text-ink" aria-label={`Powiadomienia (${notes.length})`}>
+        <motion.span animate={notes.length ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.8 }}>
+          <Icon d={ICONS.bell} className="size-[18px]" />
+        </motion.span>
+        {notes.length > 0 && <span className={`absolute -top-0.5 -right-0.5 grid min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-medium text-white ${urgent ? "bg-red-500" : "bg-accent"}`}>{notes.length}</span>}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="edge absolute top-12 right-0 z-50 w-[min(360px,calc(100vw-40px))] overflow-hidden rounded-2xl bg-surface shadow-[0_30px_60px_-20px_rgb(0_0_0/0.8)]"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.25 }}
+          >
+            <p className="border-b border-line px-4 py-3 text-[13px] text-dim">Powiadomienia</p>
+            {notes.length === 0 ? (
+              <p className="px-4 py-8 text-center text-[13.5px] text-dim">Wszystko pod kontrolą ✓</p>
+            ) : (
+              <ul className="max-h-[360px] overflow-y-auto" data-lenis-prevent>
+                {notes.map((n) => (
+                  <li key={n.id}>
+                    <Link href={n.href} onClick={() => setOpen(false)} className="flex gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]">
+                      <span className={`mt-1.5 size-2 shrink-0 rounded-full ${n.kind === "inquiry" ? "bg-accent" : n.urgent ? "bg-red-400" : "bg-amber-300"}`} />
+                      <span className="min-w-0">
+                        <span className="block truncate text-[14px]">{n.title}</span>
+                        <span className="block truncate text-[12.5px] text-dim">{n.text}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function PanelShell({ user, admin, notes, counts, sites, children }: Props) {
   const path = usePathname();
-  const links =
-    user.role === "admin"
-      ? [
-          { href: "/panel/admin", label: "Klienci i zaproszenia", icon: icons.users },
-          { href: "/panel/admin/maile", label: "Szablony maili", icon: icons.mail },
-        ]
-      : [{ href: "/panel", label: "Przegląd", icon: icons.home }];
+  const [menu, setMenu] = useState(false);
+  const nav = navFor(admin, counts, sites);
+  const active = (href: string) => (href === "/panel/admin" || href === "/panel" ? path === href : path.startsWith(href));
+
+  useEffect(() => {
+    const t = setTimeout(() => setMenu(false), 0);
+    return () => clearTimeout(t);
+  }, [path]);
+
+  const side = (
+    <div className="flex h-full flex-col">
+      <Link href="/" className="flex items-center gap-3 px-2" aria-label="afto.works — strona główna">
+        <Mark className="size-8" />
+        <Wordmark className="h-[19px] w-auto" />
+      </Link>
+      <nav className="mt-10 flex-1 space-y-7 overflow-y-auto" aria-label="Panel" data-lenis-prevent>
+        {nav.map((g) => (
+          <div key={g.group}>
+            <p className="mb-2 px-3 text-[12px] text-dim">{g.group}</p>
+            <ul className="space-y-0.5">
+              {g.links.map((l) => {
+                const on = active(l.href);
+                const badge = "badge" in l ? (l.badge as number) : 0;
+                return (
+                  <li key={l.href}>
+                    <Link href={l.href} className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] transition-colors ${on ? "text-ink" : "text-muted hover:text-ink"}`}>
+                      {on && (
+                        <motion.span layoutId="panel-nav" className="absolute inset-0 rounded-xl border border-line-2 bg-white/[0.045]" transition={{ type: "spring", stiffness: 420, damping: 36 }}>
+                          <span className="absolute top-1/2 -left-[13px] h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent shadow-[0_0_12px_#8b6cff]" />
+                        </motion.span>
+                      )}
+                      <span className={`relative transition-colors ${on ? "text-accent-2" : ""}`}>
+                        <Icon d={l.icon} />
+                      </span>
+                      <span className="relative flex-1 truncate">{l.label}</span>
+                      {badge > 0 && <span className="relative grid min-w-[20px] place-items-center rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">{badge}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div className="mt-6 space-y-2">
+        <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:text-ink">
+          <Icon d={ICONS.site} className="size-4" />
+          Zobacz stronę
+        </Link>
+        <div className="edge flex items-center gap-3 rounded-2xl bg-white/[0.02] p-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13.5px]">{user.name}</span>
+            <span className="block truncate text-[11.5px] text-dim">{admin ? "Administrator" : user.email}</span>
+          </span>
+          <form action={logout}>
+            <button type="submit" className="grid size-8 place-items-center rounded-full text-dim transition-colors hover:bg-white/5 hover:text-ink" aria-label="Wyloguj" title="Wyloguj">
+              <Icon d={ICONS.logout} className="size-4" />
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-[100svh] lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-line bg-bg/80 px-5 py-4 backdrop-blur-xl lg:h-[100svh] lg:flex-col lg:items-stretch lg:justify-start lg:border-r lg:border-b-0 lg:p-6">
-        <Link href="/" className="flex items-center gap-3" aria-label="afto.works — strona główna">
-          <Mark className="size-8" />
-          <Wordmark className="hidden h-[19px] w-auto sm:block" />
-        </Link>
+    <div className="min-h-[100svh] lg:grid lg:grid-cols-[264px_1fr]">
+      <aside className="sticky top-0 hidden h-[100svh] border-r border-line bg-bg/60 px-4 py-6 backdrop-blur-xl lg:block">{side}</aside>
 
-        <nav className="flex gap-1 lg:mt-12 lg:flex-col" aria-label="Panel">
-          <p className="mb-3 hidden px-3 text-[12px] text-dim lg:block">{user.role === "admin" ? "Administrator" : "Panel klienta"}</p>
-          {links.map((l) => {
-            const on = path === l.href;
-            return (
-              <Link key={l.href} href={l.href} className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] transition-colors ${on ? "text-ink" : "text-muted hover:text-ink"}`}>
-                {on && <motion.span layoutId="panel-nav" className="absolute inset-0 rounded-xl border border-line-2 bg-white/[0.04]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-                <span className="relative">
-                  <Icon d={l.icon} />
-                </span>
-                <span className="relative hidden sm:inline">{l.label}</span>
-              </Link>
-            );
-          })}
-          <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-muted transition-colors hover:text-ink">
-            <Icon d={icons.site} />
-            <span className="hidden sm:inline">Strona</span>
-          </Link>
-        </nav>
+      <AnimatePresence>
+        {menu && (
+          <motion.div className="fixed inset-0 z-[70] lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenu(false)} />
+            <motion.aside className="absolute inset-y-0 left-0 w-[280px] border-r border-line bg-bg px-4 py-6" initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }} transition={{ duration: 0.45, ease }}>
+              {side}
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="hidden lg:mt-auto lg:block">
-          <div className="edge rounded-2xl bg-surface p-4">
-            <div className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/20 text-[14px] font-medium text-accent-2">{user.name.charAt(0).toUpperCase()}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-[14px]">{user.name}</span>
-                <span className="block truncate text-[12px] text-dim">{user.email}</span>
-              </span>
-            </div>
-            <form action={logout} className="mt-4">
-              <button type="submit" className="w-full rounded-xl border border-line-2 py-2 text-[13px] text-muted transition-colors hover:border-white/30 hover:text-ink">
-                Wyloguj
-              </button>
-            </form>
+      <div className="relative min-w-0">
+        <div className="pointer-events-none fixed top-0 right-0 size-[700px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.08),transparent)]" aria-hidden />
+        <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg/70 px-5 py-3 backdrop-blur-xl sm:px-8">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setMenu(true)} className="grid size-10 place-items-center rounded-full border border-line-2 lg:hidden" aria-label="Menu">
+              <Icon d={ICONS.menu} className="size-[18px]" />
+            </button>
+            <p className="hidden text-[13px] text-dim sm:block" suppressHydrationWarning>{new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p>
           </div>
-        </div>
-        <form action={logout} className="lg:hidden">
-          <button type="submit" className="rounded-full border border-line-2 px-4 py-2 text-[13px] text-muted">
-            Wyloguj
-          </button>
-        </form>
-      </aside>
-
-      <main className="relative min-w-0 px-5 py-10 sm:px-10 lg:py-14">
-        <div className="pointer-events-none absolute top-0 right-0 size-[520px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.1),transparent)]" aria-hidden />
-        <div className="relative mx-auto max-w-[1100px]">{children}</div>
-      </main>
+          <div className="flex items-center gap-2">
+            {admin && <Live />}
+            {admin && <Bell notes={notes} />}
+          </div>
+        </header>
+        <main className="relative mx-auto max-w-[1240px] px-5 py-8 sm:px-8 lg:py-10">{children}</main>
+      </div>
     </div>
   );
 }

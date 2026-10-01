@@ -38,19 +38,19 @@ export function CodeResult({ code, email, mailed, dev }: { code: string; email: 
   );
 }
 
-export default function InviteForm() {
+export default function InviteForm({ email = "", name = "" }: { email?: string; name?: string }) {
   const [state, action] = useActionState(createInvite, undefined);
   return (
     <>
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <h2 className="text-[18px] font-medium tracking-[-0.01em]">Zaproś klienta</h2>
-          <p className="mt-1 text-[14px] text-muted">Klient dostanie maila z kodem. Kod działa 7 dni i tylko dla tego adresu.</p>
+          <p className="mt-1 text-[14px] text-muted">Klient dostanie maila z kodem. Najpierw wpisze kod, potem swoje dane i potwierdzi e-mail. Kod działa 7 dni i tylko dla tego adresu.</p>
         </div>
       </div>
       <form action={action} className="mt-6 grid gap-3 md:grid-cols-[1.2fr_1fr_auto]" key={state?.code ?? "new"}>
-        <Input name="email" label="E-mail klienta" type="email" required autoComplete="off" />
-        <Input name="name" label="Imię (opcjonalnie)" autoComplete="off" />
+        <Input name="email" label="E-mail klienta" type="email" required autoComplete="off" defaultValue={email} />
+        <Input name="name" label="Imię (opcjonalnie)" autoComplete="off" defaultValue={name} />
         <Submit className="md:w-[220px]">Wyślij kod</Submit>
       </form>
       <Alert>{state?.error}</Alert>

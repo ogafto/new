@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { one, run, type User } from "../db";
 import { sha256, token } from "./crypto";
+import { isAdminEmail } from "./admin";
 
 export const SESSION_COOKIE = "afto_session";
 const DAY = 24 * 60 * 60 * 1000;
@@ -49,6 +50,9 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  if (user.role !== "admin") redirect("/panel");
+  if (!isAdmin(user)) redirect("/panel");
   return user;
 }
+
+// administrator = rola admin + adres z ADMIN_EMAIL (jest tylko jeden)
+export const isAdmin = (u: Pick<User, "role" | "email">) => u.role === "admin" && isAdminEmail(u.email);

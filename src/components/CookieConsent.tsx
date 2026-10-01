@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -71,6 +72,8 @@ export default function CookieConsent({ children, ready }: { children: React.Rea
   const [banner, setBanner] = useState(false);
   const [settings, setSettings] = useState(false);
   const [draft, setDraft] = useState({ analytics: false, marketing: false });
+  // w panelu i na stronach konta baner nie przeszkadza
+  const app = /^\/(panel|konto)/.test(usePathname());
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -122,7 +125,7 @@ gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
       )}
 
       <AnimatePresence>
-        {banner && !settings && (
+        {banner && !settings && !app && (
           <motion.div
             role="dialog"
             aria-label="Pliki cookies"

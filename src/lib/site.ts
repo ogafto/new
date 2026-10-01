@@ -74,6 +74,8 @@ export const serviceName = (id: ServiceId) => services.find((s) => s.id === id)!
 /* ---------- Prace ---------- */
 
 export type Project = {
+  id?: string;
+  url?: string | null; // adres gotowej strony (opcjonalnie)
   name: string;
   slug: string;
   category: ServiceId;
@@ -86,8 +88,8 @@ export type Project = {
   gallery?: string[]; // dodatkowe zdjęcia na podstronie realizacji
 };
 
-// Przykładowe realizacje — podmień zdjęcia i opisy na swoje. Nowa praca = nowy obiekt w tablicy.
-export const projects: Project[] = [
+// Startowe projekty — trafiają do bazy przy pierwszym uruchomieniu. Potem portfolio edytujesz w panelu admina.
+export const defaultProjects: Project[] = [
   {
     name: "Ziarno",
     slug: "ziarno",
@@ -193,35 +195,5 @@ export const steps = [
     lead: "Kod, animacje i publikacja",
     text: "Koduję projekt z animacjami, optymalizuję szybkość i SEO, podpinam domenę i publikuję. Strona od pierwszego dnia pracuje na Twój wynik.",
     points: ["Kod i animacje", "Szybkość i SEO", "Publikacja na domenie"],
-  },
-];
-
-/* ---------- FAQ (widoczne na stronie + dane strukturalne dla Google) ---------- */
-// Sprawdź odpowiedzi i dopasuj do swojej oferty.
-
-export const faq = [
-  {
-    q: "Ile kosztuje strona internetowa?",
-    a: "Strona internetowa kosztuje od 200 zł, sklep internetowy od 800 zł, identyfikacja wizualna od 300 zł, a projekt UI/UX od 250 zł. Dokładną wycenę podaję po krótkiej rozmowie — zależy od liczby podstron, funkcji i treści.",
-  },
-  {
-    q: "Ile trwa wykonanie strony?",
-    a: "Prosta strona powstaje od 3 dni, identyfikacja wizualna od 5 dni, a sklep internetowy od 10 dni. Dokładny harmonogram ustalamy przed startem prac.",
-  },
-  {
-    q: "Czy strona będzie widoczna w Google?",
-    a: "Tak. Każda strona ma przygotowane podstawy SEO: szybkie ładowanie, poprawną strukturę nagłówków, opisy meta, mapę strony i dane strukturalne, dzięki którym Google lepiej rozumie Twoją ofertę.",
-  },
-  {
-    q: "Czy strona będzie dobrze działać na telefonie?",
-    a: "Tak. Projektuję wersję na telefon, tablet i komputer jednocześnie — większość klientów trafia na stronę z telefonu, więc to dla mnie priorytet.",
-  },
-  {
-    q: "Czy pomożesz z domeną i hostingiem?",
-    a: "Tak. Doradzę wybór domeny i hostingu, podepnę domenę, skonfiguruję certyfikat SSL i opublikuję stronę.",
-  },
-  {
-    q: "Jak wygląda współpraca?",
-    a: "Zaczynamy od krótkiej rozmowy o celach. Potem ustalamy kierunek wizualny, przygotowuję projekt do akceptacji, a na końcu koduję i publikuję stronę. Postęp śledzisz w panelu klienta.",
   },
 ];

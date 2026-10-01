@@ -60,14 +60,14 @@ function useSafeTime() {
   return t;
 }
 
-function Backdrop() {
+function Backdrop({ center = false }: { center?: boolean }) {
   const beam = useRef<THREE.Mesh>(null);
   const time = useSafeTime();
   const { lines, glow, beamTex, cx } = useMemo(() => {
     // linie wygaszane z dala od monogramu (jasność koloru = widoczność na czarnym tle)
     const pts: number[] = [];
     const cols: number[] = [];
-    const cx = typeof window !== "undefined" && window.innerWidth / window.innerHeight > 1.15 ? 26 : 0;
+    const cx = !center && typeof window !== "undefined" && window.innerWidth / window.innerHeight > 1.15 ? 26 : 0;
     for (let x = -150; x <= 150; x += 4) {
       const k = 0.13 * Math.exp(-Math.pow((x - cx) / 38, 2));
       for (const y of [-60, 60]) {
@@ -109,7 +109,7 @@ function Backdrop() {
     bx.fillRect(0, 0, 32, 256);
     const beamTex = new THREE.CanvasTexture(b);
     return { lines, glow, beamTex, cx };
-  }, []);
+  }, [center]);
 
   useFrame(() => {
     if (beam.current) beam.current.position.x = cx - 32 + ((time.current * 9) % 64);
@@ -134,12 +134,24 @@ function Backdrop() {
   );
 }
 
-function Monogram({ ready, mobile }: { ready: boolean; mobile: boolean }) {
+function Monogram({ ready, mobile, center = false }: { ready: boolean; mobile: boolean; center?: boolean }) {
   const group = useRef<THREE.Group>(null);
   const { size } = useThree();
   const pointer = useRef(new THREE.Vector2());
   const intro = useRef(0);
   const time = useSafeTime();
+  // „puls” (np. po poprawnym kodzie): obrót o 360° i rozbłysk kropki
+  const spin = useRef(0);
+  const boost = useRef(0);
+  const dotMat = useRef<THREE.MeshStandardMaterial>(null);
+  useEffect(() => {
+    const on = () => {
+      spin.current += Math.PI * 2;
+      boost.current = 1;
+    };
+    window.addEventListener("afto:pulse", on);
+    return () => window.removeEventListener("afto:pulse", on);
+  }, []);
 
   const { body, dot } = useMemo(() => {
     const s = logoShapes();
@@ -166,12 +178,19 @@ function Monogram({ ready, mobile }: { ready: boolean; mobile: boolean }) {
     const e = 1 - Math.pow(1 - intro.current, 4);
     const t = time.current;
 
-    const ry = Math.sin(t * 0.3) * 0.42 + pointer.current.x * 0.35 - (1 - e) * 1.2;
+    boost.current = Math.max(0, boost.current - dt * 1.4);
+    const ry = Math.sin(t * 0.3) * 0.42 + pointer.current.x * 0.35 - (1 - e) * 1.2 + spin.current;
     const rx = -pointer.current.y * 0.15 + Math.sin(t * 0.45) * 0.05;
     g.rotation.y = THREE.MathUtils.damp(g.rotation.y, ry, 2.5, dt);
     g.rotation.x = THREE.MathUtils.damp(g.rotation.x, rx, 2.5, dt);
-    g.position.set(wide ? Math.min(26, (size.width / size.height) * 11) : 0, (wide ? 3 : 22) + Math.sin(t * 0.7) * 0.7, 0);
-    g.scale.setScalar((wide ? 0.95 : 0.7) * (0.75 + 0.25 * e));
+    if (center) {
+      g.position.set(0, (wide ? 1 : 6) + Math.sin(t * 0.7) * 0.7, 0);
+      g.scale.setScalar((wide ? 1.35 : 0.85) * (0.75 + 0.25 * e) * (1 + boost.current * 0.12));
+    } else {
+      g.position.set(wide ? Math.min(26, (size.width / size.height) * 11) : 0, (wide ? 3 : 22) + Math.sin(t * 0.7) * 0.7, 0);
+      g.scale.setScalar((wide ? 0.95 : 0.7) * (0.75 + 0.25 * e));
+    }
+    if (dotMat.current) dotMat.current.emissiveIntensity = 1.8 + boost.current * 6;
   });
 
   return (
@@ -195,19 +214,19 @@ function Monogram({ ready, mobile }: { ready: boolean; mobile: boolean }) {
         />
       </mesh>
       <mesh geometry={dot}>
-        <meshStandardMaterial color={VIOLET} emissive={VIOLET} emissiveIntensity={1.8} toneMapped={false} />
+        <meshStandardMaterial ref={dotMat} color={VIOLET} emissive={VIOLET} emissiveIntensity={1.8} toneMapped={false} />
       </mesh>
     </group>
   );
 }
 
-export default function LogoScene({ ready, active }: { ready: boolean; active: boolean }) {
+export default function LogoScene({ ready, active, center = false }: { ready: boolean; active: boolean; center?: boolean }) {
   const mobile = typeof window !== "undefined" && window.innerWidth < 768;
   return (
     <Canvas dpr={[1, mobile ? 1.5 : 2]} frameloop={active ? "always" : "demand"} camera={{ position: [0, 0, 95], fov: 30 }} gl={{ antialias: true, powerPreference: "high-performance" }}>
       <color attach="background" args={["#07070a"]} />
-      <Backdrop />
-      <Monogram ready={ready} mobile={mobile} />
+      <Backdrop center={center} />
+      <Monogram ready={ready} mobile={mobile} center={center} />
       <Environment resolution={256}>
         <Lightformer form="rect" intensity={4} color="#ffffff" position={[25, 30, 30]} scale={[30, 4, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
         <Lightformer form="rect" intensity={3} color="#ffffff" position={[-35, 0, 20]} scale={[6, 60, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />

@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { requireAdmin } from "@/lib/auth/session";
+import { PageHead } from "@/components/panel/kit";
 import AnimatedLogo, { type Variant } from "@/components/brand/AnimatedLogo";
 import { BRAND } from "@/lib/logo";
 
-export const metadata: Metadata = {
-  title: "Logo i materiały",
-  robots: { index: false },
-};
+export const metadata: Metadata = { title: "Marka i logo" };
 
 const animations: { name: string; file: string; variant: Variant; light?: boolean; size: string; span?: boolean }[] = [
   { name: "Baner — animacja", file: "afto-banner-anim", variant: "banner", size: "1500 × 500", span: true },
@@ -41,18 +38,17 @@ function Download({ href, label }: { href: string; label: string }) {
   );
 }
 
-export default function BrandPage() {
+export default async function BrandPage() {
+  await requireAdmin();
   return (
     <>
-      <Navbar />
-      <main className="mx-auto max-w-[1400px] px-5 pt-40 pb-28 sm:px-10">
-        <p className="kicker">Brand</p>
-        <h1 className="h-display mt-7 text-[clamp(3rem,7vw,6.4rem)]">Logo i materiały</h1>
-        <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted">
+      <PageHead kicker="Marka" title="Logo i materiały" />
+      <div>
+        <p className="max-w-xl text-[15px] leading-relaxed text-muted">
           Monogram „af.” i logotyp „afto.” rysowane jedną linią na wspólnej siatce. Animacje do pobrania jako GIF (30 kl./s, zapętlone), pliki statyczne jako SVG i PNG.
         </p>
 
-        <h2 className="mt-20 mb-6 text-[15px] text-dim">Animacje</h2>
+        <h2 className="mt-12 mb-4 text-[15px] text-dim">Animacje</h2>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {animations.map((a) => (
             <figure key={a.file} className={`overflow-hidden rounded-[22px] border border-line bg-surface ${a.span ? "md:col-span-2 lg:col-span-3" : ""}`}>
@@ -67,7 +63,7 @@ export default function BrandPage() {
           ))}
         </div>
 
-        <h2 className="mt-20 mb-6 text-[15px] text-dim">Pliki statyczne</h2>
+        <h2 className="mt-12 mb-4 text-[15px] text-dim">Pliki statyczne</h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {assets.map((a) => (
             <figure key={a.file} className="overflow-hidden rounded-[22px] border border-line bg-surface">
@@ -86,7 +82,7 @@ export default function BrandPage() {
           ))}
         </div>
 
-        <h2 className="mt-20 mb-6 text-[15px] text-dim">Kolory</h2>
+        <h2 className="mt-12 mb-4 text-[15px] text-dim">Kolory</h2>
         <div className="grid gap-5 sm:grid-cols-3">
           {colors.map((c) => (
             <div key={c.hex} className="overflow-hidden rounded-[22px] border border-line">
@@ -98,8 +94,7 @@ export default function BrandPage() {
             </div>
           ))}
         </div>
-      </main>
-      <Footer />
+      </div>
     </>
   );
 }

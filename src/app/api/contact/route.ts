@@ -1,10 +1,13 @@
 import { Resend } from "resend";
 import { site } from "@/lib/site";
+import { run } from "@/lib/db";
+import { id } from "@/lib/auth/crypto";
 
 type Payload = {
   name: string;
   email: string;
   phone: string;
+  firm: string;
   topic: string;
   budget: string;
   timeline: string;
@@ -38,6 +41,7 @@ function validate(body: Record<string, unknown>): Payload | string {
     name: str(body.name, 80),
     email: str(body.email, 160),
     phone: str(body.phone, 30),
+    firm: str(body.firm, 120),
     topic: str(body.topic, 300),
     budget: str(body.budget, 60),
     timeline: str(body.timeline, 60),
@@ -64,7 +68,7 @@ function emailHtml(d: Payload) {
     </div>
     <div style="padding:20px 28px">
       <table style="width:100%;border-collapse:collapse">
-        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Usługi", d.topic)}${row("Budżet", d.budget)}${row("Termin", d.timeline)}
+        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Firma", d.firm)}${row("Usługi", d.topic)}${row("Budżet", d.budget)}${row("Termin", d.timeline)}
       </table>
       <div style="margin-top:12px;padding:16px;background:#f4f4f5;border-radius:12px;color:#111;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(d.message)}</div>
       <p style="color:#8b8b94;font-size:12px;margin-top:20px">Kliknij „Odpowiedz”, aby napisać bezpośrednio do klienta.</p>
@@ -82,7 +86,7 @@ async function sendResend(d: Payload) {
     replyTo: d.email,
     subject: `Nowe zapytanie — ${d.name}`,
     html: emailHtml(d),
-    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nUsługi: ${d.topic || "—"}\nBudżet: ${d.budget || "—"}\nTermin: ${d.timeline || "—"}\n\n${d.message}`,
+    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nFirma: ${d.firm || "—"}\nUsługi: ${d.topic || "—"}\nBudżet: ${d.budget || "—"}\nTermin: ${d.timeline || "—"}\n\n${d.message}`,
   });
   if (error) throw new Error(`Resend: ${error.message}`);
   return true;
@@ -106,6 +110,7 @@ async function sendDiscord(d: Payload) {
             { name: "Imię", value: d.name, inline: true },
             { name: "E-mail", value: d.email, inline: true },
             { name: "Telefon", value: d.phone || "—", inline: true },
+            ...(d.firm ? [{ name: "Firma", value: d.firm, inline: true }] : []),
             ...(d.topic ? [{ name: "Usługi", value: d.topic.slice(0, 1024) }] : []),
             ...(d.budget ? [{ name: "Budżet", value: d.budget, inline: true }] : []),
             ...(d.timeline ? [{ name: "Termin", value: d.timeline, inline: true }] : []),
@@ -140,16 +145,30 @@ export async function POST(req: Request) {
   const data = validate(body);
   if (typeof data === "string") return Response.json({ error: data }, { status: 400 });
 
-  const results = await Promise.allSettled([sendResend(data), sendDiscord(data)]);
-  const delivered = results.some((r) => r.status === "fulfilled" && r.value === true);
-  const configured = results.some((r) => r.status === "rejected" || r.value !== null);
+  // zapis w panelu (Zapytania) — działa nawet bez skonfigurowanego maila
+  let saved = false;
+  try {
+    await run("INSERT INTO inquiries (id, name, email, phone, company, topic, budget, timeline, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      id(),
+      data.name,
+      data.email,
+      data.phone,
+      data.firm || null,
+      data.topic || null,
+      data.budget || null,
+      data.timeline || null,
+      data.message,
+      Date.now(),
+    ]);
+    saved = true;
+  } catch (e) {
+    console.error("[contact] zapis w bazie", e);
+  }
 
+  const results = await Promise.allSettled([sendResend(data), sendDiscord(data)]);
+  const delivered = saved || results.some((r) => r.status === "fulfilled" && r.value === true);
   results.forEach((r) => r.status === "rejected" && console.error("[contact]", r.reason));
 
-  if (!configured) {
-    console.error("[contact] Brak RESEND_API_KEY i DISCORD_WEBHOOK_URL — formularz nie jest skonfigurowany.");
-    return Response.json({ error: "Formularz jest chwilowo niedostępny." }, { status: 503 });
-  }
   if (!delivered) {
     return Response.json({ error: "Nie udało się wysłać wiadomości." }, { status: 502 });
   }

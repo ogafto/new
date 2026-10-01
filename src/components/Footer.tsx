@@ -127,11 +127,7 @@ export default function Footer() {
                   Ustawienia cookies
                 </button>
               </li>
-              <li>
-                <TLink href="/brand" label="Logo" className="link-u text-muted transition-colors hover:text-ink">
-                  Logo
-                </TLink>
-              </li>
+
             </ul>
           </div>
         </div>

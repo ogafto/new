@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useLenis } from "lenis/react";
-import { projects, serviceName, type Project } from "@/lib/site";
+import { serviceName, type Project } from "@/lib/site";
 import { TLink } from "../Transition";
 import { Arrow } from "../ui/Button";
 
@@ -17,19 +17,17 @@ import { Arrow } from "../ui/Button";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const FEATURED = 6;
-const list = projects.slice(0, FEATURED);
-const N = list.length;
 const EXPAND = 0.8; // ile „ekranów” przewijania zajmuje rozrost ramki
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 const smooth = (x: number) => x * x * (3 - 2 * x);
 
 // pozycja w pokazie: 0 … N-1 (ułamki = w trakcie przejścia)
-const slideOf = (p: number) => Math.min(N - 1, Math.max(0, p * N - EXPAND));
+const slideOf = (p: number, n: number) => Math.min(n - 1, Math.max(0, p * n - EXPAND));
 const revealOf = (s: number, i: number) => (i === 0 ? 1 : smooth(clamp((s - (i - 1) - 0.2) / 0.6)));
 
-function Layer({ p, i, progress }: { p: Project; i: number; progress: MotionValue<number> }) {
-  const reveal = useTransform(progress, (v) => revealOf(slideOf(v), i));
-  const covered = useTransform(progress, (v) => (i < N - 1 ? revealOf(slideOf(v), i + 1) : 0));
+function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progress: MotionValue<number> }) {
+  const reveal = useTransform(progress, (v) => revealOf(slideOf(v, n), i));
+  const covered = useTransform(progress, (v) => (i < n - 1 ? revealOf(slideOf(v, n), i + 1) : 0));
   const clip = useTransform(reveal, (r) => `inset(${(1 - r) * 100}% 0% 0% 0%)`);
   // wejście: zdjęcie dojeżdża z dołu i z przybliżenia; przykrywane: oddala się i ciemnieje
   const y = useTransform(reveal, (r) => `${(1 - r) * 18}%`);
@@ -64,7 +62,10 @@ function Roll({ k, children, className = "", delay = 0 }: { k: string | number; 
   );
 }
 
-export default function Work() {
+export default function Work({ projects }: { projects: Project[] }) {
+  const featured = projects.filter((p) => (p as { featured?: boolean }).featured !== false);
+  const list = (featured.length ? featured : projects).slice(0, FEATURED);
+  const N = list.length;
   const wrap = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
   const [current, setCurrent] = useState(0);
@@ -90,7 +91,7 @@ export default function Work() {
   const ui = useTransform(scrollYProgress, (v) => clamp((v * N - EXPAND * 0.7) / 0.3));
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const s = slideOf(v);
+    const s = slideOf(v, N);
     let idx = 0;
     for (let i = 1; i < N; i++) if (revealOf(s, i) > 0.5) idx = i;
     setCurrent(idx);
@@ -114,7 +115,7 @@ export default function Work() {
 
           <motion.div className="absolute inset-0 bg-surface" style={{ clipPath: frame }}>
             {list.map((proj, i) => (
-              <Layer key={proj.slug} p={proj} i={i} progress={scrollYProgress} />
+              <Layer key={proj.slug} p={proj} i={i} n={N} progress={scrollYProgress} />
             ))}
 
             {/* cały kadr prowadzi do projektu */}

@@ -2,22 +2,22 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/hero/Hero";
 import Work from "@/components/work/Work";
 import Process from "@/components/Process";
-import Faq from "@/components/Faq";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
 import { homeSchema } from "@/lib/seo";
+import { getProjects } from "@/lib/projects";
 
-export default function Home() {
+export default async function Home() {
+  const projects = await getProjects();
   return (
     <>
       <JsonLd data={homeSchema()} />
       <Navbar />
       <main>
-        <Hero />
-        <Work />
+        <Hero recent={projects.slice(0, 4)} />
+        <Work projects={projects} />
         <Process />
-        <Faq />
         <Contact />
       </main>
       <Footer />

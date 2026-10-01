@@ -2,7 +2,8 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { AnimatePresence } from "motion/react";
-import { resendInvite, revokeInvite, updateClient } from "@/app/panel/admin/actions";
+import { deleteClient, resendInvite, revokeInvite, updateClient } from "@/app/panel/admin/actions";
+import { ConfirmBtn } from "./kit";
 import { STAGES } from "@/lib/format";
 import { CodeResult } from "./InviteForm";
 
@@ -34,7 +35,7 @@ export function InviteActions({ id, canRevoke }: { id: string; canRevoke: boolea
   );
 }
 
-type C = { id: string; name: string; email: string; verified: boolean; stage: number; project: string; since: string; last: string };
+type C = { id: string; name: string; email: string; phone: string | null; verified: boolean; stage: number; project: string; since: string; last: string; site?: { id: string; name: string } | null };
 
 export function ClientRow({ c }: { c: C }) {
   const [saved, setSaved] = useState(false);
@@ -42,15 +43,21 @@ export function ClientRow({ c }: { c: C }) {
   return (
     <li className="grid gap-4 py-4 md:grid-cols-[1fr_1.4fr] md:items-center">
       <div className="flex items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/5 text-[14px]">{c.name.charAt(0).toUpperCase()}</span>
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent/40 to-accent-2/20 text-[14px]">{c.name.charAt(0).toUpperCase()}</span>
         <span className="min-w-0">
           <span className="block truncate text-[15px]">
             {c.name}
             {!c.verified && <span className="ml-2 text-[12px] text-amber-200">niezweryfikowany</span>}
           </span>
           <span className="block truncate text-[12.5px] text-dim">
-            {c.email} · od {c.since} · ostatnio {c.last}
+            {c.email}
+            {c.phone ? ` · ${c.phone}` : ""} · od {c.since} · ostatnio {c.last}
           </span>
+          {c.site && (
+            <a href={`/panel/admin/strony/${c.site.id}`} className="mt-1 inline-block text-[12px] text-accent-2 hover:underline">
+              CMS: {c.site.name} →
+            </a>
+          )}
         </span>
       </div>
       <form
@@ -80,6 +87,9 @@ export function ClientRow({ c }: { c: C }) {
         <button type="submit" disabled={pending} className="h-10 rounded-xl bg-ink px-4 text-[13px] font-medium text-bg transition-colors hover:bg-white disabled:opacity-60">
           {saved ? "Zapisano ✓" : pending ? "…" : "Zapisz"}
         </button>
+        <ConfirmBtn onConfirm={() => start(() => deleteClient(c.id))} label="Usunąć konto?">
+          <span className="sr-only">Usuń</span>
+        </ConfirmBtn>
       </form>
     </li>
   );

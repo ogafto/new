@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { TLink } from "../Transition";
 import { AnimatePresence, motion } from "motion/react";
-import { projects, serviceName, services, type Project, type ServiceId } from "@/lib/site";
+import { serviceName, services, type Project, type ServiceId } from "@/lib/site";
 import { FadeUp, Heading } from "../ui/Reveal";
 import { Arrow } from "../ui/Button";
 
@@ -43,7 +43,7 @@ export function ProjectCard({ p, wide = false }: { p: Project; wide?: boolean })
   );
 }
 
-export default function AllWork() {
+export default function AllWork({ projects }: { projects: Project[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [all, setAll] = useState(false);
 

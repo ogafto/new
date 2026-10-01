@@ -7,6 +7,7 @@ import { MotionConfig } from "motion/react";
 import Loader from "./Loader";
 import CookieConsent from "./CookieConsent";
 import { TransitionProvider } from "./Transition";
+import Analytics from "./Analytics";
 
 const LoadedContext = createContext(false);
 export const useLoaded = () => useContext(LoadedContext);
@@ -40,6 +41,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <CookieConsent ready={loaded}>
             {!loaded && !app && <Loader onDone={() => setLoaded(true)} />}
             <RouteScroll />
+            <Analytics />
             <TransitionProvider>{children}</TransitionProvider>
           </CookieConsent>
         </LoadedContext.Provider>

@@ -1,4 +1,4 @@
-import { faq, projects, serviceName, services, site, type Project } from "./site";
+import { serviceName, services, site, type Project } from "./site";
 
 const id = (frag: string) => `${site.url}/#${frag}`;
 
@@ -42,16 +42,11 @@ export function homeSchema() {
         inLanguage: "pl-PL",
         publisher: { "@id": id("business") },
       },
-      {
-        "@type": "FAQPage",
-        "@id": id("faq"),
-        mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-      },
     ],
   };
 }
 
-export function portfolioSchema() {
+export function portfolioSchema(projects: Project[]) {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",

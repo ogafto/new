@@ -13,8 +13,12 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
 // canvas dopasowany do rozmiaru i gęstości pikseli, pętla tylko na ekranie
-function useCanvas(draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number) => void) {
+type Ptr = { x: number; y: number; on: number };
+function useCanvas(draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, ptr: Ptr) => void) {
   const ref = useRef<HTMLCanvasElement>(null);
+  // kursor nad sceną (on: 0–1, płynnie)
+  const ptr = useRef<Ptr>({ x: 0.5, y: 0.5, on: 0 });
+  const target = useRef({ x: 0.5, y: 0.5, on: 0 });
   const inView = useInView(ref, { margin: "-10% 0px" });
   const fn = useRef(draw);
   useEffect(() => {
@@ -42,22 +46,34 @@ function useCanvas(draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t
     ro.observe(c);
     const start = performance.now();
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const host = c.parentElement!;
+    const move = (e: PointerEvent) => {
+      const r = c.getBoundingClientRect();
+      target.current = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, on: 1 };
+    };
+    const leave = () => (target.current = { ...target.current, on: 0 });
+    host.addEventListener("pointermove", move);
+    host.addEventListener("pointerleave", leave);
     const loop = (now: number) => {
-      fn.current(ctx, w, h, reduce ? 4 : (now - start) / 1000);
+      const p = ptr.current;
+      const tg = target.current;
+      p.x += (tg.x - p.x) * 0.08;
+      p.y += (tg.y - p.y) * 0.08;
+      p.on += (tg.on - p.on) * 0.06;
+      fn.current(ctx, w, h, reduce ? 4 : (now - start) / 1000, p);
       if (!reduce) raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      host.removeEventListener("pointermove", move);
+      host.removeEventListener("pointerleave", leave);
     };
   }, [inView]);
   return { ref, inView };
 }
 
-function Caption({ children }: { children: React.ReactNode }) {
-  return <span className="pointer-events-none absolute bottom-4 left-5 text-[11.5px] tracking-[0.02em] text-dim">{children}</span>;
-}
 
 /* ---------- 1. Rozmowa: dwa głosy, które na zmianę mówią i się słuchają ---------- */
 
@@ -66,7 +82,7 @@ const words = ["więcej klientów", "rezerwacje online", "budżet", "termin", "k
 export function TalkArt() {
   const sparks = useRef<{ x: number; y: number; vx: number; vy: number; life: number; v: boolean }[]>([]);
   const [chips, setChips] = useState<{ id: number; text: string; x: number }[]>([]);
-  const { ref, inView } = useCanvas((ctx, w, h, t) => {
+  const { ref, inView } = useCanvas((ctx, w, h, t, ptr) => {
     ctx.clearRect(0, 0, w, h);
     const mid = h * 0.52;
     // kto mówi: na zmianę co ~2,6 s, z płynnym przejściem
@@ -83,7 +99,8 @@ export function TalkArt() {
         ctx.beginPath();
         for (let x = 0; x <= w; x += 3) {
           const u = x / w;
-          const env = Math.sin(u * Math.PI) ** 1.6;
+          // kursor „podgłaśnia” fale w swoim pobliżu
+          const env = Math.sin(u * Math.PI) ** 1.6 * (1 + ptr.on * 1.2 * Math.exp(-(((u - ptr.x) * 6) ** 2)));
           const y =
             mid +
             env *
@@ -130,7 +147,7 @@ export function TalkArt() {
     let i = 0;
     const t = setInterval(() => {
       const id = Date.now();
-      setChips((c) => [...c.slice(-3), { id, text: words[i++ % words.length], x: 12 + Math.random() * 56 }]);
+      setChips((c) => [...c.slice(-3), { id, text: words[i++ % words.length], x: 20 + Math.random() * 50 }]);
     }, 1300);
     return () => clearInterval(t);
   }, [inView]);
@@ -138,7 +155,7 @@ export function TalkArt() {
   return (
     <div className="absolute inset-0">
       <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden />
-      <div className="absolute top-5 left-5 flex items-center gap-4 text-[12px] text-muted">
+      <div className="absolute top-[12%] left-1/2 flex -translate-x-1/2 items-center gap-4 text-[12px] text-muted">
         <span className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-ink" />
           Ty
@@ -152,7 +169,7 @@ export function TalkArt() {
         {chips.map((c) => (
           <motion.span
             key={c.id}
-            className="absolute top-[38%] rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[12px] whitespace-nowrap text-ink/80 backdrop-blur-md"
+            className="pointer-events-none absolute top-[40%] rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[12px] whitespace-nowrap text-ink/80 backdrop-blur-md"
             style={{ left: `${c.x}%` }}
             initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
             animate={{ opacity: [0, 1, 1, 0], y: -90, filter: "blur(0px)" }}
@@ -163,7 +180,6 @@ export function TalkArt() {
           </motion.span>
         ))}
       </AnimatePresence>
-      <Caption>słucham · pytam · notuję</Caption>
     </div>
   );
 }
@@ -171,15 +187,16 @@ export function TalkArt() {
 /* ---------- 2. Kierunek: chaos linii układa się w jeden kierunek ---------- */
 
 export function DirectionArt() {
-  const { ref } = useCanvas((ctx, w, h, t) => {
+  const { ref } = useCanvas((ctx, w, h, t, ptr) => {
     ctx.clearRect(0, 0, w, h);
-    const gap = Math.max(16, w / 30);
+    const gap = Math.max(16, w / 26);
     const cycle = 8;
     const p = (t % cycle) / cycle;
     // 0–0.12 chaos, 0.12–0.45 linie zwracają się ku jednemu punktowi, 0.45–0.82 porządek, potem rozpad
-    const k = p < 0.12 ? 0 : p < 0.45 ? smooth((p - 0.12) / 0.33) : p < 0.82 ? 1 : 1 - smooth((p - 0.82) / 0.18);
-    const fx = w * 0.78;
-    const fy = h * 0.32;
+    // po najechaniu wszystko patrzy na kursor
+    const k = Math.max(ptr.on, p < 0.12 ? 0 : p < 0.45 ? smooth((p - 0.12) / 0.33) : p < 0.82 ? 1 : 1 - smooth((p - 0.82) / 0.18));
+    const fx = w * (0.62 + (ptr.x - 0.62) * ptr.on);
+    const fy = h * (0.4 + (ptr.y - 0.4) * ptr.on);
     const maxD = Math.hypot(w, h);
     ctx.lineCap = "round";
     for (let y = gap / 2; y < h; y += gap) {
@@ -218,7 +235,7 @@ export function DirectionArt() {
     ctx.arc(fx, fy, 2.5 + k * 1.5 + Math.sin(t * 4) * 0.6 * k, 0, Math.PI * 2);
     ctx.fill();
     // kometa lecąca do celu
-    if (k > 0.9) {
+    if (k > 0.9 && ptr.on < 0.2) {
       const q = smooth(Math.min(1, ((t % cycle) / cycle - 0.45) / 0.3));
       const sx = w * 0.05;
       const sy = h * 0.9;
@@ -242,7 +259,6 @@ export function DirectionArt() {
   return (
     <div className="absolute inset-0">
       <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden />
-      <Caption>z wielu pomysłów — jeden kierunek</Caption>
     </div>
   );
 }
@@ -274,7 +290,7 @@ export function DesignArt() {
   return (
     <div ref={box} className="absolute inset-0">
       {inView && (
-        <svg key={k} viewBox="-14 -2 72 54" className="absolute inset-0 size-full" fill="none" aria-hidden>
+        <svg key={k} viewBox="-14 -2 72 54" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full" fill="none" aria-hidden>
           <defs>
             <pattern id="d-grid" width="4" height="4" patternUnits="userSpaceOnUse">
               <path d="M4 0H0V4" stroke="rgba(255,255,255,0.05)" strokeWidth="0.15" />
@@ -349,7 +365,6 @@ export function DesignArt() {
           </motion.g>
         </svg>
       )}
-      <Caption>siatka · proporcje · detal</Caption>
     </div>
   );
 }
@@ -360,15 +375,15 @@ export function LaunchArt() {
   const stars = useRef<{ x: number; y: number; z: number; pz: number }[]>([]);
   const [live, setLive] = useState(false);
   const cycle = 7;
-  const { ref, inView } = useCanvas((ctx, w, h, t) => {
+  const { ref, inView } = useCanvas((ctx, w, h, t, ptr) => {
     if (!stars.current.length) stars.current = Array.from({ length: 260 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random(), pz: 0 }));
     const p = (t % cycle) / cycle;
     // przyspieszenie → szczyt → hamowanie
     const speed = p < 0.45 ? 0.002 + smooth(p / 0.45) * 0.05 : 0.052 * (1 - smooth((p - 0.45) / 0.25)) + 0.0015;
     ctx.fillStyle = `rgba(14,14,19,${p > 0.42 && p < 0.5 ? 0.25 : 0.55})`;
     ctx.fillRect(0, 0, w, h);
-    const cx = w / 2;
-    const cy = h / 2;
+    const cx = w * (0.5 + (ptr.x - 0.5) * 0.35 * ptr.on);
+    const cy = h * (0.5 + (ptr.y - 0.5) * 0.35 * ptr.on);
     for (const s of stars.current) {
       s.pz = s.z;
       s.z -= speed;
@@ -423,7 +438,7 @@ export function LaunchArt() {
       <AnimatePresence>
         {live && (
           <motion.div
-            className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-full border border-emerald-400/30 bg-bg/70 py-2 pr-4 pl-3 text-[13px] whitespace-nowrap text-emerald-100 backdrop-blur-md"
+            className="absolute top-6 right-6 flex items-center gap-2.5 rounded-full border border-emerald-400/30 sm:top-8 sm:right-8 bg-bg/70 py-2 pr-4 pl-3 text-[13px] whitespace-nowrap text-emerald-100 backdrop-blur-md"
             initial={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 0.9, filter: "blur(6px)" }}
@@ -437,7 +452,6 @@ export function LaunchArt() {
           </motion.div>
         )}
       </AnimatePresence>
-      <Caption>kod · szybkość · start</Caption>
     </div>
   );
 }

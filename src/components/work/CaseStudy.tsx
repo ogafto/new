@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { serviceName, type Project } from "@/lib/site";
 import { useLoaded } from "../Providers";
@@ -36,7 +37,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
     <main className="pt-32">
       <div className="mx-auto max-w-[1400px] px-5 sm:px-10">
         <motion.div className="flex items-center justify-between gap-6" initial={{ opacity: 0, y: -8 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease }}>
-          <TLink href="/#realizacje" label="Strona główna" className="group inline-flex items-center gap-3 rounded-full border border-line-2 py-2 pr-5 pl-2 text-[14px] text-muted transition-colors duration-500 hover:border-white/30 hover:text-ink">
+          <TLink href="/#portfolio" label="Strona główna" className="group inline-flex items-center gap-3 rounded-full border border-line-2 py-2 pr-5 pl-2 text-[14px] text-muted transition-colors duration-500 hover:border-white/30 hover:text-ink">
             <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-white/[0.06] transition-colors duration-500 group-hover:bg-accent group-hover:text-white">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-0.5" aria-hidden>
                 <path d="M11 7H3M6.5 3.5L3 7l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,8 +45,8 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
             </span>
             Wróć na stronę główną
           </TLink>
-          <TLink href="/realizacje" label="Realizacje" className="link-u hidden text-[14px] text-muted hover:text-ink sm:block">
-            Wszystkie realizacje
+          <TLink href="/portfolio" label="Portfolio" className="link-u hidden text-[14px] text-muted hover:text-ink sm:block">
+            Całe portfolio
           </TLink>
         </motion.div>
         <motion.p className="kicker mt-14" initial={{ opacity: 0 }} animate={show ? { opacity: 1 } : {}} transition={{ duration: 0.8 }}>
@@ -80,7 +81,9 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
         transition={{ delay: 0.45, duration: 1.3, ease }}
       >
         <div className="relative size-full overflow-hidden sm:rounded-[28px]">
-          <motion.img src={p.image} alt={`${p.name} — ${p.client}`} className="absolute inset-x-0 -top-[9%] h-[118%] w-full object-cover" style={{ y }} />
+          <motion.div className="absolute inset-x-0 -top-[9%] h-[118%] w-full" style={{ y }}>
+            <Image src={p.image} alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill priority sizes="(min-width: 1400px) 1320px, 100vw" className="object-cover" />
+          </motion.div>
         </div>
       </motion.div>
 

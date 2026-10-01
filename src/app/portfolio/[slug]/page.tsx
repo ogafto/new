@@ -4,6 +4,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CaseStudy from "@/components/work/CaseStudy";
 import { projects, serviceName } from "@/lib/site";
+import JsonLd from "@/components/JsonLd";
+import { projectSchema } from "@/lib/seo";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -13,7 +15,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
   if (!p) return {};
-  return { title: `${p.name} — ${serviceName(p.category)}`, description: p.description, openGraph: { images: [p.image] } };
+  const title = `${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`;
+  return {
+    title,
+    description: `${p.description} ${serviceName(p.category)} — projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,
+    alternates: { canonical: `/portfolio/${p.slug}` },
+    openGraph: { title, description: p.description, url: `/portfolio/${p.slug}`, type: "article", images: [{ url: p.image, width: 1600, height: 1200, alt: p.name }] },
+    twitter: { card: "summary_large_image", title, description: p.description, images: [p.image] },
+  };
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -22,6 +31,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   if (i < 0) notFound();
   return (
     <>
+      <JsonLd data={projectSchema(projects[i])} />
       <Navbar />
       <CaseStudy p={projects[i]} next={projects[(i + 1) % projects.length]} />
       <Footer />

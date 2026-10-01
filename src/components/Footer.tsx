@@ -75,12 +75,14 @@ export default function Footer() {
           <div>
             <Mark className="size-10" />
             <p className="mt-6 max-w-[300px] text-[15px] leading-relaxed text-muted">Projektuję i koduję strony, które wyglądają drogo i sprzedają.</p>
+            <address className="not-italic">
             <a href={`mailto:${site.email}`} className="link-u mt-6 inline-block text-[17px]">
               {site.email}
             </a>
             <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="link-u mt-2 block w-fit text-[15px] text-muted hover:text-ink">
               {site.phone}
             </a>
+            </address>
           </div>
           {cols.map((c) => (
             <div key={c.title}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { TLink } from "../Transition";
 import { AnimatePresence, motion } from "motion/react";
 import { projects, serviceName, services, type Project, type ServiceId } from "@/lib/site";
@@ -11,17 +12,17 @@ type Filter = "all" | ServiceId;
 const ease = [0.16, 1, 0.3, 1] as const;
 const PAGE = 12;
 
-// Karta realizacji: duże zdjęcie + podpis pod spodem
+// Karta projektu: duże zdjęcie + podpis pod spodem
 export function ProjectCard({ p, wide = false }: { p: Project; wide?: boolean }) {
   return (
-    <TLink href={`/realizacje/${p.slug}`} label={p.name} className="group block" aria-label={`${p.name} — ${serviceName(p.category)}`}>
+    <TLink href={`/portfolio/${p.slug}`} label={p.name} className="group block" aria-label={`${p.name} — ${serviceName(p.category)}`}>
       <div className={`relative overflow-hidden rounded-[20px] bg-surface ${wide ? "aspect-[4/3] md:aspect-[2/1]" : "aspect-[4/3]"}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={p.image}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 size-full object-cover object-top transition-transform duration-[1.2s] ease-out-expo group-hover:scale-[1.035]"
+          alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`}
+          fill
+          sizes={wide ? "(min-width: 768px) 90vw, 100vw" : "(min-width: 768px) 45vw, 100vw"}
+          className="object-cover object-top transition-transform duration-[1.2s] ease-out-expo group-hover:scale-[1.035]"
         />
         <span className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-white/[0.08] ring-inset" />
       </div>
@@ -58,12 +59,12 @@ export default function AllWork() {
       <div className="mb-14 flex flex-col justify-between gap-10 lg:mb-20 lg:flex-row lg:items-end">
         <div>
           <FadeUp>
-            <p className="kicker">Realizacje</p>
+            <p className="kicker">Portfolio</p>
           </FadeUp>
-          <Heading className="mt-7 text-[clamp(2.8rem,6.5vw,6.4rem)]" lines={["Wszystkie", <span key="2" className="text-muted">realizacje</span>]} />
+          <Heading as="h1" className="mt-7 text-[clamp(2.8rem,6.5vw,6.4rem)]" lines={["Portfolio", <span key="2" className="text-muted">wszystkie projekty</span>]} />
         </div>
         <FadeUp delay={0.1}>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtruj realizacje">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtruj projekty">
             {filters.map((f) => (
               <button
                 key={f.id}

@@ -19,9 +19,10 @@ export function FadeUp({ children, delay = 0, className = "", y = 24 }: { childr
 }
 
 // Nagłówek: linie wysuwają się spod maski
-export function Heading({ lines, className = "" }: { lines: React.ReactNode[]; className?: string }) {
+export function Heading({ lines, className = "", as = "h2" }: { lines: React.ReactNode[]; className?: string; as?: "h1" | "h2" }) {
+  const Tag = as === "h1" ? motion.h1 : motion.h2;
   return (
-    <motion.h2 className={`h-display ${className}`} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }}>
+    <Tag className={`h-display ${className}`} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }}>
       {lines.map((l, i) => (
         <span key={i} className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
           <motion.span className="block" variants={{ hidden: { y: "108%" }, show: { y: "0%", transition: { delay: i * 0.09, duration: 1.2, ease } } }}>
@@ -29,7 +30,7 @@ export function Heading({ lines, className = "" }: { lines: React.ReactNode[]; c
           </motion.span>
         </span>
       ))}
-    </motion.h2>
+    </Tag>
   );
 }
 

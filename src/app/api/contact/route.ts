@@ -6,6 +6,8 @@ type Payload = {
   email: string;
   phone: string;
   topic: string;
+  budget: string;
+  timeline: string;
   message: string;
 };
 
@@ -37,6 +39,8 @@ function validate(body: Record<string, unknown>): Payload | string {
     email: str(body.email, 160),
     phone: str(body.phone, 30),
     topic: str(body.topic, 300),
+    budget: str(body.budget, 60),
+    timeline: str(body.timeline, 60),
     message: str(body.message, 3000),
   };
   if (data.name.length < 2) return "Podaj imię.";
@@ -60,7 +64,7 @@ function emailHtml(d: Payload) {
     </div>
     <div style="padding:20px 28px">
       <table style="width:100%;border-collapse:collapse">
-        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Konfiguracja", d.topic)}
+        ${row("Imię", d.name)}${row("E-mail", d.email)}${row("Telefon", d.phone)}${row("Usługi", d.topic)}${row("Budżet", d.budget)}${row("Termin", d.timeline)}
       </table>
       <div style="margin-top:12px;padding:16px;background:#f4f4f5;border-radius:12px;color:#111;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(d.message)}</div>
       <p style="color:#8b8b94;font-size:12px;margin-top:20px">Kliknij „Odpowiedz”, aby napisać bezpośrednio do klienta.</p>
@@ -78,7 +82,7 @@ async function sendResend(d: Payload) {
     replyTo: d.email,
     subject: `Nowe zapytanie — ${d.name}`,
     html: emailHtml(d),
-    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nKonfiguracja: ${d.topic || "—"}\n\n${d.message}`,
+    text: `Imię: ${d.name}\nE-mail: ${d.email}\nTelefon: ${d.phone || "—"}\nUsługi: ${d.topic || "—"}\nBudżet: ${d.budget || "—"}\nTermin: ${d.timeline || "—"}\n\n${d.message}`,
   });
   if (error) throw new Error(`Resend: ${error.message}`);
   return true;
@@ -96,13 +100,15 @@ async function sendDiscord(d: Payload) {
       allowed_mentions: { parse: [] },
       embeds: [
         {
-          title: `💬 Nowy komentarz — ${d.name}`,
-          color: 0x0d99ff,
+          title: `Nowe zapytanie — ${d.name}`,
+          color: 0x8b6cff,
           fields: [
             { name: "Imię", value: d.name, inline: true },
             { name: "E-mail", value: d.email, inline: true },
             { name: "Telefon", value: d.phone || "—", inline: true },
-            ...(d.topic ? [{ name: "Konfiguracja", value: d.topic.slice(0, 1024) }] : []),
+            ...(d.topic ? [{ name: "Usługi", value: d.topic.slice(0, 1024) }] : []),
+            ...(d.budget ? [{ name: "Budżet", value: d.budget, inline: true }] : []),
+            ...(d.timeline ? [{ name: "Termin", value: d.timeline, inline: true }] : []),
             { name: "Wiadomość", value: d.message.slice(0, 1024) },
           ],
           footer: { text: site.domain },

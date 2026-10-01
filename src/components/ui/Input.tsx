@@ -14,10 +14,14 @@ type Props = {
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   className?: string;
   hint?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+  autoFocus?: boolean;
 };
 
 // Pole z pływającą etykietą w zaokrąglonej ramce
-export default function Input({ name, label, type = "text", required, autoComplete, defaultValue, area, minLength, inputMode, className = "", hint }: Props) {
+export default function Input({ name, label, type = "text", required, autoComplete, defaultValue, area, minLength, inputMode, className = "", hint, value, onChange, autoFocus }: Props) {
+  const ctl = value !== undefined ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange?.(e.target.value) } : { defaultValue };
   const [show, setShow] = useState(false);
   const isPass = type === "password";
   const cls =
@@ -26,7 +30,7 @@ export default function Input({ name, label, type = "text", required, autoComple
     <div className={className}>
       <label className="relative block">
         {area ? (
-          <textarea name={name} required={required} minLength={minLength} rows={4} placeholder={label} defaultValue={defaultValue} className={`${cls} resize-none pt-7 pb-3 leading-relaxed`} />
+          <textarea name={name} required={required} minLength={minLength} rows={4} placeholder={label} {...ctl} autoFocus={autoFocus} className={`${cls} resize-none pt-7 pb-3 leading-relaxed`} />
         ) : (
           <input
             name={name}
@@ -34,7 +38,8 @@ export default function Input({ name, label, type = "text", required, autoComple
             required={required}
             minLength={minLength}
             autoComplete={autoComplete}
-            defaultValue={defaultValue}
+            {...ctl}
+            autoFocus={autoFocus}
             inputMode={inputMode}
             placeholder={label}
             className={`${cls} h-[60px] pt-5 ${isPass ? "pr-20" : ""}`}

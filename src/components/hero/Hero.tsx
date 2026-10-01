@@ -68,16 +68,16 @@ export default function Hero() {
                 <Button href="#kontakt">Wyceń projekt</Button>
               </Magnetic>
               <Magnetic>
-                <Button href="#realizacje" variant="outline">
-                  Realizacje
+                <Button href="#portfolio" variant="outline">
+                  Portfolio
                 </Button>
               </Magnetic>
             </div>
           </motion.div>
 
-          {/* ostatnie realizacje — miniatury rozsuwają się po najechaniu */}
+          {/* ostatnie projekty — miniatury rozsuwają się po najechaniu */}
           <motion.a
-            href="#realizacje"
+            href="#portfolio"
             className="group hidden items-center gap-5 md:flex"
             initial={{ opacity: 0, y: 16 }}
             animate={show ? { opacity: 1, y: 0 } : {}}
@@ -86,7 +86,7 @@ export default function Hero() {
             <span className="text-right text-[14px] leading-snug text-muted transition-colors group-hover:text-ink">
               Ostatnie
               <br />
-              realizacje
+              projekty
             </span>
             <span className="flex">
               {projects.slice(0, 4).map((p, i) => (

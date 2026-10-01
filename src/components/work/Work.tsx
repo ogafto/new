@@ -1,174 +1,213 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import Image from "next/image";
+import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import { useLenis } from "lenis/react";
 import { projects, serviceName, type Project } from "@/lib/site";
 import { TLink } from "../Transition";
-import { FadeUp, Heading } from "../ui/Reveal";
 import { Arrow } from "../ui/Button";
+
+/*
+ * Portfolio jako „kinowy” pokaz sterowany przewijaniem:
+ * 1) mała ramka rośnie do pełnego ekranu, przykrywając napis „Portfolio”,
+ * 2) każdy kolejny projekt odsłania się od dołu na poprzednim (który lekko się oddala i ciemnieje),
+ * 3) nazwa projektu i licznik przewijają się jak na tablicy.
+ */
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const FEATURED = 6;
 const list = projects.slice(0, FEATURED);
+const N = list.length;
+const EXPAND = 0.8; // ile „ekranów” przewijania zajmuje rozrost ramki
+const clamp = (v: number) => Math.min(1, Math.max(0, v));
+const smooth = (x: number) => x * x * (3 - 2 * x);
 
-// Kafel = zdjęcie; podpis na zdjęciu, delikatna paralaksa w poziomie
-function Tile({ p, i, progress, big }: { p: Project; i: number; progress: MotionValue<number>; big: boolean }) {
-  const x = useTransform(progress, [0, 1], ["5%", "-5%"]);
+// pozycja w pokazie: 0 … N-1 (ułamki = w trakcie przejścia)
+const slideOf = (p: number) => Math.min(N - 1, Math.max(0, p * N - EXPAND));
+const revealOf = (s: number, i: number) => (i === 0 ? 1 : smooth(clamp((s - (i - 1) - 0.2) / 0.6)));
+
+function Layer({ p, i, progress }: { p: Project; i: number; progress: MotionValue<number> }) {
+  const reveal = useTransform(progress, (v) => revealOf(slideOf(v), i));
+  const covered = useTransform(progress, (v) => (i < N - 1 ? revealOf(slideOf(v), i + 1) : 0));
+  const clip = useTransform(reveal, (r) => `inset(${(1 - r) * 100}% 0% 0% 0%)`);
+  // wejście: zdjęcie dojeżdża z dołu i z przybliżenia; przykrywane: oddala się i ciemnieje
+  const y = useTransform(reveal, (r) => `${(1 - r) * 18}%`);
+  const scale = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => 1 + (1 - r) * 0.18 + c * 0.08);
+  const shade = useTransform(covered, (c) => c * 0.65);
   return (
-    <TLink
-      href={`/realizacje/${p.slug}`}
-      label={p.name}
-      className={`group relative block shrink-0 overflow-hidden rounded-[26px] bg-surface ${
-        big ? "h-[66svh] w-[min(58vw,1040px)]" : "h-[52svh] w-[min(38vw,680px)] self-end"
-      }`}
-      aria-label={`${p.name} — ${serviceName(p.category)}`}
-    >
-      <motion.span className="absolute inset-y-0 -left-[6%] block w-[112%]" style={{ x }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.image} alt="" loading="lazy" className="size-full object-cover object-top transition-transform duration-[1.4s] ease-out-expo group-hover:scale-[1.04]" />
-      </motion.span>
-      <span className="absolute inset-0 bg-[linear-gradient(to_top,rgb(7_7_10/0.94),rgb(7_7_10/0.55)_28%,transparent_58%)]" />
-      <span className="pointer-events-none absolute inset-0 rounded-[26px] ring-1 ring-white/[0.08] ring-inset" />
-
-      <span className="absolute top-5 left-6 text-[13px] text-white/60 tabular-nums">0{i + 1}</span>
-      <span className="absolute top-5 right-5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[12px] text-white/80 backdrop-blur-md">{serviceName(p.category)}</span>
-
-      <span className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-6">
-        <span>
-          <span className={`h-display block text-white ${big ? "text-[clamp(2.4rem,4.4vw,4.6rem)]" : "text-[clamp(2rem,3vw,3rem)]"}`}>{p.name}</span>
-          <span className="mt-2 block text-[15px] text-white/60">
-            {p.client} · {p.year}
-          </span>
-        </span>
-        <span className="grid size-14 shrink-0 translate-y-3 scale-75 place-items-center rounded-full bg-white text-bg opacity-0 transition-all duration-700 ease-out-expo group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
-          <Arrow className="size-4" />
-        </span>
-      </span>
-    </TLink>
+    <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: clip, zIndex: i }}>
+      <motion.div className="absolute inset-0" style={{ y, scale }}>
+        <Image src={p.image} alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
+      </motion.div>
+      <motion.div className="absolute inset-0 bg-bg" style={{ opacity: shade }} />
+    </motion.div>
   );
 }
 
-// Telefon / tablet: pionowa lista kafli
-function MobileList() {
+function Roll({ k, children, className = "", delay = 0 }: { k: string | number; children: React.ReactNode; className?: string; delay?: number }) {
   return (
-    <div className="mx-auto max-w-[1400px] px-5 sm:px-10 lg:hidden">
-      <ul className="grid gap-5 sm:grid-cols-2">
-        {list.slice(0, 4).map((p, i) => (
-          <motion.li key={p.slug} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: (i % 2) * 0.08, duration: 1, ease }}>
-            <TLink href={`/realizacje/${p.slug}`} label={p.name} className="group relative block aspect-[4/5] overflow-hidden rounded-[22px] bg-surface">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.image} alt="" loading="lazy" className="absolute inset-0 size-full object-cover object-top" />
-              <span className="absolute inset-0 bg-[linear-gradient(to_top,rgb(7_7_10/0.85),transparent_55%)]" />
-              <span className="absolute top-4 right-4 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[12px] text-white/80 backdrop-blur-md">{serviceName(p.category)}</span>
-              <span className="absolute inset-x-5 bottom-5">
-                <span className="h-display block text-[2.4rem] text-white">{p.name}</span>
-                <span className="mt-1 block text-[14px] text-white/60">
-                  {p.client} · {p.year}
-                </span>
-              </span>
-            </TLink>
-          </motion.li>
-        ))}
-      </ul>
-      <div className="mt-10 flex justify-center">
-        <TLink href="/realizacje" label="Realizacje" className="group btn btn-outline">
-          <span className="roll">
-            <span>Wszystkie realizacje — {projects.length}</span>
-            <span aria-hidden>Wszystkie realizacje — {projects.length}</span>
-          </span>
-        </TLink>
-      </div>
-    </div>
+    <span className={`relative block overflow-hidden ${className}`}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={k}
+          className="block"
+          initial={{ y: "105%" }}
+          animate={{ y: "0%" }}
+          exit={{ y: "-105%" }}
+          transition={{ duration: 0.9, delay, ease }}
+        >
+          {children}
+        </motion.span>
+      </AnimatePresence>
+    </span>
   );
 }
 
 export default function Work() {
   const wrap = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
-  const [dist, setDist] = useState(0);
+  const lenis = useLenis();
   const [current, setCurrent] = useState(0);
+  const narrow = useMotionValue(0);
 
-  // przewijanie w pionie przesuwa pas kafli w poziomie
   useEffect(() => {
-    const el = track.current;
-    if (!el) return;
-    const measure = () => setDist(Math.max(0, el.scrollWidth - window.innerWidth));
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
+    const mq = window.matchMedia("(max-width: 767px)");
+    const on = () => narrow.set(mq.matches ? 1 : 0);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [narrow]);
 
   const { scrollYProgress } = useScroll({ target: wrap, offset: ["start start", "end end"] });
-  const x = useTransform(scrollYProgress, (v) => -v * dist);
-  useMotionValueEvent(scrollYProgress, "change", (v) => setCurrent(Math.min(list.length - 1, Math.floor(v * list.length))));
+  const expand = useTransform(scrollYProgress, (v) => smooth(clamp((v * N) / EXPAND)));
+  const frame = useTransform([expand, narrow] as MotionValue<number>[], ([e, n]: number[]) => {
+    const [t, x] = n ? [30, 12] : [27, 33];
+    const r = 32 - e * 8;
+    return `inset(${t * (1 - e) + 1.2 * e}% ${x * (1 - e) + 0.9 * e}% ${t * (1 - e) + 1.2 * e}% ${x * (1 - e) + 0.9 * e}% round ${r}px)`;
+  });
+  const wordScale = useTransform(expand, [0, 1], [1, 0.86]);
+  const wordOpacity = useTransform(expand, [0, 0.7], [1, 0]);
+  const ui = useTransform(scrollYProgress, (v) => clamp((v * N - EXPAND * 0.7) / 0.3));
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    const s = slideOf(v);
+    let idx = 0;
+    for (let i = 1; i < N; i++) if (revealOf(s, i) > 0.5) idx = i;
+    setCurrent(idx);
+  });
+
+  // kliknięcie w pasek postępu → przewiń do projektu
+  const jump = (i: number) => {
+    const el = wrap.current;
+    if (!el) return;
+    const total = el.offsetHeight - window.innerHeight;
+    const v = (EXPAND + Math.max(0, i - 1) + (i ? 0.85 : 0)) / N;
+    lenis?.scrollTo(el.offsetTop + total * v, { duration: 1.4 });
+  };
+
+  const p = list[current];
 
   return (
-    <section id="realizacje" className="relative py-32 lg:py-0">
-      <div className="mx-auto mb-14 max-w-[1400px] px-5 sm:px-10 lg:hidden">
-        <FadeUp>
-          <p className="kicker">Realizacje</p>
-        </FadeUp>
-        <Heading className="mt-7 text-[clamp(2.8rem,6.5vw,6.4rem)]" lines={["Wybrane", <span key="2" className="text-muted">realizacje</span>]} />
-      </div>
-      <MobileList />
+    <section id="portfolio" aria-labelledby="portfolio-title" className="relative">
+      <div ref={wrap} className="relative" style={{ height: `${(N + 1) * 100}svh` }}>
+        <div className="sticky top-0 h-[100svh] overflow-hidden">
 
-      <div ref={wrap} className="relative hidden lg:block" style={{ height: `calc(100svh + ${dist}px)` }}>
-        <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden">
-          <motion.div ref={track} className="flex w-max items-stretch gap-6 px-10 pt-16" style={{ x }}>
-            {/* wstęp */}
-            <div className="flex w-[min(30vw,460px)] shrink-0 flex-col justify-between py-2 pr-6">
-              <div>
-                <FadeUp>
-                  <p className="kicker">Realizacje</p>
-                </FadeUp>
-                <Heading className="mt-7 text-[clamp(3rem,5.4vw,6rem)]" lines={["Wybrane", <span key="2" className="text-muted">realizacje</span>]} />
-              </div>
-              <FadeUp delay={0.15}>
-                <p className="max-w-[340px] text-[16px] leading-relaxed text-muted">Strony, sklepy i marki projektowane od zera. Przewiń, żeby zobaczyć więcej.</p>
-                <motion.span className="mt-8 flex items-center gap-3 text-[13px] text-dim" animate={{ x: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}>
-                  <span className="h-px w-10 bg-dim" />
-                  Przewiń
-                </motion.span>
-              </FadeUp>
-            </div>
-
-            {list.map((p, i) => (
-              <Tile key={p.slug} p={p} i={i} progress={scrollYProgress} big={i % 2 === 0} />
+          <motion.div className="absolute inset-0 bg-surface" style={{ clipPath: frame }}>
+            {list.map((proj, i) => (
+              <Layer key={proj.slug} p={proj} i={i} progress={scrollYProgress} />
             ))}
 
-            {/* wszystkie */}
-            <TLink href="/realizacje" label="Realizacje" className="group edge relative flex w-[min(30vw,460px)] shrink-0 flex-col justify-between overflow-hidden rounded-[26px] bg-surface p-8">
-              <span className="absolute -right-24 -bottom-24 size-[360px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.28),transparent)] transition-transform duration-1000 ease-out-expo group-hover:scale-125" />
-              <span className="relative text-[14px] text-muted">{projects.length} projektów</span>
-              <span className="relative">
-                <span className="h-display block text-[clamp(2.6rem,4vw,4rem)]">
-                  Wszystkie
-                  <br />
-                  <span className="text-muted transition-colors duration-500 group-hover:text-accent-2">realizacje</span>
-                </span>
-                <span className="mt-8 grid size-14 place-items-center rounded-full bg-white text-bg transition-transform duration-700 ease-out-expo group-hover:rotate-45">
-                  <Arrow className="size-4" />
-                </span>
-              </span>
-            </TLink>
+            {/* cały kadr prowadzi do projektu */}
+            <TLink href={`/portfolio/${p.slug}`} label={p.name} className="absolute inset-0 z-20" aria-label={`Zobacz projekt ${p.name}`} tabIndex={-1} />
+
+            <motion.div className="pointer-events-none absolute inset-0 z-30" style={{ opacity: ui }}>
+              <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-bg/75 to-transparent" />
+              {/* stopniowe rozmycie pod nazwą projektu — czytelnie na każdym zdjęciu */}
+              <div className="absolute inset-x-0 bottom-0 h-[50%] backdrop-blur-2xl [mask-image:linear-gradient(to_top,#000_35%,transparent)]" />
+              <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-bg/90 via-bg/45 to-transparent" />
+
+              {/* góra */}
+              <div className="absolute inset-x-5 top-24 flex items-start justify-between sm:inset-x-10 sm:top-28">
+                <p className="text-[13px] text-white/70">Portfolio</p>
+                <p className="flex items-baseline gap-1.5 text-[13px] text-white/70 tabular-nums">
+                  <Roll k={current} className="text-white">
+                    0{current + 1}
+                  </Roll>
+                  / 0{N}
+                </p>
+              </div>
+
+              {/* dół */}
+              <div className="absolute inset-x-5 bottom-8 flex flex-col gap-6 sm:inset-x-10 sm:bottom-12 md:flex-row md:items-end md:justify-between">
+                <div className="min-w-0">
+                  <Roll k={`c-${current}`} className="text-[14px] text-accent-2">
+                    {serviceName(p.category)}
+                  </Roll>
+                  <h3 className="h-display mt-3 text-[clamp(3rem,9vw,9rem)] text-white">
+                    <Roll k={`n-${current}`} className="pb-[0.12em] -mb-[0.12em]" delay={0.04}>
+                      {p.name}
+                    </Roll>
+                  </h3>
+                  <Roll k={`m-${current}`} className="mt-3 text-[15px] text-white/60" delay={0.08}>
+                    {p.client} · {p.year}
+                  </Roll>
+                </div>
+
+                <TLink
+                  href={`/portfolio/${p.slug}`}
+                  label={p.name}
+                  className="group pointer-events-auto flex shrink-0 items-center gap-4 self-start rounded-full bg-white py-2 pr-2 pl-6 text-[15px] font-medium text-bg md:self-auto"
+                >
+                  <span className="roll">
+                    <span>Zobacz projekt</span>
+                    <span aria-hidden>Zobacz projekt</span>
+                  </span>
+                  <span className="grid size-11 place-items-center rounded-full bg-accent text-white transition-transform duration-700 ease-out-expo group-hover:rotate-45">
+                    <Arrow className="size-4" />
+                  </span>
+                </TLink>
+              </div>
+
+              {/* pasek postępu */}
+              <div className="pointer-events-auto absolute top-1/2 right-5 hidden -translate-y-1/2 flex-col gap-2 sm:right-10 md:flex" role="tablist" aria-label="Projekty">
+                {list.map((proj, i) => (
+                  <button
+                    key={proj.slug}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === current}
+                    aria-label={proj.name}
+                    onClick={() => jump(i)}
+                    className="group flex items-center justify-end gap-3 py-1"
+                  >
+                    <span className={`text-[12px] transition-all duration-500 ${i === current ? "text-white opacity-100" : "translate-x-2 text-white/50 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"}`}>{proj.name}</span>
+                    <span className={`block h-px transition-all duration-700 ease-out-expo ${i === current ? "w-10 bg-white" : "w-5 bg-white/35 group-hover:w-7 group-hover:bg-white/70"}`} />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
 
-          {/* postęp */}
-          <div className="mx-auto mt-10 flex w-full max-w-[1400px] items-center gap-6 px-10">
-            <span className="w-14 text-[13px] text-muted tabular-nums">
-              0{current + 1} / 0{list.length}
-            </span>
-            <span className="relative h-px flex-1 bg-line">
-              <motion.span className="absolute inset-0 origin-left bg-accent" style={{ scaleX: scrollYProgress }} />
-            </span>
-            <span className="w-40 truncate text-right text-[13px] text-muted">{list[current].name}</span>
-          </div>
+          {/* napis nad ramką (odwrócone kolory) — znika, gdy ramka wypełnia ekran */}
+          <motion.div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center mix-blend-difference" style={{ scale: wordScale, opacity: wordOpacity }}>
+            <h2 id="portfolio-title" className="h-display text-[clamp(4.5rem,21vw,22rem)] leading-[0.8] tracking-[-0.06em] text-white">
+              Portfolio
+            </h2>
+            <p className="mt-6 text-[14px] text-white/70">Wybrane projekty · 0{N}</p>
+          </motion.div>
         </div>
+      </div>
+
+      {/* całe portfolio */}
+      <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-6 px-5 pt-16 pb-8 sm:flex-row sm:items-center sm:px-10">
+        <p className="max-w-md text-[17px] leading-relaxed text-muted">Strony, sklepy, identyfikacje i projekty UI/UX — każdy zaprojektowany od zera, pod konkretny cel.</p>
+        <TLink href="/portfolio" label="Portfolio" className="group flex items-center gap-4 text-[clamp(1.4rem,2.4vw,2rem)] tracking-[-0.02em]">
+          <span className="link-u">Całe portfolio</span>
+          <span className="text-[14px] text-dim">{projects.length}</span>
+          <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-ink group-hover:text-bg">
+            <Arrow className="size-4" />
+          </span>
+        </TLink>
       </div>
     </section>
   );

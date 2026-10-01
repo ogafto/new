@@ -7,24 +7,44 @@ import "./globals.css";
 // Satoshi (Fontshare, ITF Free Font License — patrz src/fonts/Satoshi-LICENSE.txt)
 const satoshi = localFont({ src: "../fonts/Satoshi-Variable.woff2", variable: "--font-satoshi", weight: "300 900", display: "swap" });
 
+const title = `${site.domain} — projektowanie stron internetowych, sklepów i identyfikacji wizualnych`;
+const description =
+  "Projektuję i koduję strony internetowe, sklepy internetowe, identyfikacje wizualne i projekty UI/UX, które wyglądają premium i sprzedają. Szybkie, dopracowane na telefonie i gotowe pod Google.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: {
-    default: `${site.domain} — strony, które wyglądają drogo i sprzedają`,
-    template: `%s — ${site.domain}`,
-  },
-  description:
-    "Web designer & developer. Projektuję i koduję strony internetowe, sklepy, identyfikacje wizualne i projekty UI/UX dla firm, które chcą wyróżnić się od pierwszego spojrzenia.",
-  keywords: ["strona internetowa", "sklep internetowy", "identyfikacja wizualna", "projekt UI/UX", "web designer", "web developer", "projektowanie stron"],
+  title: { default: title, template: `%s — ${site.domain}` },
+  description,
+  applicationName: site.domain,
+  keywords: [
+    "projektowanie stron internetowych",
+    "strona internetowa",
+    "tworzenie stron www",
+    "sklep internetowy",
+    "identyfikacja wizualna",
+    "projekt logo",
+    "projekt UI/UX",
+    "web designer",
+    "strona dla firmy",
+    "landing page",
+  ],
+  creator: site.domain,
+  publisher: site.domain,
+  category: "design",
   alternates: { canonical: "/" },
   openGraph: {
-    title: `${site.domain} — strony, które wyglądają drogo i sprzedają`,
-    description: "Strony internetowe, sklepy i identyfikacje wizualne premium.",
+    title,
+    description,
     url: site.url,
     siteName: site.domain,
     locale: "pl_PL",
     type: "website",
   },
+  twitter: { card: "summary_large_image", title, description },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  formatDetection: { telephone: false },
+  // Google Search Console → Ustawienia → Weryfikacja własności → tag HTML (sama wartość content)
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : undefined,
 };
 
 export const viewport: Viewport = {

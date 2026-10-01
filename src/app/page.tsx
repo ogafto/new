@@ -9,16 +9,13 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      {/* kontener z pionowymi liniami po bokach — cała strona "siedzi" na siatce */}
-      <div className="mx-3 border-x border-line sm:mx-6 2xl:mx-auto 2xl:max-w-[1440px]">
-        <main>
-          <Hero />
-          <Work />
-          <Process />
-          <Contact />
-        </main>
-        <Footer />
-      </div>
+      <main>
+        <Hero />
+        <Work />
+        <Process />
+        <Contact />
+      </main>
+      <Footer />
     </>
   );
 }

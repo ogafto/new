@@ -19,7 +19,9 @@ export default function ServiceIcon({ id, active = false, className = "size-11" 
           key={`${id}-${i}-${active}`}
           d={d}
           stroke="currentColor"
-          strokeWidth="1.2"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}
           viewport={{ once: !active }}

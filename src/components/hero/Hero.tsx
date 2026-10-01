@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { projects, site } from "@/lib/site";
+import { site } from "@/lib/site";
 import { useLoaded } from "../Providers";
-import { Arrow, Cross, LineX } from "../ui/Line";
-import RidgeField from "./RidgeField";
-import Eye from "./Eye";
+import Button, { Magnetic } from "../ui/Button";
+import { ShowcaseRows, ShowcaseWall } from "./Showcase";
 
-const ease = [0.76, 0, 0.24, 1] as const;
+const ease = [0.16, 1, 0.3, 1] as const;
 
-function Reveal({ children, delay, show }: { children: React.ReactNode; delay: number; show: boolean }) {
+const trust = ["Odpowiedź w 24 godziny", "Stała cena — bez niespodzianek", "Widzisz projekt przed realizacją"];
+
+function Line({ children, i, show }: { children: React.ReactNode; i: number; show: boolean }) {
   return (
-    <span className="block overflow-hidden pb-[0.04em]">
-      <motion.span className="block" initial={{ y: "102%" }} animate={show ? { y: "0%" } : {}} transition={{ delay, duration: 1.1, ease }}>
+    <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
+      <motion.span className="block" initial={{ y: "108%" }} animate={show ? { y: "0%" } : {}} transition={{ delay: 0.1 + i * 0.09, duration: 1.2, ease }}>
         {children}
       </motion.span>
     </span>
@@ -21,86 +21,91 @@ function Reveal({ children, delay, show }: { children: React.ReactNode; delay: n
 }
 
 export default function Hero() {
-  const loaded = useLoaded();
-  const coords = useRef<HTMLSpanElement>(null);
-
-  // współrzędne kursora jak w programie graficznym
-  useEffect(() => {
-    const pad = (n: number) => String(Math.max(0, Math.round(n))).padStart(4, "0");
-    const onMove = (e: PointerEvent) => {
-      if (coords.current) coords.current.textContent = `X ${pad(e.clientX)}  Y ${pad(e.clientY + window.scrollY)}`;
-    };
-    window.addEventListener("pointermove", onMove);
-    return () => window.removeEventListener("pointermove", onMove);
-  }, []);
-
-  const cells = [
-    <>{site.brand} — grafika & web design</>,
-    <>Strony · Sklepy · Branding · UI/UX</>,
-    <>
-      <span className="mr-2 inline-block size-1.5 bg-accent align-middle" /> Przyjmuję zlecenia
-    </>,
-    <span key="c" ref={coords} className="tabular-nums">
-      X 0000 Y 0000
-    </span>,
-  ];
+  const show = useLoaded();
+  const fade = (d: number) => ({
+    initial: { opacity: 0, y: 18 },
+    animate: show ? { opacity: 1, y: 0 } : {},
+    transition: { delay: d, duration: 1, ease },
+  });
 
   return (
-    <section id="start" className="relative flex min-h-[100svh] flex-col pt-14">
-      <div className="relative grid grid-cols-2 lg:grid-cols-4">
-        {cells.map((c, i) => (
-          <motion.div
-            key={i}
-            className={`label flex h-11 items-center border-line px-4 text-muted sm:px-6 ${i % 2 === 0 ? "border-r" : ""} ${i === 1 ? "lg:border-r" : ""} ${i >= 2 ? "hidden lg:flex" : ""}`}
-            initial={{ opacity: 0 }}
-            animate={loaded ? { opacity: 1 } : {}}
-            transition={{ delay: 0.3 + i * 0.08 }}
-          >
-            {c}
+    <section id="start" className="relative overflow-hidden pt-[72px]">
+      <div className="mx-auto grid max-w-[1320px] items-center gap-14 px-5 pt-14 pb-16 sm:px-8 lg:min-h-[calc(100svh-72px)] lg:grid-cols-[1.08fr_1fr] lg:gap-10 lg:py-0">
+        <div className="relative z-10">
+          <motion.p {...fade(0)} className="inline-flex items-center gap-2.5 rounded-full border border-line-2 py-1.5 pr-4 pl-1.5 text-[14px] text-muted">
+            <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-[13px] text-accent-2">{site.role}</span>
+            {site.location}
+          </motion.p>
+
+          <h1 className="h-display mt-8 text-[clamp(2.8rem,5.3vw,5.1rem)]">
+            <Line i={0} show={show}>
+              Strony, które
+            </Line>
+            <Line i={1} show={show}>
+              wyglądają drogo.
+            </Line>
+            <Line i={2} show={show}>
+              <span className="text-muted">I </span>
+              <span className="relative inline-block">
+                sprzedają.
+                <svg viewBox="0 0 300 24" preserveAspectRatio="none" className="absolute -bottom-[0.06em] left-0 h-[0.16em] w-[96%] overflow-visible text-accent" aria-hidden>
+                  <motion.path
+                    d="M3 16 C 60 6, 140 4, 297 11"
+                    stroke="currentColor"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    fill="none"
+                    initial={{ pathLength: 0 }}
+                    animate={show ? { pathLength: 1 } : {}}
+                    transition={{ delay: 0.8, duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
+                  />
+                </svg>
+              </span>
+            </Line>
+          </h1>
+
+          <motion.p {...fade(0.5)} className="mt-8 max-w-[34rem] text-[18px] leading-relaxed text-muted lg:text-[19px]">
+            Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne, które budują zaufanie od pierwszego spojrzenia.{" "}
+            <span className="text-ink">Jakość dużej agencji — bez agencyjnych cen.</span>
+          </motion.p>
+
+          <motion.div {...fade(0.62)} className="mt-10 flex flex-wrap items-center gap-3">
+            <Magnetic>
+              <Button href="#kontakt">Wyceń projekt</Button>
+            </Magnetic>
+            <Magnetic>
+              <Button href="#realizacje" variant="ghost" arrow={false}>
+                Zobacz realizacje
+              </Button>
+            </Magnetic>
           </motion.div>
-        ))}
-        <LineX className="bottom-0" />
-      </div>
 
-      <div className="relative min-h-[56svh] flex-1">
-        <RidgeField className="absolute inset-0 h-full w-full" />
-        <h1 className="display relative z-10 px-4 pt-[5vh] text-[clamp(3.2rem,13.2vw,13.5rem)] sm:px-6">
-          <Reveal delay={0.1} show={loaded}>Klienci kupują</Reveal>
-          <Reveal delay={0.22} show={loaded}>
-            <Eye />
-            czami.
-          </Reveal>
-        </h1>
-      </div>
+          <motion.ul {...fade(0.75)} className="mt-12 flex flex-col gap-3 text-[15px] text-muted sm:flex-row sm:flex-wrap sm:gap-x-7">
+            {trust.map((t) => (
+              <li key={t} className="flex items-center gap-2.5">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-accent-2" aria-hidden>
+                  <path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t}
+              </li>
+            ))}
+          </motion.ul>
+        </div>
 
-      <div className="relative z-10 grid bg-bg lg:grid-cols-4">
-        <LineX className="top-0" />
-        <Cross className="-top-[5px] -left-[6px]" />
-        <Cross className="-top-[5px] -right-[6px]" />
-        <motion.p
-          className="border-line p-4 text-[17px] leading-relaxed text-muted sm:p-6 lg:col-span-2 lg:border-r lg:text-[19px]"
-          initial={{ opacity: 0, y: 12 }}
-          animate={loaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.6, duration: 0.8 }}
+        <motion.div
+          className="relative hidden h-[calc(100svh-72px)] min-h-[640px] lg:-mr-[max(32px,calc((100vw-1320px)/2+32px))] lg:block"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={show ? { opacity: 1, scale: 1 } : {}}
+          transition={{ delay: 0.3, duration: 1.4, ease }}
+          aria-hidden
         >
-          Twoja strona ma kilka sekund, żeby przekonać klienta.{" "}
-          <span className="text-ink">Projektuję i koduję strony, sklepy i identyfikacje wizualne, które robią to od pierwszego spojrzenia.</span>
-        </motion.p>
-        <a href="#prace" className="group relative flex min-h-[120px] flex-col justify-between border-t border-line p-4 sm:p-6 lg:border-t-0 lg:border-r">
-          <span className="label text-muted">Portfolio · {String(projects.length).padStart(2, "0")} prace</span>
-          <span className="flex items-end justify-between">
-            <span className="display text-[34px] lg:text-[44px]">Zobacz prace</span>
-            <span className="text-2xl transition-transform duration-500 ease-out-expo group-hover:translate-y-1">↓</span>
-          </span>
-        </a>
-        <a href="#kontakt" className="group relative flex min-h-[120px] flex-col justify-between bg-accent p-4 text-bg transition-colors duration-300 hover:bg-ink sm:p-6">
-          <span className="label">Odpowiedź w 24 h</span>
-          <span className="flex items-end justify-between">
-            <span className="display text-[34px] lg:text-[44px]">Wyceń projekt</span>
-            <Arrow className="size-7 transition-transform duration-500 ease-out-expo group-hover:translate-x-1 group-hover:-translate-y-1" />
-          </span>
-        </a>
+          <ShowcaseWall />
+        </motion.div>
       </div>
+
+      <motion.div className="pb-16 lg:hidden" initial={{ opacity: 0 }} animate={show ? { opacity: 1 } : {}} transition={{ delay: 0.6, duration: 1 }} aria-hidden>
+        <ShowcaseRows />
+      </motion.div>
     </section>
   );
 }

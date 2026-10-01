@@ -4,66 +4,98 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Polityka prywatności",
-  description: "Zasady przetwarzania danych osobowych i plików cookies.",
+  description: "Jak afto.works przetwarza dane osobowe, jakich plików cookies używa i jakie masz prawa.",
+  alternates: { canonical: "/polityka-prywatnosci" },
 };
 
-const { owner, address } = site.legal;
+const { owner, street, city } = site.legal;
+
+const summary = [
+  "Administratorem danych jestem ja — Wojciech Lubojański, Wrocław.",
+  "Dane z formularza wykorzystuję tylko do odpowiedzi i przygotowania wyceny.",
+  "Nie sprzedaję danych i nie wysyłam newsletterów.",
+  "Statystyki odwiedzin zbieram anonimowo, bez plików cookies.",
+  "Google Analytics włącza się wyłącznie za Twoją zgodą.",
+  "W każdej chwili możesz poprosić o wgląd, poprawienie lub usunięcie danych.",
+];
 
 const sections: LegalSection[] = [
   {
     title: "Administrator danych",
     items: [
-      `Administratorem danych osobowych jest ${owner}, ${address} (dalej: „Administrator”).`,
-      `W sprawach ochrony danych możesz kontaktować się pod adresem ${site.email}.`,
+      `Administratorem danych osobowych jest ${owner}, prowadzący działalność nierejestrowaną, ${street}, ${city} (dalej: „Administrator”).`,
+      `Kontakt w sprawach danych osobowych: ${site.email}, tel. ${site.phone}. Administrator nie wyznaczył inspektora ochrony danych.`,
     ],
   },
   {
-    title: "Jakie dane przetwarzam i po co",
+    title: "Cele, podstawy i okres przetwarzania",
     items: [
-      "Imię, adres e-mail, numer telefonu i treść wiadomości — w celu odpowiedzi na zapytanie i przygotowania wyceny (art. 6 ust. 1 lit. b RODO).",
-      "Imię, adres e-mail i hasło (przechowywane wyłącznie w postaci zaszyfrowanego skrótu) — w celu prowadzenia konta w panelu klienta, do którego dostęp otrzymujesz po zaproszeniu (art. 6 ust. 1 lit. b RODO).",
-      "Dane niezbędne do wystawienia rachunku lub faktury — w celu wypełnienia obowiązków prawnych (art. 6 ust. 1 lit. c RODO).",
-      "Dane z korespondencji — w celu ewentualnego dochodzenia roszczeń lub obrony przed nimi (art. 6 ust. 1 lit. f RODO).",
-    ],
-  },
-  {
-    title: "Jak długo przechowuję dane",
-    items: [
-      "Zapytania z formularza są przechowywane w panelu administratora, dopóki są potrzebne do kontaktu i realizacji zlecenia.",
-      "Dane z zapytań — do czasu zakończenia korespondencji, a w przypadku zawarcia umowy przez okres jej realizacji.",
-      "Dane konta w panelu klienta — do czasu usunięcia konta (na Twoją prośbę) lub zakończenia współpracy.",
-      "Dane rozliczeniowe — przez okres wymagany przepisami podatkowymi.",
+      "Formularz kontaktowy, e-mail, telefon, Discord — imię i nazwisko, adres e-mail, numer telefonu, wybraną usługę, budżet i treść wiadomości przetwarzam, aby odpowiedzieć na zapytanie i przygotować wycenę (art. 6 ust. 1 lit. b RODO — działania przed zawarciem umowy, oraz lit. f — prawnie uzasadniony interes polegający na odpowiadaniu na wiadomości). Dane przechowuję do zakończenia korespondencji, a jeśli nie dojdzie do współpracy — nie dłużej niż 12 miesięcy od ostatniego kontaktu.",
+      "Realizacja umowy — dane kontaktowe i dane potrzebne do rozliczenia przetwarzam w celu wykonania umowy (art. 6 ust. 1 lit. b RODO) przez czas jej trwania, a następnie do upływu terminów przedawnienia roszczeń.",
+      "Obowiązki prawne — dane z rachunków przechowuję przez okres wymagany przepisami podatkowymi (art. 6 ust. 1 lit. c RODO).",
+      "Panel klienta — imię i nazwisko, adres e-mail, numer telefonu, skrót hasła (samego hasła nie znam), daty logowań oraz treści dodane w edytorze przetwarzam, aby prowadzić konto (art. 6 ust. 1 lit. b RODO), do czasu jego usunięcia.",
+      "Dochodzenie i obrona roszczeń — w niezbędnym zakresie, na podstawie prawnie uzasadnionego interesu (art. 6 ust. 1 lit. f RODO), do upływu terminów przedawnienia.",
+      "Statystyki odwiedzin — własna analityka bez plików cookies: zapisuję odwiedzone podstrony, czas wizyty, głębokość przewinięcia, kliknięte elementy, typ urządzenia, przeglądarkę, kraj i źródło wejścia. Odwiedzającego rozpoznaję tylko po skrócie, który zmienia się codziennie — adresu IP nie przechowuję. Podstawa: prawnie uzasadniony interes w ulepszaniu strony (art. 6 ust. 1 lit. f RODO). Dane usuwam po 26 miesiącach.",
+      "Google Analytics — wyłącznie po wyrażeniu zgody w ustawieniach cookies (art. 6 ust. 1 lit. a RODO), do czasu jej wycofania.",
     ],
   },
   {
     title: "Odbiorcy danych",
     items: [
-      "Dane mogą być przekazywane podmiotom wspierającym działalność Administratora: dostawcy poczty e-mail, hostingu oraz biuru rachunkowemu — wyłącznie w niezbędnym zakresie.",
-      "Dane nie są sprzedawane ani udostępniane w celach marketingowych osobom trzecim.",
+      "Dane mogą otrzymać wyłącznie podmioty, które pomagają mi prowadzić stronę i współpracę, w niezbędnym zakresie i na podstawie umów powierzenia lub warunków usług: dostawca hostingu i bazy danych, dostawca wysyłki e-maili (Resend), komunikator Discord (powiadomienia o nowych zapytaniach), dostawca przechowywania plików oraz — po wyrażeniu zgody — Google (Google Analytics).",
+      "Dane mogą otrzymać także organy publiczne, jeśli wynika to z przepisów prawa.",
+      "Niektórzy dostawcy (np. Resend, Discord, Google, Vercel) mają siedzibę w USA. Przekazanie danych odbywa się na podstawie decyzji Komisji Europejskiej w sprawie EU-US Data Privacy Framework lub standardowych klauzul umownych.",
+      "Nie sprzedaję danych i nie udostępniam ich w celach marketingowych.",
     ],
   },
   {
     title: "Twoje prawa",
     items: [
-      "Masz prawo dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia oraz wniesienia sprzeciwu.",
-      "Masz prawo wnieść skargę do Prezesa Urzędu Ochrony Danych Osobowych.",
-      "Podanie danych jest dobrowolne, ale niezbędne do odpowiedzi na zapytanie.",
+      "Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia oraz wniesienia sprzeciwu wobec przetwarzania opartego na prawnie uzasadnionym interesie.",
+      "Jeśli przetwarzanie odbywa się na podstawie zgody, możesz ją w każdej chwili wycofać — bez wpływu na zgodność z prawem przetwarzania przed jej wycofaniem.",
+      `Aby skorzystać z praw, napisz na ${site.email}. Odpowiem w ciągu miesiąca.`,
+      "Masz prawo wnieść skargę do Prezesa Urzędu Ochrony Danych Osobowych (ul. Stawki 2, 00-193 Warszawa, uodo.gov.pl).",
+      "Podanie danych jest dobrowolne, ale bez nich nie mogę odpowiedzieć na zapytanie ani założyć konta. Nie podejmuję decyzji w sposób zautomatyzowany i nie profiluję.",
     ],
   },
   {
-    title: "Pliki cookies",
+    title: "Pliki cookies i pamięć przeglądarki",
     items: [
-      "Strona używa niezbędnych plików cookies, w tym ciasteczka „afto_consent”, które zapamiętuje Twój wybór dotyczący cookies przez 180 dni.",
-      "Po zalogowaniu do panelu klienta zapisywane jest niezbędne ciasteczko sesji „afto_session” (ważne 30 dni lub do wylogowania).",
-      "Strona mierzy ruch własną, anonimową analityką bez plików cookies: zapisywane są odwiedzone podstrony, czas i głębokość przewinięcia oraz kliknięcia. Odwiedzający jest rozpoznawany wyłącznie przez skrót zmieniający się codziennie — adres IP nie jest przechowywany, a danych nie da się powiązać z konkretną osobą.",
-      "Za Twoją zgodą strona może używać cookies analitycznych (Google Analytics 4) do anonimowych statystyk odwiedzin oraz marketingowych do pomiaru skuteczności reklam.",
-      "Cookies opcjonalne są ładowane dopiero po wyrażeniu zgody. Zgodę możesz w każdej chwili zmienić lub wycofać, klikając „Ustawienia cookies” w stopce strony.",
-      "Możesz też zarządzać plikami cookies w ustawieniach swojej przeglądarki.",
+      "Strona używa niezbędnych plików cookies, bez których nie działałaby poprawnie, oraz — tylko za Twoją zgodą — cookies analitycznych Google Analytics.",
+      "Zgodę możesz w każdej chwili zmienić lub wycofać w „Ustawieniach cookies” (link w stopce i na górze tej strony). Możesz też zarządzać plikami cookies w ustawieniach przeglądarki.",
+      "Własna analityka nie zapisuje niczego na Twoim urządzeniu.",
+    ],
+    table: {
+      head: ["Nazwa", "Rodzaj", "Cel", "Ważność"],
+      rows: [
+        ["afto_consent", "Niezbędne", "Zapamiętuje Twój wybór dotyczący cookies", "180 dni"],
+        ["afto_session", "Niezbędne", "Utrzymuje zalogowanie w panelu klienta", "30 dni lub do wylogowania"],
+        ["afto:service", "Niezbędne (pamięć sesji)", "Przenosi wybraną usługę z podstrony projektu do formularza", "Do zamknięcia karty"],
+        ["_ga, _ga_*", "Analityczne (Google)", "Statystyki odwiedzin Google Analytics — tylko po zgodzie", "Do 2 lat"],
+      ],
+    },
+  },
+  {
+    title: "Bezpieczeństwo",
+    items: [
+      "Strona korzysta z szyfrowanego połączenia (HTTPS). Hasła do panelu klienta są przechowywane wyłącznie jako skrót kryptograficzny (scrypt).",
+      "Dostęp do danych ma wyłącznie Administrator.",
     ],
   },
-
+  {
+    title: "Zmiany polityki",
+    items: ["Polityka może się zmienić, np. przy zmianie przepisów lub sposobu działania strony. Aktualna wersja jest zawsze dostępna na tej stronie, z datą obowiązywania."],
+  },
 ];
 
 export default function PolitykaPrywatnosci() {
-  return <LegalPage title="Polityka prywatności" sections={sections} />;
+  return (
+    <LegalPage
+      current="/polityka-prywatnosci"
+      title="Polityka prywatności"
+      intro="Jakie dane zbieram, po co, jak długo je przechowuję i jakie masz prawa. Bez prawniczego żargonu tam, gdzie się da."
+      summary={summary}
+      sections={sections}
+    />
+  );
 }

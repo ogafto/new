@@ -73,3 +73,13 @@ export async function sendReminders() {
   }
   return { sent: res.ok ? items.length : 0 };
 }
+
+// Porządki zgodne z polityką prywatności (raz dziennie razem z przypomnieniami)
+export async function housekeeping() {
+  const now = Date.now();
+  const months = (m: number) => now - m * 30.44 * 86_400_000;
+  await run("DELETE FROM pageviews WHERE ts < ?", [months(26)]);
+  await run("DELETE FROM events WHERE ts < ?", [months(26)]);
+  await run("DELETE FROM inquiries WHERE status != 'won' AND created_at < ?", [months(12)]);
+  await run("DELETE FROM sessions WHERE expires_at < ?", [now]);
+}

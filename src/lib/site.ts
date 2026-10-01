@@ -15,12 +15,13 @@ export const site = {
     { label: "Dribbble", href: "https://dribbble.com/" },
     { label: "Discord", href: "https://discord.com/" }, // podmień na swój link zaproszenia / profil
   ],
-  // Dane do regulaminu i polityki prywatności — uzupełnij przed publikacją.
+  // Dane do regulaminu i polityki prywatności
   legal: {
-    owner: "[Imię i nazwisko / nazwa firmy]",
-    address: "[adres]",
-    nip: "[NIP — jeśli dotyczy]",
-    updated: "1 października 2026",
+    owner: "Wojciech Lubojański",
+    form: "działalność nierejestrowana",
+    street: "ul. Stalowa 92/5a",
+    city: "53-440 Wrocław",
+    updated: "2 października 2026",
   },
 };
 

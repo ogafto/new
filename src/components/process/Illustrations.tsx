@@ -1,287 +1,443 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { animate, motion, useInView, useMotionValue, useTransform } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
+import { MARK, STROKE } from "@/lib/logo";
 
 /*
- * Ilustracje etapów procesu — małe, zapętlone sceny (grają tylko, gdy są na ekranie).
+ * Ilustracje etapów procesu — generatywne sceny w stylu strony (linie + światło),
+ * rysowane na canvasie / w SVG. Grają tylko, gdy są widoczne.
  */
 
 const ease = [0.16, 1, 0.3, 1] as const;
+const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
-// odtwarza scenę od nowa co `ms`, gdy widoczna
-function useLoop(ms: number) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { margin: "-15% 0px" });
+// canvas dopasowany do rozmiaru i gęstości pikseli, pętla tylko na ekranie
+function useCanvas(draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number) => void) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const inView = useInView(ref, { margin: "-10% 0px" });
+  const fn = useRef(draw);
+  useEffect(() => {
+    fn.current = draw;
+  });
+  useEffect(() => {
+    const c = ref.current;
+    if (!c || !inView) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    let raf = 0;
+    let w = 0;
+    let h = 0;
+    const size = () => {
+      const r = c.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      w = r.width;
+      h = r.height;
+      c.width = Math.round(w * dpr);
+      c.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    size();
+    const ro = new ResizeObserver(size);
+    ro.observe(c);
+    const start = performance.now();
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const loop = (now: number) => {
+      fn.current(ctx, w, h, reduce ? 4 : (now - start) / 1000);
+      if (!reduce) raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [inView]);
+  return { ref, inView };
+}
+
+function Caption({ children }: { children: React.ReactNode }) {
+  return <span className="pointer-events-none absolute bottom-4 left-5 text-[11.5px] tracking-[0.02em] text-dim">{children}</span>;
+}
+
+/* ---------- 1. Rozmowa: dwa głosy, które na zmianę mówią i się słuchają ---------- */
+
+const words = ["więcej klientów", "rezerwacje online", "budżet", "termin", "konkurencja", "styl marki", "telefon", "cel"];
+
+export function TalkArt() {
+  const sparks = useRef<{ x: number; y: number; vx: number; vy: number; life: number; v: boolean }[]>([]);
+  const [chips, setChips] = useState<{ id: number; text: string; x: number }[]>([]);
+  const { ref, inView } = useCanvas((ctx, w, h, t) => {
+    ctx.clearRect(0, 0, w, h);
+    const mid = h * 0.52;
+    // kto mówi: na zmianę co ~2,6 s, z płynnym przejściem
+    const phase = (t % 5.2) / 5.2;
+    const a = smooth(Math.sin(phase * Math.PI * 2) * 2.2 + 0.5);
+    const b = 1 - a;
+    const waves = [
+      { amp: 0.12 + a * 0.88, color: [239, 237, 245], k: 1, sp: 1.3 },
+      { amp: 0.12 + b * 0.88, color: [139, 108, 255], k: 1.35, sp: -1.1 },
+    ];
+    ctx.lineCap = "round";
+    for (const [wi, wv] of waves.entries()) {
+      for (const pass of [0, 1]) {
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += 3) {
+          const u = x / w;
+          const env = Math.sin(u * Math.PI) ** 1.6;
+          const y =
+            mid +
+            env *
+              wv.amp *
+              h *
+              0.22 *
+              (Math.sin(u * 14 * wv.k + t * 3 * wv.sp) * 0.55 + Math.sin(u * 31 * wv.k - t * 4.1 * wv.sp) * 0.25 + Math.sin(u * 6 + t * 1.3 + wi) * 0.35) *
+              (pass ? -0.45 : 1);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        const [r, g, bl] = wv.color;
+        ctx.strokeStyle = `rgba(${r},${g},${bl},${pass ? 0.18 : 0.35 + wv.amp * 0.6})`;
+        ctx.lineWidth = pass ? 1 : 1.6 + wv.amp;
+        ctx.shadowColor = `rgba(${r},${g},${bl},0.8)`;
+        ctx.shadowBlur = pass ? 0 : 14 * wv.amp;
+        ctx.stroke();
+      }
+      // iskry z mówiącej fali
+      if (wv.amp > 0.7 && Math.random() < 0.35) {
+        const x = w * (0.2 + Math.random() * 0.6);
+        sparks.current.push({ x, y: mid, vx: (Math.random() - 0.5) * 0.4, vy: -0.4 - Math.random() * 0.9, life: 1, v: wi === 1 });
+      }
+    }
+    ctx.shadowBlur = 0;
+    sparks.current = sparks.current.filter((s) => s.life > 0);
+    for (const s of sparks.current) {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life -= 0.012;
+      ctx.fillStyle = s.v ? `rgba(180,162,255,${s.life * 0.9})` : `rgba(239,237,245,${s.life * 0.7})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // linia środka
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fillRect(0, mid, w, 1);
+  });
+
+  // słowa-klucze wypływające z rozmowy
+  useEffect(() => {
+    if (!inView) return;
+    let i = 0;
+    const t = setInterval(() => {
+      const id = Date.now();
+      setChips((c) => [...c.slice(-3), { id, text: words[i++ % words.length], x: 12 + Math.random() * 56 }]);
+    }, 1300);
+    return () => clearInterval(t);
+  }, [inView]);
+
+  return (
+    <div className="absolute inset-0">
+      <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden />
+      <div className="absolute top-5 left-5 flex items-center gap-4 text-[12px] text-muted">
+        <span className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-ink" />
+          Ty
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-accent shadow-[0_0_10px_#8b6cff]" />
+          afto.
+        </span>
+      </div>
+      <AnimatePresence>
+        {chips.map((c) => (
+          <motion.span
+            key={c.id}
+            className="absolute top-[38%] rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[12px] whitespace-nowrap text-ink/80 backdrop-blur-md"
+            style={{ left: `${c.x}%` }}
+            initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
+            animate={{ opacity: [0, 1, 1, 0], y: -90, filter: "blur(0px)" }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 4.2, ease: "easeOut", times: [0, 0.15, 0.7, 1] }}
+          >
+            {c.text}
+          </motion.span>
+        ))}
+      </AnimatePresence>
+      <Caption>słucham · pytam · notuję</Caption>
+    </div>
+  );
+}
+
+/* ---------- 2. Kierunek: chaos linii układa się w jeden kierunek ---------- */
+
+export function DirectionArt() {
+  const { ref } = useCanvas((ctx, w, h, t) => {
+    ctx.clearRect(0, 0, w, h);
+    const gap = Math.max(16, w / 30);
+    const cycle = 8;
+    const p = (t % cycle) / cycle;
+    // 0–0.12 chaos, 0.12–0.45 linie zwracają się ku jednemu punktowi, 0.45–0.82 porządek, potem rozpad
+    const k = p < 0.12 ? 0 : p < 0.45 ? smooth((p - 0.12) / 0.33) : p < 0.82 ? 1 : 1 - smooth((p - 0.82) / 0.18);
+    const fx = w * 0.78;
+    const fy = h * 0.32;
+    const maxD = Math.hypot(w, h);
+    ctx.lineCap = "round";
+    for (let y = gap / 2; y < h; y += gap) {
+      for (let x = gap / 2; x < w; x += gap) {
+        const noise = Math.sin(x * 0.045 + t * 0.6) * 1.7 + Math.cos(y * 0.05 - t * 0.5) * 1.5 + Math.sin((x + y) * 0.02 + t * 0.35) * 1.2;
+        const dist = Math.hypot(fx - x, fy - y);
+        // fala porządkowania rozchodzi się od punktu docelowego
+        const local = smooth(k * 1.7 - (dist / maxD) * 0.9);
+        const target = Math.atan2(fy - y, fx - x);
+        let d = target - noise;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        const ang = noise + d * local;
+        const near = 1 - Math.min(1, dist / (maxD * 0.55));
+        const len = gap * (0.32 + local * (0.25 + near * 0.35));
+        const dx = (Math.cos(ang) * len) / 2;
+        const dy = (Math.sin(ang) * len) / 2;
+        const r = Math.round(110 + local * (60 + near * 60));
+        const g = Math.round(108 + local * (near * 70));
+        const b = Math.round(125 + local * 130);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${0.18 + local * (0.35 + near * 0.45)})`;
+        ctx.lineWidth = 1.1 + local * near * 1.4;
+        ctx.beginPath();
+        ctx.moveTo(x - dx, y - dy);
+        ctx.lineTo(x + dx, y + dy);
+        ctx.stroke();
+      }
+    }
+    // punkt docelowy — świeci, gdy wszystko się ułoży
+    const glow = ctx.createRadialGradient(fx, fy, 0, fx, fy, 70 + k * 40);
+    glow.addColorStop(0, `rgba(200,188,255,${0.55 * k})`);
+    glow.addColorStop(1, "rgba(139,108,255,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(fx - 120, fy - 120, 240, 240);
+    ctx.fillStyle = `rgba(255,255,255,${0.3 + k * 0.7})`;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 2.5 + k * 1.5 + Math.sin(t * 4) * 0.6 * k, 0, Math.PI * 2);
+    ctx.fill();
+    // kometa lecąca do celu
+    if (k > 0.9) {
+      const q = smooth(Math.min(1, ((t % cycle) / cycle - 0.45) / 0.3));
+      const sx = w * 0.05;
+      const sy = h * 0.9;
+      const cx = sx + (fx - sx) * q;
+      const cy = sy + (fy - sy) * q;
+      const ang = Math.atan2(fy - sy, fx - sx);
+      const grad = ctx.createLinearGradient(cx - Math.cos(ang) * 150, cy - Math.sin(ang) * 150, cx, cy);
+      grad.addColorStop(0, "rgba(139,108,255,0)");
+      grad.addColorStop(1, `rgba(230,224,255,${1 - q * 0.6})`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "#8b6cff";
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.moveTo(cx - Math.cos(ang) * 150, cy - Math.sin(ang) * 150);
+      ctx.lineTo(cx, cy);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  });
+  return (
+    <div className="absolute inset-0">
+      <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden />
+      <Caption>z wielu pomysłów — jeden kierunek</Caption>
+    </div>
+  );
+}
+
+/* ---------- 3. Projekt: konstrukcja znaku na siatce, jak w narzędziu projektowym ---------- */
+
+export function DesignArt() {
+  const box = useRef<HTMLDivElement>(null);
+  const inView = useInView(box, { margin: "-10% 0px" });
   const [k, setK] = useState(0);
   useEffect(() => {
     if (!inView) return;
-    const t = setInterval(() => setK((x) => x + 1), ms);
+    const t = setInterval(() => setK((x) => x + 1), 8000);
     return () => clearInterval(t);
-  }, [inView, ms]);
-  return { ref, k, inView };
-}
-
-/* ---------- 1. Rozmowa: rozmowa wideo + notatki ---------- */
-
-export function TalkArt() {
-  const { ref, k, inView } = useLoop(7000);
+  }, [inView]);
+  const c = MARK.circles[0];
+  const draw = (d: number, dur = 1) => ({ initial: { pathLength: 0, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { pathLength: { delay: d, duration: dur, ease }, opacity: { delay: d, duration: 0.2 } } });
+  const fade = (d: number) => ({ initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: d, duration: 0.5 } });
+  const nodes = [
+    [25, 42.5],
+    [25, 17],
+    [32, 10],
+    [39.5, 10],
+    [25, 24],
+    [34.5, 24],
+    [16, 22],
+    [7, 31],
+  ];
   return (
-    <div ref={ref} className="absolute inset-0 p-5 sm:p-7">
+    <div ref={box} className="absolute inset-0">
       {inView && (
-        <div key={k} className="grid h-full grid-cols-[1.1fr_1fr] gap-3">
-          <div className="flex flex-col gap-3">
-            {[
-              { n: "Ty", c: "from-[#d98b5f] to-[#8a4b2c]", d: 0.2 },
-              { n: "af.", c: "from-accent to-[#4b34b8]", d: 0.4 },
-            ].map((p, i) => (
-              <motion.div key={p.n} className="relative flex flex-1 items-center justify-center overflow-hidden rounded-2xl border border-line bg-white/[0.03]" initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: p.d, duration: 0.7, ease }}>
-                <span className={`grid size-12 place-items-center rounded-full bg-gradient-to-br text-[14px] font-medium text-white ${p.c}`}>{p.n}</span>
-                {/* fala dźwięku */}
-                <span className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-end gap-[3px]">
-                  {Array.from({ length: 9 }).map((_, j) => (
-                    <motion.span
-                      key={j}
-                      className={`w-[3px] rounded-full ${i ? "bg-accent-2" : "bg-white/60"}`}
-                      animate={{ height: [4, 6 + ((j * 7 + i * 5) % 14), 4] }}
-                      transition={{ repeat: Infinity, duration: 0.5 + (j % 3) * 0.15, delay: j * 0.06 + i * 1.6, repeatDelay: i ? 0.2 : 1.2, ease: "easeInOut" }}
-                      style={{ height: 4 }}
-                    />
-                  ))}
-                </span>
-                <span className="absolute top-2.5 left-3 flex items-center gap-1.5 text-[10.5px] text-white/60">
-                  <span className="size-1.5 animate-pulse rounded-full bg-red-400" />
-                  {i ? "afto.works" : "Klient"}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-          <motion.div className="flex flex-col rounded-2xl border border-line bg-bg/60 p-4" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.8, ease }}>
-            <p className="text-[11px] text-dim">Notatki z rozmowy</p>
-            <ul className="mt-3 space-y-2.5 text-[12px]">
-              {["Cel: więcej rezerwacji", "Klienci: 25–40 lat", "Budżet ustalony", "Termin: 3 tygodnie"].map((t, i) => (
-                <motion.li key={t} className="flex items-center gap-2" initial={{ opacity: 0.25 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 + i * 0.9 }}>
-                  <motion.span className="grid size-4 shrink-0 place-items-center rounded-full border" initial={{ borderColor: "rgba(255,255,255,0.2)", backgroundColor: "rgba(139,108,255,0)" }} animate={{ borderColor: "#8b6cff", backgroundColor: "#8b6cff" }} transition={{ delay: 1.2 + i * 0.9, duration: 0.3 }}>
-                    <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden>
-                      <motion.path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1.3 + i * 0.9, duration: 0.3 }} />
-                    </svg>
-                  </motion.span>
-                  {t}
-                </motion.li>
-              ))}
-            </ul>
-            <motion.div className="mt-auto rounded-xl bg-accent/15 px-3 py-2 text-[11.5px] text-accent-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 5, duration: 0.6, ease }}>
-              Wycena wysłana ✓
-            </motion.div>
-          </motion.div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- 2. Kierunek: wachlarz kolorów + typografia ---------- */
-
-const fan = ["#efe9ff", "#b4a2ff", "#8b6cff", "#4b34b8", "#1a1426"];
-
-export function DirectionArt() {
-  const { ref, k, inView } = useLoop(8000);
-  return (
-    <div ref={ref} className="absolute inset-0 overflow-hidden">
-      {inView && (
-        <div key={k} className="absolute inset-0">
-          {/* wachlarz próbników */}
-          <div className="absolute bottom-[-8%] left-[30%] h-[85%] w-[34%]">
-            {fan.map((c, i) => (
-              <motion.div
-                key={c}
-                className="absolute inset-0 origin-[50%_92%] rounded-2xl border border-white/10 p-3 shadow-[0_20px_40px_-15px_rgb(0_0_0/0.7)]"
-                style={{ background: c }}
-                initial={{ rotate: 0, y: 40, opacity: 0 }}
-                animate={{ rotate: (i - 2) * 13, y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 + i * 0.09, type: "spring", stiffness: 120, damping: 14 }}
-              >
-                <span className={`block text-[10px] ${i < 2 ? "text-black/60" : "text-white/70"}`}>{c.toUpperCase()}</span>
-              </motion.div>
-            ))}
-          </div>
-          {/* typografia — oddychająca grubość */}
-          <motion.div className="absolute top-[12%] left-[7%]" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease }}>
-            <motion.p className="text-[clamp(3.2rem,7vw,5rem)] leading-none tracking-[-0.05em]" animate={{ fontVariationSettings: ["'wght' 300", "'wght' 800", "'wght' 300"] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}>
-              Aa
-            </motion.p>
-            <p className="mt-2 text-[11px] text-dim">Satoshi · 300 → 800</p>
-          </motion.div>
-          <motion.div className="absolute top-[14%] right-[6%] flex flex-col items-end gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>
-            {["Premium", "Minimalnie", "Ciepło"].map((t, i) => (
-              <motion.span key={t} className={`rounded-full border px-2.5 py-1 text-[11px] ${i === 0 ? "border-accent bg-accent/20 text-accent-2" : "border-line-2 text-dim"}`} initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 1.2 + i * 0.15, duration: 0.6, ease }}>
-                {t}
-              </motion.span>
-            ))}
-          </motion.div>
-          {/* kursor wybiera kolor */}
-          <motion.div className="absolute z-10" initial={{ left: "85%", top: "80%", opacity: 0 }} animate={{ left: ["85%", "52%", "52%"], top: ["80%", "30%", "30%"], opacity: 1 }} transition={{ delay: 2, duration: 2, times: [0, 0.7, 1], ease: "easeInOut" }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-              <path d="M2 1.5l13 6.2-5.6 1.6L7 15z" fill="#efedf5" stroke="#07070a" strokeWidth="1.2" strokeLinejoin="round" />
-            </svg>
-            <motion.span className="absolute -top-3 -left-3 size-10 rounded-full border border-accent-2" initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4], opacity: [1, 0] }} transition={{ delay: 3.5, duration: 0.6 }} />
-          </motion.div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- 3. Projekt: makieta rysuje się sama ---------- */
-
-export function DesignArt() {
-  const { ref, k, inView } = useLoop(7500);
-  const draw = (d: number) => ({ initial: { pathLength: 0, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { delay: d, duration: 0.9, ease } });
-  const fill = (d: number) => ({ initial: { fillOpacity: 0 }, animate: { fillOpacity: 1 }, transition: { delay: d, duration: 0.6 } });
-  // obrys rysuje się, potem kształt wypełnia kolorem
-  const both = (d: number, f: number) => ({
-    initial: { pathLength: 0, opacity: 0, fillOpacity: 0 },
-    animate: { pathLength: 1, opacity: 1, fillOpacity: 1 },
-    transition: { pathLength: { delay: d, duration: 0.9, ease }, opacity: { delay: d, duration: 0.3 }, fillOpacity: { delay: f, duration: 0.6 } },
-  });
-  return (
-    <div ref={ref} className="absolute inset-0">
-      <div className="absolute inset-0 [background-image:radial-gradient(rgb(255_255_255/0.07)_1px,transparent_1px)] [background-size:18px_18px]" />
-      {inView && (
-        <svg key={k} viewBox="0 0 400 300" className="absolute inset-0 size-full p-5" fill="none" aria-hidden>
-          <motion.rect x="20" y="16" width="360" height="268" rx="14" stroke="rgba(255,255,255,0.25)" {...draw(0.1)} />
-          <motion.rect x="36" y="32" width="328" height="22" rx="8" stroke="rgba(255,255,255,0.3)" fill="rgba(255,255,255,0.05)" {...draw(0.4)} />
-          <motion.rect x="46" y="40" width="40" height="6" rx="3" fill="#efedf5" {...fill(1)} />
-          {[260, 286, 312].map((x, i) => (
-            <motion.rect key={x} x={x} y="41" width="20" height="4" rx="2" fill={i === 2 ? "#8b6cff" : "rgba(255,255,255,0.4)"} {...fill(1.1 + i * 0.1)} />
+        <svg key={k} viewBox="-14 -2 72 54" className="absolute inset-0 size-full" fill="none" aria-hidden>
+          <defs>
+            <pattern id="d-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+              <path d="M4 0H0V4" stroke="rgba(255,255,255,0.05)" strokeWidth="0.15" />
+            </pattern>
+            <radialGradient id="d-glow">
+              <stop offset="0" stopColor="#8b6cff" stopOpacity="0.35" />
+              <stop offset="1" stopColor="#8b6cff" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <motion.rect x="-14" y="-2" width="72" height="54" fill="url(#d-grid)" {...fade(0)} />
+          <motion.circle cx="22" cy="28" r="26" fill="url(#d-glow)" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0.6] }} transition={{ delay: 4.2, duration: 1.6 }} />
+          {/* linie pomocnicze */}
+          {[
+            ["M-14 42.5H58", 0.3],
+            ["M-14 22H58", 0.4],
+            ["M-14 10H58", 0.5],
+            ["M25 -2V52", 0.45],
+            ["M16 -2V52", 0.55],
+          ].map(([d, dl]) => (
+            <motion.path key={d as string} d={d as string} stroke="#8b6cff" strokeOpacity="0.35" strokeWidth="0.18" strokeDasharray="0.8 0.8" {...draw(dl as number, 1.2)} />
           ))}
-          <motion.rect x="46" y="80" width="150" height="16" rx="5" stroke="rgba(255,255,255,0.3)" fill="#efedf5" {...both(0.8, 2.6)} />
-          <motion.rect x="46" y="102" width="110" height="16" rx="5" stroke="rgba(255,255,255,0.3)" fill="#b4a2ff" {...both(0.95, 2.75)} />
-          <motion.rect x="46" y="132" width="64" height="20" rx="10" stroke="rgba(255,255,255,0.3)" fill="#8b6cff" {...both(1.1, 2.9)} />
-          <motion.rect x="218" y="74" width="146" height="100" rx="12" stroke="rgba(255,255,255,0.3)" {...draw(1.2)} />
-          <motion.path d="M218 174L364 74M218 74l146 100" stroke="rgba(255,255,255,0.12)" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ delay: 3 }} />
-          <motion.rect x="218" y="74" width="146" height="100" rx="12" fill="url(#g-design)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3, duration: 0.8 }} />
-          {[46, 152, 258].map((x, i) => (
-            <motion.rect key={x} x={x} y="196" width="96" height="70" rx="10" stroke="rgba(255,255,255,0.22)" fill="rgba(255,255,255,0.04)" {...draw(1.4 + i * 0.12)} />
-          ))}
-          {/* zaznaczenie przycisku */}
-          <motion.g initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0] }} transition={{ delay: 1.9, duration: 2.6, times: [0, 0.1, 0.85, 1] }}>
-            <rect x="42" y="128" width="72" height="28" stroke="#8b6cff" strokeWidth="1.2" />
-            {[
-              [42, 128],
-              [114, 128],
-              [42, 156],
-              [114, 156],
-            ].map(([x, y]) => (
-              <rect key={`${x}${y}`} x={x - 3} y={y - 3} width="6" height="6" fill="#fff" stroke="#8b6cff" />
-            ))}
-            <rect x="56" y="162" width="44" height="13" rx="3" fill="#8b6cff" />
-            <text x="78" y="171.5" textAnchor="middle" fontSize="8" fill="#fff" fontFamily="var(--font-satoshi)">
-              64 × 20
+          {/* okręgi konstrukcyjne */}
+          <motion.circle cx={c.cx} cy={c.cy} r={c.r + STROKE / 2} stroke="rgba(255,255,255,0.25)" strokeWidth="0.15" strokeDasharray="0.6 0.6" {...draw(0.9, 1.2)} />
+          <motion.circle cx={c.cx} cy={c.cy} r={c.r - STROKE / 2} stroke="rgba(255,255,255,0.25)" strokeWidth="0.15" strokeDasharray="0.6 0.6" {...draw(1.05, 1.2)} />
+          <motion.circle cx="32" cy="17" r="7" stroke="rgba(180,162,255,0.4)" strokeWidth="0.15" strokeDasharray="0.6 0.6" {...draw(1.2, 1)} />
+          {/* wymiary */}
+          <motion.g {...fade(1.8)}>
+            <path d="M7 47.5H25" stroke="#b4a2ff" strokeWidth="0.15" />
+            <path d="M7 46.8v1.4M25 46.8v1.4" stroke="#b4a2ff" strokeWidth="0.15" />
+            <rect x="12.2" y="46.4" width="7.6" height="2.2" rx="0.5" fill="#8b6cff" />
+            <text x="16" y="48" textAnchor="middle" fontSize="1.3" fill="#fff" fontFamily="var(--font-satoshi)">
+              18 px
             </text>
           </motion.g>
-          <defs>
-            <linearGradient id="g-design" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#c9b8ff" />
-              <stop offset="1" stopColor="#4b34b8" />
-            </linearGradient>
-          </defs>
+          {/* właściwy znak */}
+          <motion.circle cx={c.cx} cy={c.cy} r={c.r} stroke="#efedf5" strokeWidth={STROKE} {...draw(2.2, 1.1)} />
+          {MARK.paths.map((d, i) => (
+            <motion.path key={d} d={d} stroke="#efedf5" strokeWidth={STROKE} {...draw(2.6 + i * 0.35, 1)} />
+          ))}
+          <motion.rect
+            x={MARK.dot.x}
+            y={MARK.dot.y}
+            width={MARK.dot.size}
+            height={MARK.dot.size}
+            fill="#8b6cff"
+            style={{ transformBox: "fill-box", transformOrigin: "center", filter: "drop-shadow(0 0 1.6px #8b6cff)" }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1.5, 1], opacity: 1 }}
+            transition={{ delay: 3.9, duration: 0.7 }}
+          />
+          {/* punkty węzłowe i uchwyty (jak w narzędziu pióra) */}
+          {nodes.map(([x, y], i) => (
+            <motion.rect
+              key={i}
+              x={x - 0.7}
+              y={y - 0.7}
+              width="1.4"
+              height="1.4"
+              fill="#07070a"
+              stroke="#8b6cff"
+              strokeWidth="0.25"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 1, 1, 0], scale: 1 }}
+              transition={{ delay: 2.4 + i * 0.12, duration: 3.2, times: [0, 0.1, 0.8, 1] }}
+              style={{ transformBox: "fill-box", transformOrigin: "center" }}
+            />
+          ))}
+          <motion.g initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0] }} transition={{ delay: 3, duration: 2.4, times: [0, 0.15, 0.8, 1] }}>
+            <path d="M25 17L25 10.5M32 10H36" stroke="#8b6cff" strokeWidth="0.2" />
+            <circle cx="25" cy="10.5" r="0.6" fill="#8b6cff" />
+            <circle cx="36" cy="10" r="0.6" fill="#8b6cff" />
+          </motion.g>
         </svg>
       )}
-      {inView && (
-        <motion.div key={`c${k}`} className="absolute z-10" initial={{ left: "80%", top: "85%" }} animate={{ left: ["80%", "22%", "26%", "60%"], top: ["85%", "48%", "48%", "40%"] }} transition={{ duration: 4.5, times: [0, 0.35, 0.55, 1], ease: "easeInOut", delay: 1 }}>
-          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-            <path d="M2 1.5l13 6.2-5.6 1.6L7 15z" fill="#efedf5" stroke="#07070a" strokeWidth="1.2" strokeLinejoin="round" />
-          </svg>
-          <span className="ml-3 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-medium text-white">afto</span>
-        </motion.div>
-      )}
+      <Caption>siatka · proporcje · detal</Caption>
     </div>
   );
 }
 
-/* ---------- 4. Wdrożenie: licznik do 100 i start ---------- */
-
-function Ring({ delay }: { delay: number }) {
-  const v = useMotionValue(0);
-  const txt = useTransform(v, (x) => Math.round(x));
-  const len = useTransform(v, (x) => x / 100);
-  useEffect(() => {
-    const c = animate(v, 100, { delay, duration: 2.2, ease: [0.65, 0, 0.35, 1] });
-    return () => c.stop();
-  }, [v, delay]);
-  return (
-    <div className="relative grid size-[120px] place-items-center sm:size-[140px]">
-      <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
-        <circle cx="50" cy="50" r="44" stroke="rgba(255,255,255,0.08)" strokeWidth="5" fill="none" />
-        <motion.circle cx="50" cy="50" r="44" stroke="url(#g-ring)" strokeWidth="5" fill="none" strokeLinecap="round" style={{ pathLength: len }} />
-        <defs>
-          <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#8b6cff" />
-            <stop offset="1" stopColor="#6ee7b7" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <span className="text-center">
-        <motion.span className="h-display block text-[38px] leading-none tabular-nums">{txt}</motion.span>
-        <span className="text-[10.5px] text-dim">Wydajność</span>
-      </span>
-    </div>
-  );
-}
+/* ---------- 4. Wdrożenie: skok w nadprzestrzeń i start ---------- */
 
 export function LaunchArt() {
-  const { ref, k, inView } = useLoop(7000);
-  const url = "twojafirma.pl";
+  const stars = useRef<{ x: number; y: number; z: number; pz: number }[]>([]);
+  const [live, setLive] = useState(false);
+  const cycle = 7;
+  const { ref, inView } = useCanvas((ctx, w, h, t) => {
+    if (!stars.current.length) stars.current = Array.from({ length: 260 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random(), pz: 0 }));
+    const p = (t % cycle) / cycle;
+    // przyspieszenie → szczyt → hamowanie
+    const speed = p < 0.45 ? 0.002 + smooth(p / 0.45) * 0.05 : 0.052 * (1 - smooth((p - 0.45) / 0.25)) + 0.0015;
+    ctx.fillStyle = `rgba(14,14,19,${p > 0.42 && p < 0.5 ? 0.25 : 0.55})`;
+    ctx.fillRect(0, 0, w, h);
+    const cx = w / 2;
+    const cy = h / 2;
+    for (const s of stars.current) {
+      s.pz = s.z;
+      s.z -= speed;
+      if (s.z <= 0.01) {
+        s.x = Math.random() * 2 - 1;
+        s.y = Math.random() * 2 - 1;
+        s.z = 1;
+        s.pz = 1;
+      }
+      const sx = cx + (s.x / s.z) * w * 0.35;
+      const sy = cy + (s.y / s.z) * h * 0.35;
+      const px = cx + (s.x / s.pz) * w * 0.35;
+      const py = cy + (s.y / s.pz) * h * 0.35;
+      const b = 1 - s.z;
+      ctx.strokeStyle = Math.abs(s.x) < 0.3 ? `rgba(180,162,255,${b})` : `rgba(239,237,245,${b * 0.85})`;
+      ctx.lineWidth = Math.max(0.6, b * 2.2);
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+    }
+    // błysk i fala po „starcie”
+    if (p > 0.45) {
+      const q = (p - 0.45) / 0.55;
+      const r = smooth(q) * Math.max(w, h) * 0.7;
+      ctx.strokeStyle = `rgba(139,108,255,${(1 - q) * 0.6})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 90);
+      g.addColorStop(0, `rgba(180,162,255,${0.35 * (1 - q * 0.6)})`);
+      g.addColorStop(1, "rgba(139,108,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - 90, cy - 90, 180, 180);
+    }
+  });
+
+  useEffect(() => {
+    if (!inView) return;
+    const start = performance.now();
+    const t = setInterval(() => {
+      const p = (((performance.now() - start) / 1000) % cycle) / cycle;
+      setLive(p > 0.5 && p < 0.97);
+    }, 200);
+    return () => clearInterval(t);
+  }, [inView]);
+
   return (
-    <div ref={ref} className="absolute inset-0">
-      {inView && (
-        <div key={k} className="absolute inset-0 flex flex-col p-5 sm:p-7">
-          <motion.div className="flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3 py-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}>
-            <motion.span className="size-2 rounded-full" initial={{ backgroundColor: "#615e6e" }} animate={{ backgroundColor: "#34d399", boxShadow: "0 0 10px #34d399" }} transition={{ delay: 3.2 }} />
-            <span className="text-[12px] text-muted">
-              https://
-              {url.split("").map((c, i) => (
-                <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 + i * 0.06 }} className="text-ink">
-                  {c}
-                </motion.span>
-              ))}
-            </span>
-          </motion.div>
-          <div className="relative flex flex-1 items-center justify-center gap-6">
-            <Ring delay={0.8} />
-            <div className="space-y-2 text-[12px]">
-              {["SSL", "SEO", "Analityka", "Formularz"].map((t, i) => (
-                <motion.p key={t} className="flex items-center gap-2 text-muted" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1 + i * 0.4, duration: 0.5 }}>
-                  <span className="text-emerald-300">✓</span>
-                  {t}
-                </motion.p>
-              ))}
-            </div>
-            {/* konfetti */}
-            {Array.from({ length: 14 }).map((_, i) => {
-              const a = (i / 14) * Math.PI * 2;
-              return (
-                <motion.span
-                  key={i}
-                  className="absolute top-1/2 left-1/2 size-1.5 rounded-full"
-                  style={{ background: ["#8b6cff", "#b4a2ff", "#6ee7b7", "#efedf5"][i % 4] }}
-                  initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
-                  animate={{ x: Math.cos(a) * (90 + (i % 3) * 30), y: Math.sin(a) * (70 + (i % 4) * 18), opacity: [0, 1, 0], scale: [0, 1, 0.6] }}
-                  transition={{ delay: 3.1, duration: 1.4, ease: "easeOut" }}
-                />
-              );
-            })}
-          </div>
-          <motion.div className="mx-auto flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-[13px] text-emerald-200" initial={{ opacity: 0, scale: 0.6, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 3.1, type: "spring", stiffness: 300, damping: 18 }}>
+    <div className="absolute inset-0">
+      <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden />
+      <AnimatePresence>
+        {live && (
+          <motion.div
+            className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-full border border-emerald-400/30 bg-bg/70 py-2 pr-4 pl-3 text-[13px] whitespace-nowrap text-emerald-100 backdrop-blur-md"
+            initial={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.9, filter: "blur(6px)" }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          >
             <span className="relative flex size-2">
               <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />
               <span className="relative size-2 rounded-full bg-emerald-400" />
             </span>
-            Strona jest online
+            twojafirma.pl jest online
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+      <Caption>kod · szybkość · start</Caption>
     </div>
   );
 }

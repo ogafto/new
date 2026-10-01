@@ -95,7 +95,8 @@ export default function CookieConsent({ children, ready }: { children: React.Rea
   // baner pokazuje się po zakończeniu animacji wejścia, jeśli nie ma zapisanego wyboru
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => setBanner(!read()), 1200);
+    // baner potrzebny tylko, gdy są opcjonalne cookies (Google Analytics)
+    const t = setTimeout(() => setBanner(!!GA_ID && !read()), 1200);
     return () => clearTimeout(t);
   }, [ready]);
 
@@ -137,13 +138,13 @@ gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
           >
             <p className="text-[16px] text-ink">Pliki cookies</p>
             <p className="mt-2 text-[14px] leading-relaxed text-muted">
-              Używam niezbędnych plików cookies, a za Twoją zgodą — także analitycznych, żeby ulepszać stronę.{" "}
+              Używam niezbędnych plików cookies. Za Twoją zgodą włączę też Google Analytics, żeby lepiej rozumieć, jak korzystasz ze strony.{" "}
               <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4">
                 Więcej
               </Link>
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <button type="button" onClick={() => save(true, true)} className="h-10 rounded-full bg-ink px-5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
+              <button type="button" onClick={() => save(true, false)} className="h-10 rounded-full bg-ink px-5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
                 Akceptuję
               </button>
               <button type="button" onClick={() => save(false, false)} className="h-10 rounded-full border border-line-2 px-5 text-[14px] transition-colors hover:border-white/40">
@@ -164,7 +165,8 @@ gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
               role="dialog"
               aria-modal="true"
               aria-label="Ustawienia cookies"
-              className="edge w-full max-w-[520px] rounded-[26px] bg-surface p-7"
+              data-lenis-prevent
+              className="edge max-h-[90svh] w-full max-w-[520px] overflow-y-auto rounded-[26px] bg-surface p-7"
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 24 }}
@@ -172,26 +174,47 @@ gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
               onClick={(e) => e.stopPropagation()}
             >
               <p className="h-display text-[30px]">Ustawienia cookies</p>
-              <ul className="mt-6 divide-y divide-line border-y border-line">
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">
+                Statystyki odwiedzin zbieram anonimowo, bez plików cookies. Opcjonalne jest tylko Google Analytics{GA_ID ? "" : " (obecnie wyłączone)"}.
+              </p>
+              <ul className="mt-6 space-y-2">
                 {[
-                  { key: "necessary", name: "Niezbędne", text: "Działanie strony i zapamiętanie Twojego wyboru. Zawsze aktywne.", on: true, fixed: true },
-                  { key: "analytics", name: "Analityczne", text: "Anonimowe statystyki odwiedzin (np. Google Analytics).", on: draft.analytics },
-                  { key: "marketing", name: "Marketingowe", text: "Pomiar skuteczności reklam.", on: draft.marketing },
+                  { key: "necessary", name: "Niezbędne", text: "Zapamiętanie Twojego wyboru i logowanie do panelu klienta. Bez nich strona nie działa poprawnie.", on: true, fixed: true, list: ["afto_consent · 180 dni", "afto_session · 30 dni"] },
+                  { key: "analytics", name: "Analityczne", text: "Google Analytics — statystyki odwiedzin. Włączają się tylko za Twoją zgodą.", on: draft.analytics, list: ["_ga, _ga_* · do 2 lat"] },
                 ].map((r) => (
-                  <li key={r.key} className="flex items-start justify-between gap-6 py-4">
-                    <span>
-                      <span className="block text-[15px]">{r.name}</span>
-                      <span className="mt-1 block text-[13px] leading-relaxed text-muted">{r.text}</span>
-                    </span>
-                    <Toggle label={r.name} on={r.on} disabled={r.fixed} onChange={(v) => setDraft((d) => ({ ...d, [r.key]: v }))} />
+                  <li key={r.key} className="rounded-2xl border border-line p-4">
+                    <div className="flex items-start justify-between gap-6">
+                      <span>
+                        <span className="flex items-center gap-2 text-[15px]">
+                          {r.name}
+                          {r.fixed && <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-dim">zawsze aktywne</span>}
+                        </span>
+                        <span className="mt-1 block text-[13px] leading-relaxed text-muted">{r.text}</span>
+                      </span>
+                      <Toggle label={r.name} on={r.on} disabled={r.fixed} onChange={(v) => setDraft((d) => ({ ...d, [r.key]: v, marketing: false }))} />
+                    </div>
+                    <details className="group mt-3">
+                      <summary className="cursor-pointer list-none text-[12.5px] text-dim transition-colors hover:text-ink">
+                        <span className="group-open:hidden">Pokaż pliki ↓</span>
+                        <span className="hidden group-open:inline">Ukryj pliki ↑</span>
+                      </summary>
+                      <ul className="mt-2 space-y-1 font-mono text-[12px] text-muted">
+                        {r.list.map((c) => (
+                          <li key={c}>{c}</li>
+                        ))}
+                      </ul>
+                    </details>
                   </li>
                 ))}
               </ul>
+              <Link href="/polityka-prywatnosci" onClick={() => setSettings(false)} className="link-u mt-5 inline-block text-[13.5px] text-muted hover:text-ink">
+                Polityka prywatności →
+              </Link>
               <div className="mt-6 flex flex-wrap justify-end gap-2">
                 <button type="button" onClick={() => save(false, false)} className="h-10 rounded-full border border-line-2 px-5 text-[14px] transition-colors hover:border-white/40">
-                  Odrzuć opcjonalne
+                  Tylko niezbędne
                 </button>
-                <button type="button" onClick={() => save(draft.analytics, draft.marketing)} className="h-10 rounded-full bg-ink px-5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
+                <button type="button" onClick={() => save(draft.analytics, false)} className="h-10 rounded-full bg-ink px-5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
                   Zapisz wybór
                 </button>
               </div>

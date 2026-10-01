@@ -13,7 +13,6 @@ import Button, { Magnetic } from "./ui/Button";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const arts = [TalkArt, DirectionArt, DesignArt, LaunchArt];
-const tags = ["rozmowa.call", "moodboard.fig", "projekt.fig", "twojafirma.pl"];
 
 // Tytuł, którego litery „zapalają się” przy przewijaniu
 function FillText({ text, progress, className = "" }: { text: string; progress: MotionValue<number>; className?: string }) {
@@ -68,18 +67,11 @@ function ArtCard({ i, progress }: { i: number; progress: MotionValue<number> }) 
         className="edge group relative aspect-[4/3] overflow-hidden rounded-[28px] bg-surface shadow-[0_40px_100px_-40px_rgb(139_108_255/0.35)]"
       >
         <motion.div className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: light }} />
-        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-line bg-bg/40 px-4 py-2.5 backdrop-blur">
-          <span className="flex gap-1.5">
-            {[0, 1, 2].map((k) => (
-              <span key={k} className="size-2 rounded-full bg-white/15" />
-            ))}
-          </span>
-          <span className="text-[11px] text-dim">{tags[i]}</span>
-          <span className="w-8" />
-        </div>
-        <div className="absolute inset-x-0 top-10 bottom-0">
+        <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_0%,rgb(139_108_255/0.08),transparent_60%)]" />
+        <div className="absolute inset-0 overflow-hidden rounded-[28px] [clip-path:inset(0_round_28px)]">
           <Art />
         </div>
+        <span className="absolute top-4 right-5 z-20 text-[11.5px] text-dim tabular-nums">0{i + 1}</span>
       </motion.div>
     </motion.div>
   );
@@ -151,7 +143,7 @@ export default function Process() {
   const top = useTransform(beam, (v) => `${v * 100}%`);
 
   return (
-    <section id="proces" aria-labelledby="proces-title" className="relative overflow-clip py-32 lg:py-44">
+    <section id="proces" aria-labelledby="proces-title" className="relative overflow-x-clip pt-32 pb-16 lg:pt-44 lg:pb-24">
       <div className="pointer-events-none absolute top-1/4 left-1/2 size-[1000px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.08),transparent)]" aria-hidden />
 
       <div ref={head} className="relative mx-auto max-w-[1400px] px-5 text-center sm:px-10">

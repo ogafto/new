@@ -6,153 +6,61 @@ import { AnimatePresence, motion } from "motion/react";
 import { services, site, type ServiceId } from "@/lib/site";
 import { track } from "./Analytics";
 import { Arrow, Magnetic } from "./ui/Button";
+import { FadeUp, Heading } from "./ui/Reveal";
+import Input from "./ui/Input";
+import Select from "./ui/Select";
 
-/*
- * Kontakt jako zdanie do uzupełnienia: „Cześć! Nazywam się ___ z firmy ___…”.
- * Pola rosną razem z tekstem, listy rozwijają się pod słowem, brakujące pole drga i podświetla się.
- */
+/* Kontakt: prosty formularz (imię, e-mail, telefon, usługa, budżet, opis) + bezpośrednie kanały. */
 
 const ease = [0.16, 1, 0.3, 1] as const;
-const budgets = ["do 1 000 zł", "1–3 tys. zł", "3–6 tys. zł", "powyżej 6 tys. zł", "do ustalenia"];
 const discord = site.socials.find((s) => s.label === "Discord")?.href ?? "https://discord.com/";
-type Key = "name" | "firm" | "service" | "other" | "budget" | "message" | "phone" | "email";
+const budgets = ["50–200 zł", "200–500 zł", "500–1 000 zł", "1 000–3 000 zł", "powyżej 3 000 zł", "Jeszcze nie wiem"];
+const serviceOptions = [...services.map((s) => ({ value: s.id, label: s.name, meta: `od ${s.price} zł` })), { value: "other", label: "Coś innego" }];
+
 type Status = { state: "idle" | "sending" | "sent" | "error"; message?: string };
+const empty = { name: "", email: "", phone: "", service: "", budget: "", message: "" };
 
-// pole w tekście: szerokość = treść (albo podpowiedź)
-function Blank({ id, value, onChange, placeholder, type = "text", bad, onFocus, autoComplete, inputMode }: { id: Key; value: string; onChange: (v: string) => void; placeholder: string; type?: string; bad: boolean; onFocus: () => void; autoComplete?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"] }) {
-  const [focus, setFocus] = useState(false);
-  return (
-    <motion.span className="relative mx-[0.15em] inline-grid max-w-full align-baseline" animate={bad ? { x: [0, -8, 7, -4, 0] } : { x: 0 }} transition={{ duration: 0.45 }}>
-      <span className="invisible col-start-1 row-start-1 overflow-hidden px-[0.1em] whitespace-pre">{value || placeholder}</span>
-      <input
-        id={`c-${id}`}
-        name={id}
-        type={type}
-        size={1}
-        value={value}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        inputMode={inputMode}
-        aria-label={placeholder}
-        aria-invalid={bad}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => {
-          setFocus(true);
-          onFocus();
-        }}
-        onBlur={() => setFocus(false)}
-        className="col-start-1 row-start-1 w-full min-w-0 bg-transparent px-[0.1em] text-ink outline-none placeholder:text-white/25"
-      />
-      <span className={`absolute inset-x-0 -bottom-[0.06em] h-[2px] rounded-full ${bad ? "bg-red-400" : "bg-white/15"}`} />
-      <motion.span className="absolute inset-x-0 -bottom-[0.06em] h-[2px] origin-left rounded-full bg-gradient-to-r from-accent to-accent-2" initial={false} animate={{ scaleX: focus || (value && !bad) ? 1 : 0, opacity: focus ? 1 : value ? 0.55 : 0 }} transition={{ duration: 0.5, ease }} />
-    </motion.span>
-  );
-}
-
-// wybór z listy rozwijanej pod słowem
-function Pick({ id, value, options, onChange, placeholder, bad, onFocus }: { id: Key; value: string; options: { value: string; label: string; meta?: string }[]; onChange: (v: string) => void; placeholder: string; bad: boolean; onFocus: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    addEventListener("mousedown", close);
-    addEventListener("keydown", esc);
-    return () => {
-      removeEventListener("mousedown", close);
-      removeEventListener("keydown", esc);
-    };
-  }, [open]);
-  const current = options.find((o) => o.value === value);
-  return (
-    <motion.span ref={ref} className={`relative mx-[0.15em] inline-block ${open ? "z-40" : ""}`} animate={bad ? { x: [0, -8, 7, -4, 0] } : { x: 0 }} transition={{ duration: 0.45 }}>
-      <button
-        id={`c-${id}`}
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((o) => !o);
-          onFocus();
-        }}
-        className={`group relative inline-flex items-baseline gap-[0.2em] px-[0.1em] transition-colors ${current ? "text-ink" : "text-white/25 hover:text-white/45"}`}
-      >
-        {current?.label ?? placeholder}
-        <motion.svg viewBox="0 0 12 12" className="size-[0.45em] self-center" animate={{ rotate: open ? 180 : 0 }} aria-hidden>
-          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        </motion.svg>
-        <span className={`absolute inset-x-0 -bottom-[0.06em] h-[2px] rounded-full ${bad ? "bg-red-400" : current ? "bg-gradient-to-r from-accent to-accent-2 opacity-60" : "bg-white/15"}`} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.span
-            role="listbox"
-            className="edge absolute top-full left-0 z-30 mt-3 block w-[min(320px,80vw)] overflow-hidden rounded-2xl bg-surface p-1.5 text-[15px] leading-normal tracking-normal shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)]"
-            initial={{ opacity: 0, y: -8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.25, ease }}
-          >
-            {options.map((o, i) => (
-              <motion.button
-                key={o.value}
-                type="button"
-                role="option"
-                aria-selected={o.value === value}
-                onClick={() => {
-                  onChange(o.value);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-2.5 text-left transition-colors ${o.value === value ? "bg-accent/15 text-ink" : "text-muted hover:bg-white/[0.05] hover:text-ink"}`}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                {o.label}
-                {o.meta && <span className="text-[13px] text-dim">{o.meta}</span>}
-              </motion.button>
-            ))}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </motion.span>
-  );
-}
-
-const empty: Record<Key, string> = { name: "", firm: "", service: "", other: "", budget: "", message: "", phone: "", email: "" };
+const channels = [
+  { label: "E-mail", value: site.email, href: `mailto:${site.email}`, icon: "M3 6.5A1.5 1.5 0 014.5 5h15A1.5 1.5 0 0121 6.5v11a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5zM3.5 6l8.5 7 8.5-7" },
+  { label: "Telefon", value: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}`, icon: "M5 4h3.5l1.8 4.5-2.3 1.4a11 11 0 005.6 5.6l1.4-2.3L19.5 15v3.5a1.5 1.5 0 01-1.6 1.5C10.6 19.5 4.5 13.4 4 6.1A1.5 1.5 0 015 4z" },
+  {
+    label: "Discord",
+    value: "Napisz na Discordzie",
+    href: discord,
+    ext: true,
+    icon: "M8.5 7.5c2.3-.7 4.7-.7 7 0M7 17c3.3 1.3 6.7 1.3 10 0M8.5 7.5L7.5 6C5.8 6.4 4.6 7 3.5 8 2.4 10.6 2 13.3 2.4 16c1.2 1 2.6 1.6 4 2l1-1.8M15.5 7.5l1-1.5c1.7.4 2.9 1 4 2 1.1 2.6 1.5 5.3 1.1 8-1.2 1-2.6 1.6-4 2l-1-1.8M9.3 13.2a.9.9 0 100-1.8.9.9 0 000 1.8zM14.7 13.2a.9.9 0 100-1.8.9.9 0 000 1.8z",
+  },
+];
 
 export default function Contact() {
   const [d, setD] = useState(empty);
-  const [bad, setBad] = useState<Key | null>(null);
-  const [hint, setHint] = useState("");
   const [consent, setConsent] = useState(false);
+  const [error, setError] = useState("");
+  const [bad, setBad] = useState("");
   const [status, setStatus] = useState<Status>({ state: "idle" });
   const [sender, setSender] = useState("");
   const started = useRef(false);
-  const set = (k: Key) => (v: string) => {
+  const set = (k: keyof typeof empty) => (v: string) => {
     setD((x) => ({ ...x, [k]: v }));
     if (bad === k) {
-      setBad(null);
-      setHint("");
+      setBad("");
+      setError("");
     }
-  };
-  const start = () => {
-    if (started.current) return;
-    started.current = true;
-    track("form", "start");
+    if (!started.current) {
+      started.current = true;
+      track("form", "start");
+    }
   };
 
   // wybór z podstrony projektu („Zamów podobny projekt”)
   useEffect(() => {
-    const add = (id: ServiceId) => setD((x) => ({ ...x, service: id }));
-    const on = (e: Event) => add((e as CustomEvent<ServiceId>).detail);
+    const on = (e: Event) => setD((x) => ({ ...x, service: (e as CustomEvent<ServiceId>).detail }));
     window.addEventListener("afto:service", on);
     const t = setTimeout(() => {
       try {
         const s = sessionStorage.getItem("afto:service") as ServiceId | null;
         if (s) {
-          add(s);
+          setD((x) => ({ ...x, service: s }));
           sessionStorage.removeItem("afto:service");
         }
       } catch {}
@@ -163,29 +71,24 @@ export default function Contact() {
     };
   }, []);
 
-  const svc = services.find((s) => s.id === d.service);
-  const checks: [Key, boolean, string][] = [
-    ["name", d.name.trim().length >= 2, "Jak masz na imię?"],
-    ["service", !!d.service && (d.service !== "other" || d.other.trim().length > 1), d.service === "other" ? "Napisz, czego potrzebujesz." : "Wybierz, czego potrzebujesz."],
-    ["message", d.message.trim().length >= 10, "Napisz kilka słów o projekcie (min. 10 znaków)."],
-    ["phone", d.phone.replace(/\D/g, "").length >= 9, "Podaj numer telefonu."],
-    ["email", /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email), "Podaj poprawny e-mail."],
-  ];
-
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const checks: [string, boolean, string][] = [
+      ["name", d.name.trim().length >= 2, "Podaj imię i nazwisko."],
+      ["email", /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email), "Podaj poprawny adres e-mail."],
+      ["phone", d.phone.replace(/\D/g, "").length >= 9, "Podaj numer telefonu."],
+      ["service", !!d.service, "Wybierz usługę."],
+      ["message", d.message.trim().length >= 10, "Napisz kilka słów o projekcie (min. 10 znaków)."],
+      ["consent", consent, "Zaakceptuj politykę prywatności."],
+    ];
     const miss = checks.find(([, ok]) => !ok);
     if (miss) {
       setBad(miss[0]);
-      setHint(miss[2]);
-      document.getElementById(`c-${miss[0] === "service" && d.service === "other" ? "other" : miss[0]}`)?.focus();
+      setError(miss[2]);
       return;
     }
-    if (!consent) {
-      setHint("Zaznacz zgodę na przetwarzanie danych.");
-      return;
-    }
-    setHint("");
+    const svc = services.find((s) => s.id === d.service);
+    setError("");
     setStatus({ state: "sending" });
     try {
       const res = await fetch("/api/contact", {
@@ -193,10 +96,9 @@ export default function Contact() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: d.name,
-          firm: d.firm,
           email: d.email,
           phone: d.phone,
-          topic: svc ? `${svc.name} (od ${svc.price} zł)` : `Inne: ${d.other}`,
+          topic: svc ? `${svc.name} (od ${svc.price} zł)` : "Coś innego",
           budget: d.budget,
           message: d.message,
           company: String(new FormData(e.currentTarget).get("company") ?? ""),
@@ -214,170 +116,122 @@ export default function Contact() {
     }
   };
 
-  const B = (k: Key, placeholder: string, extra: Partial<Parameters<typeof Blank>[0]> = {}) => <Blank id={k} value={d[k]} onChange={set(k)} placeholder={placeholder} bad={bad === k} onFocus={start} {...extra} />;
-
   return (
-    <section id="kontakt" aria-labelledby="kontakt-title" className="relative overflow-clip py-32 lg:py-44">
-      <div className="pointer-events-none absolute -top-40 right-[-15%] size-[900px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.1),transparent)]" aria-hidden />
-      <div className="relative mx-auto max-w-[1240px] px-5 sm:px-10">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <motion.p className="kicker" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              Kontakt
-            </motion.p>
-            <h2 id="kontakt-title" className="h-display mt-7 overflow-hidden pb-[0.1em] text-[clamp(2.8rem,6vw,5.6rem)]">
-              <motion.span className="block" initial={{ y: "105%" }} whileInView={{ y: 0 }} viewport={{ once: true }} transition={{ duration: 1.1, ease }}>
-                Napisz do mnie.
-              </motion.span>
-            </h2>
+    <section id="kontakt" className="relative overflow-x-clip pt-20 pb-32 lg:pt-20 lg:pb-40">
+      <div className="pointer-events-none absolute top-1/3 right-0 h-[700px] w-[min(900px,100vw)] bg-[radial-gradient(closest-side,rgb(139_108_255/0.1),transparent)]" aria-hidden />
+
+      <div className="relative mx-auto grid max-w-[1400px] gap-14 px-5 sm:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+        <div className="flex flex-col">
+          <FadeUp>
+            <p className="kicker">Kontakt</p>
+          </FadeUp>
+          <Heading className="mt-7 text-[clamp(2.8rem,5.6vw,5.4rem)]" lines={["Porozmawiajmy", <span key="2" className="text-muted">o Twoim projekcie</span>]} />
+          <FadeUp delay={0.1}>
+            <p className="mt-6 max-w-[400px] text-[17px] leading-relaxed text-muted">Napisz, czego potrzebujesz — odezwę się z pytaniami i wyceną.</p>
+          </FadeUp>
+
+          <ul className="mt-12 space-y-2 lg:mt-auto">
+            {channels.map((c, i) => (
+              <motion.li key={c.label} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 + i * 0.08, duration: 0.8, ease }}>
+                <a href={c.href} {...(c.ext ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="group flex items-center gap-4 rounded-2xl py-3 pr-2">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line-2 text-muted transition-colors duration-500 group-hover:border-accent/50 group-hover:bg-accent/10 group-hover:text-accent-2">
+                    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d={c.icon} />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[12.5px] text-dim">{c.label}</span>
+                    <span className="block text-[17px] tracking-[-0.01em] break-all transition-colors group-hover:text-ink">{c.value}</span>
+                  </span>
+                  <Arrow className="size-4 shrink-0 -translate-x-2 text-muted opacity-0 transition-all duration-500 ease-out-expo group-hover:translate-x-0 group-hover:opacity-100" />
+                </a>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+
+        <motion.div
+          className="edge relative min-w-0 rounded-[32px] bg-surface p-6 sm:p-10"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 1.1, ease }}
+        >
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]" aria-hidden>
+            <div className="absolute -top-40 left-1/2 size-[480px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent)]" />
           </div>
-          <motion.p className="max-w-[320px] text-[15px] leading-relaxed text-muted" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-            Uzupełnij luki w zdaniu — zajmie to mniej niż minutę.
-          </motion.p>
-        </div>
 
-        <AnimatePresence mode="wait">
-          {status.state === "sent" ? (
-            <motion.div key="ok" className="py-20 lg:py-28" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <svg viewBox="0 0 64 64" className="size-16" fill="none" aria-hidden>
-                <motion.circle cx="32" cy="32" r="30" stroke="var(--color-accent)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease }} />
-                <motion.path d="M20 33l8 8 16-17" stroke="var(--color-accent-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5, duration: 0.6, ease }} />
-              </svg>
-              <p className="h-display mt-10 text-[clamp(2.4rem,5.6vw,5rem)]">
-                {`Dzięki${sender ? `, ${sender}` : ""}.`.split(" ").map((w, i) => (
-                  <motion.span key={i} className="mr-[0.25em] inline-block" initial={{ opacity: 0, y: 30, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.3 + i * 0.12, duration: 0.8, ease }}>
-                    {w}
-                  </motion.span>
-                ))}
-                <motion.span className="block text-muted" initial={{ opacity: 0, y: 30, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.6, duration: 0.8, ease }}>
-                  Odezwę się wkrótce.
-                </motion.span>
-              </p>
-              <button type="button" onClick={() => setStatus({ state: "idle" })} className="link-u mt-10 text-[15px]">
-                Napisz ponownie
-              </button>
-            </motion.div>
-          ) : (
-            <motion.form key="form" onSubmit={submit} noValidate className="relative mt-16 lg:mt-20" exit={{ opacity: 0, y: -20, filter: "blur(10px)" }} transition={{ duration: 0.5 }}>
-              <motion.div
-                className="text-[clamp(1.45rem,3.1vw,2.7rem)] leading-[1.75] tracking-[-0.025em] text-muted"
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-80px" }}
-                variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-              >
-                {[
-                  <>
-                    Cześć! Nazywam się {B("name", "imię i nazwisko", { autoComplete: "name" })}
-                    {" z firmy "}
-                    {B("firm", "nazwa (opcjonalnie)", { autoComplete: "organization" })}.
-                  </>,
-                  <>
-                    {" Szukam kogoś, kto zrobi dla mnie "}
-                    <Pick
-                      id="service"
-                      value={d.service}
-                      onChange={set("service")}
-                      placeholder="wybierz usługę"
-                      bad={bad === "service"}
-                      onFocus={start}
-                      options={[...services.map((s) => ({ value: s.id, label: s.name.toLowerCase(), meta: `od ${s.price} zł` })), { value: "other", label: "coś innego" }]}
-                    />
-                    {d.service === "other" && <>({B("other", "co dokładnie?")})</>}
-                    {" w budżecie "}
-                    <Pick id="budget" value={d.budget} onChange={set("budget")} placeholder="do ustalenia" bad={false} onFocus={start} options={budgets.map((b) => ({ value: b, label: b }))} />.
-                  </>,
-                  <>
-                    {" W skrócie: "}
-                    {B("message", "kilka słów o projekcie i celu")}.
-                  </>,
-                  <>
-                    {" Najlepiej złapać mnie pod numerem "}
-                    {B("phone", "telefon", { type: "tel", autoComplete: "tel", inputMode: "tel" })}
-                    {" albo mailowo: "}
-                    {B("email", "e-mail", { type: "email", autoComplete: "email", inputMode: "email" })}.
-                  </>,
-                ].map((part, i) => (
-                  <motion.span key={i} className="inline" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.9, ease } } }}>
-                    {part}
-                  </motion.span>
-                ))}
+          <AnimatePresence mode="wait">
+            {status.state === "sent" ? (
+              <motion.div key="ok" className="relative flex min-h-[520px] flex-col items-center justify-center text-center" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                <svg viewBox="0 0 64 64" className="size-16" fill="none" aria-hidden>
+                  <motion.circle cx="32" cy="32" r="30" stroke="var(--color-accent)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease }} />
+                  <motion.path d="M20 33l8 8 16-17" stroke="var(--color-accent-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5, duration: 0.6, ease }} />
+                </svg>
+                <h3 className="h-display mt-8 text-[44px]">Dziękuję{sender ? `, ${sender}` : ""}.</h3>
+                <p className="mt-3 max-w-sm text-[17px] text-muted">Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.</p>
+                <button type="button" onClick={() => setStatus({ state: "idle" })} className="link-u mt-8 text-[15px]">
+                  Napisz ponownie
+                </button>
               </motion.div>
-              <input name="company" tabIndex={-1} autoComplete="off" className="absolute -left-[9999px] size-px opacity-0" aria-hidden />
-
-              <div className="mt-14 flex flex-col gap-8 border-t border-line pt-8 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-3">
-                  <label className="flex cursor-pointer items-start gap-3 text-[14px] leading-relaxed text-muted">
-                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="peer sr-only" />
-                    <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border border-line-2 transition-colors peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50 [&>svg]:scale-0 peer-checked:[&>svg]:scale-100">
-                      <svg width="11" height="11" viewBox="0 0 10 10" className="transition-transform duration-300" aria-hidden>
-                        <path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span>
-                      Akceptuję{" "}
-                      <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4 hover:decoration-white">
-                        politykę prywatności
-                      </Link>
-                      .
-                    </span>
-                  </label>
-                  <AnimatePresence mode="wait">
-                    {(hint || status.state === "error") && (
-                      <motion.p key={hint + status.message} role="alert" className="text-[14px] text-red-300" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                        {hint || `${status.message} Zadzwoń: ${site.phone}`}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
+            ) : (
+              <motion.form key="form" onSubmit={submit} noValidate className="relative grid gap-3 sm:grid-cols-2" exit={{ opacity: 0 }}>
+                <Input name="name" label="Imię i nazwisko" required autoComplete="name" value={d.name} onChange={set("name")} className={bad === "name" ? "[&_input]:border-red-400/60" : ""} />
+                <Input name="email" label="Adres e-mail" type="email" required autoComplete="email" inputMode="email" value={d.email} onChange={set("email")} className={bad === "email" ? "[&_input]:border-red-400/60" : ""} />
+                <Input name="phone" label="Numer telefonu" type="tel" required autoComplete="tel" inputMode="tel" value={d.phone} onChange={set("phone")} className={bad === "phone" ? "[&_input]:border-red-400/60" : ""} />
+                <Select name="service" label="Wybierz usługę" required options={serviceOptions} value={d.service} onChange={set("service")} invalid={bad === "service"} />
+                <div className="sm:col-span-2">
+                  <Select name="budget" label="Budżet" options={budgets.map((b) => ({ value: b, label: b }))} value={d.budget} onChange={set("budget")} />
                 </div>
+                <Input name="message" label="Kilka słów o projekcie" required area minLength={10} value={d.message} onChange={set("message")} className={`sm:col-span-2 ${bad === "message" ? "[&_textarea]:border-red-400/60" : ""}`} />
+                <input name="company" tabIndex={-1} autoComplete="off" className="absolute -left-[9999px] size-px opacity-0" aria-hidden />
 
-                <Magnetic strength={0.15}>
-                  <button
-                    type="submit"
-                    disabled={status.state === "sending"}
-                    className="group relative flex h-[76px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2.5 pl-9 text-[19px] font-medium text-bg disabled:opacity-60"
+                <label className="mt-3 flex cursor-pointer items-start gap-3 text-[13.5px] leading-relaxed text-muted sm:col-span-2">
+                  <input type="checkbox" checked={consent} onChange={(e) => (setConsent(e.target.checked), bad === "consent" && (setBad(""), setError("")))} className="peer sr-only" />
+                  <span
+                    className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border transition-colors peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50 [&>svg]:scale-0 peer-checked:[&>svg]:scale-100 ${bad === "consent" ? "border-red-400/70" : "border-line-2"}`}
                   >
-                    <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_90%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_90%_50%)]" />
-                    <span className="relative transition-colors duration-500 group-hover:text-white">{status.state === "sending" ? "Wysyłanie…" : "Wyślij wiadomość"}</span>
-                    <span className="relative grid size-14 place-items-center overflow-hidden rounded-full bg-bg text-ink">
-                      <Arrow className="size-5 transition-transform duration-500 ease-out-expo group-hover:translate-x-6 group-hover:-translate-y-6" />
-                      <Arrow className="absolute size-5 -translate-x-6 translate-y-6 transition-transform duration-500 ease-out-expo group-hover:translate-x-0 group-hover:translate-y-0" />
-                    </span>
-                  </button>
-                </Magnetic>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
+                    <svg width="11" height="11" viewBox="0 0 10 10" className="transition-transform duration-300" aria-hidden>
+                      <path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span>
+                    Akceptuję{" "}
+                    <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4 hover:decoration-white">
+                      politykę prywatności
+                    </Link>{" "}
+                    i zgadzam się na kontakt w sprawie zapytania.
+                  </span>
+                </label>
 
-        {/* bezpośrednio */}
-        <div className="mt-24 grid gap-px overflow-hidden rounded-[28px] border border-line bg-line md:grid-cols-3">
-          {[
-            { label: "E-mail", value: site.email, href: `mailto:${site.email}` },
-            { label: "Telefon", value: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}` },
-            { label: "Discord", value: "Napisz na Discordzie", href: discord, ext: true },
-          ].map((c, i) => (
-            <motion.a
-              key={c.label}
-              href={c.href}
-              {...(c.ext ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="group relative flex min-w-0 flex-col justify-between gap-10 overflow-hidden bg-bg p-6 sm:p-8"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08, duration: 0.9, ease }}
-            >
-              <span className="absolute inset-0 translate-y-full bg-gradient-to-t from-accent/20 to-transparent transition-transform duration-700 ease-out-expo group-hover:translate-y-0" />
-              <span className="relative flex items-center justify-between text-[13px] text-dim">
-                {c.label}
-                <span className="grid size-9 place-items-center rounded-full border border-line-2 text-ink transition-all duration-500 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-ink group-hover:text-bg">
-                  <Arrow className="size-3.5" />
-                </span>
-              </span>
-              <span className="relative text-[clamp(1.05rem,1.6vw,1.4rem)] tracking-[-0.02em] break-all">{c.value}</span>
-            </motion.a>
-          ))}
-        </div>
+                <AnimatePresence mode="wait">
+                  {(error || status.state === "error") && (
+                    <motion.p key={error + status.message} role="alert" className="text-[14px] text-red-300 sm:col-span-2" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                      {error || `${status.message} Zadzwoń: ${site.phone}`}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                <div className="mt-4 sm:col-span-2">
+                  <Magnetic strength={0.08}>
+                    <button
+                      type="submit"
+                      disabled={status.state === "sending"}
+                      className="group relative flex h-[64px] w-full min-w-[260px] items-center justify-between overflow-hidden rounded-full bg-ink pr-2 pl-8 text-[17px] font-medium text-bg disabled:opacity-60 sm:w-auto"
+                    >
+                      <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_92%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_92%_50%)]" />
+                      <span className="relative mr-8 transition-colors duration-500 group-hover:text-white">{status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
+                      <span className="relative grid size-12 place-items-center overflow-hidden rounded-full bg-bg text-ink">
+                        <Arrow className="size-4 transition-transform duration-500 ease-out-expo group-hover:translate-x-5 group-hover:-translate-y-5" />
+                        <Arrow className="absolute size-4 -translate-x-5 translate-y-5 transition-transform duration-500 ease-out-expo group-hover:translate-x-0 group-hover:translate-y-0" />
+                      </span>
+                    </button>
+                  </Magnetic>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );

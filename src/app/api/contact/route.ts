@@ -41,6 +41,7 @@ function validate(body: Record<string, unknown>): Payload | string {
   };
   if (data.name.length < 2) return "Podaj imię.";
   if (!EMAIL_RE.test(data.email)) return "Podaj poprawny adres e-mail.";
+  if (data.phone.replace(/\D/g, "").length < 9) return "Podaj numer telefonu.";
   if (data.message.length < 10) return "Wiadomość jest za krótka (min. 10 znaków).";
   return data;
 }

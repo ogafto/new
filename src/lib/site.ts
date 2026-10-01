@@ -6,13 +6,14 @@ export const site = {
   url: "https://afto.works",
   tagline: "Od piksela do zysku.",
   role: "Web designer & developer",
-  email: "kontakt@afto.works",
-  phone: "+48 000 000 000",
+  email: "lubojanskiwojciech1@gmail.com",
+  phone: "+48 518 323 533",
   timezone: "Europe/Warsaw",
   socials: [
     { label: "Instagram", href: "https://instagram.com/" },
     { label: "Behance", href: "https://behance.net/" },
     { label: "Dribbble", href: "https://dribbble.com/" },
+    { label: "Discord", href: "https://discord.com/" }, // podmień na swój link zaproszenia / profil
   ],
   // Dane do regulaminu i polityki prywatności — uzupełnij przed publikacją.
   legal: {
@@ -169,8 +170,28 @@ export const projects: Project[] = [
 /* ---------- Proces zamówienia ---------- */
 
 export const steps = [
-  { title: "Brief", text: "Opowiadasz o marce i celu. Zadaję pytania, które oszczędzą nam poprawek później." },
-  { title: "Kierunek", text: "Moodboard i koncepcja wizualna — ustalamy, jak marka ma wyglądać i czym ma się wyróżniać." },
-  { title: "Projekt", text: "Dopracowany co do piksela projekt w Figmie. Widzisz efekt, zanim powstanie kod." },
-  { title: "Wdrożenie", text: "Kod, animacje, optymalizacja i publikacja. Strona gotowa, by pracować na Twój wynik." },
+  {
+    title: "Rozmowa",
+    lead: "Poznaję Twoją firmę i potrzeby",
+    text: "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później — po niej dostajesz konkretną wycenę i termin.",
+    points: ["Cel i grupa docelowa", "Zakres i budżet", "Wycena i termin"],
+  },
+  {
+    title: "Kierunek",
+    lead: "Ustalamy, jak marka ma wyglądać",
+    text: "Moodboard, kolory i typografia. Wybieramy styl, który wyróżni Cię na tle konkurencji, zanim powstanie choćby jeden ekran.",
+    points: ["Moodboard", "Paleta i typografia", "Akceptacja stylu"],
+  },
+  {
+    title: "Projekt",
+    lead: "Każdy ekran dopracowany co do piksela",
+    text: "Pełny projekt w Figmie — desktop i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.",
+    points: ["Makiety i prototyp", "Wersja mobilna", "Poprawki do akceptacji"],
+  },
+  {
+    title: "Wdrożenie",
+    lead: "Kod, animacje i publikacja",
+    text: "Koduję projekt z animacjami, optymalizuję szybkość i SEO, podpinam domenę i publikuję. Strona od pierwszego dnia pracuje na Twój wynik.",
+    points: ["Kod i animacje", "Szybkość i SEO", "Publikacja na domenie"],
+  },
 ];

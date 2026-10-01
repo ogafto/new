@@ -1,19 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform } from "motion/react";
 import { serviceName, type Project } from "@/lib/site";
 import { useLoaded } from "../Providers";
 import Button from "../ui/Button";
 import { FadeUp } from "../ui/Reveal";
-import { ProjectCard } from "./Work";
+import { ProjectCard } from "./AllWork";
+import { TLink, usePageTransition } from "../Transition";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
   const show = useLoaded();
-  const router = useRouter();
+  const go = usePageTransition();
   const hero = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: hero, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
@@ -22,7 +22,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
     try {
       sessionStorage.setItem("afto:service", p.category);
     } catch {}
-    router.push("/#kontakt");
+    go("/#kontakt", "Kontakt");
   };
 
   const meta = [
@@ -33,9 +33,22 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
   ];
 
   return (
-    <main className="pt-36">
+    <main className="pt-32">
       <div className="mx-auto max-w-[1400px] px-5 sm:px-10">
-        <motion.p className="kicker" initial={{ opacity: 0 }} animate={show ? { opacity: 1 } : {}} transition={{ duration: 0.8 }}>
+        <motion.div className="flex items-center justify-between gap-6" initial={{ opacity: 0, y: -8 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease }}>
+          <TLink href="/#realizacje" label="Strona główna" className="group inline-flex items-center gap-3 rounded-full border border-line-2 py-2 pr-5 pl-2 text-[14px] text-muted transition-colors duration-500 hover:border-white/30 hover:text-ink">
+            <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-white/[0.06] transition-colors duration-500 group-hover:bg-accent group-hover:text-white">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-0.5" aria-hidden>
+                <path d="M11 7H3M6.5 3.5L3 7l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            Wróć na stronę główną
+          </TLink>
+          <TLink href="/realizacje" label="Realizacje" className="link-u hidden text-[14px] text-muted hover:text-ink sm:block">
+            Wszystkie realizacje
+          </TLink>
+        </motion.div>
+        <motion.p className="kicker mt-14" initial={{ opacity: 0 }} animate={show ? { opacity: 1 } : {}} transition={{ duration: 0.8 }}>
           {serviceName(p.category)}
         </motion.p>
         <h1 className="h-display mt-7 overflow-hidden pb-[0.1em] text-[clamp(3.4rem,11vw,10rem)]">

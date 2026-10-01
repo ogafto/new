@@ -11,6 +11,9 @@
     "logo:gif": "node scripts/export-gif.mjs"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@react-three/postprocessing": "^3.1.3",

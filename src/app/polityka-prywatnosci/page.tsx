@@ -21,6 +21,7 @@ const sections: LegalSection[] = [
     title: "Jakie dane przetwarzam i po co",
     items: [
       "Imię, adres e-mail, numer telefonu i treść wiadomości — w celu odpowiedzi na zapytanie i przygotowania wyceny (art. 6 ust. 1 lit. b RODO).",
+      "Imię, adres e-mail i hasło (przechowywane wyłącznie w postaci zaszyfrowanego skrótu) — w celu prowadzenia konta w panelu klienta, do którego dostęp otrzymujesz po zaproszeniu (art. 6 ust. 1 lit. b RODO).",
       "Dane niezbędne do wystawienia rachunku lub faktury — w celu wypełnienia obowiązków prawnych (art. 6 ust. 1 lit. c RODO).",
       "Dane z korespondencji — w celu ewentualnego dochodzenia roszczeń lub obrony przed nimi (art. 6 ust. 1 lit. f RODO).",
     ],
@@ -29,6 +30,7 @@ const sections: LegalSection[] = [
     title: "Jak długo przechowuję dane",
     items: [
       "Dane z zapytań — do czasu zakończenia korespondencji, a w przypadku zawarcia umowy przez okres jej realizacji.",
+      "Dane konta w panelu klienta — do czasu usunięcia konta (na Twoją prośbę) lub zakończenia współpracy.",
       "Dane rozliczeniowe — przez okres wymagany przepisami podatkowymi.",
     ],
   },
@@ -51,6 +53,7 @@ const sections: LegalSection[] = [
     title: "Pliki cookies",
     items: [
       "Strona używa niezbędnych plików cookies, w tym ciasteczka „afto_consent”, które zapamiętuje Twój wybór dotyczący cookies przez 180 dni.",
+      "Po zalogowaniu do panelu klienta zapisywane jest niezbędne ciasteczko sesji „afto_session” (ważne 30 dni lub do wylogowania).",
       "Za Twoją zgodą strona może używać cookies analitycznych (Google Analytics 4) do anonimowych statystyk odwiedzin oraz marketingowych do pomiaru skuteczności reklam.",
       "Cookies opcjonalne są ładowane dopiero po wyrażeniu zgody. Zgodę możesz w każdej chwili zmienić lub wycofać, klikając „Ustawienia cookies” w stopce strony.",
       "Możesz też zarządzać plikami cookies w ustawieniach swojej przeglądarki.",

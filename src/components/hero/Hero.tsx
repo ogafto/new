@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useLoaded } from "../Providers";
+import { useCovering } from "../Transition";
 import { projects } from "@/lib/site";
 import Button, { Magnetic } from "../ui/Button";
 
@@ -22,6 +23,14 @@ function Line({ children, i, show }: { children: React.ReactNode; i: number; sho
 
 export default function Hero() {
   const show = useLoaded();
+  // po przejściu z podstrony scena 3D startuje dopiero, gdy kurtyna zjedzie (bez szarpania animacji)
+  const covering = useCovering();
+  const [scene, setScene] = useState(!covering);
+  useEffect(() => {
+    if (scene || covering) return;
+    const t = setTimeout(() => setScene(true), 950);
+    return () => clearTimeout(t);
+  }, [scene, covering]);
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { margin: "120px" });
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -30,8 +39,8 @@ export default function Hero() {
 
   return (
     <section ref={ref} id="start" className="relative h-[100svh] min-h-[680px] overflow-hidden">
-      <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={show ? { opacity: 1 } : {}} transition={{ duration: 1.6 }} aria-hidden>
-        <LogoScene ready={show} active={inView} />
+      <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={show && scene ? { opacity: 1 } : {}} transition={{ duration: 1.6 }} aria-hidden>
+        {scene && <LogoScene ready={show} active={inView} />}
       </motion.div>
       {/* przyciemnienie pod tekstem */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,var(--color-bg)_2%,transparent_45%),linear-gradient(to_right,rgb(7_7_10/0.7),transparent_55%)]" aria-hidden />

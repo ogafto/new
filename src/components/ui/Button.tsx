@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { motion, useMotionValue, useSpring } from "motion/react";
+import { TLink } from "../Transition";
 
 export function Arrow({ className = "" }: { className?: string }) {
   return (
@@ -46,9 +46,10 @@ type Props = {
   variant?: "primary" | "outline";
   className?: string;
   disabled?: boolean;
+  label?: string; // napis na kurtynie przejścia
 };
 
-export default function Button({ children, href, onClick, type = "button", variant = "primary", className = "", disabled }: Props) {
+export default function Button({ children, href, onClick, type = "button", variant = "primary", className = "", disabled, label }: Props) {
   const cls = `group btn btn-${variant} ${disabled ? "pointer-events-none opacity-60" : ""} ${className}`;
   const inner = (
     <>
@@ -66,9 +67,9 @@ export default function Button({ children, href, onClick, type = "button", varia
   );
   if (href?.startsWith("/"))
     return (
-      <Link href={href} className={cls} onClick={onClick}>
+      <TLink href={href} label={label ?? children} className={cls} onClick={onClick}>
         {inner}
-      </Link>
+      </TLink>
     );
   if (href)
     return (

@@ -1,26 +1,56 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
+import { motion, useAnimationFrame, useMotionValue, useScroll, useVelocity } from "motion/react";
 import { useLenis } from "lenis/react";
 import { nav, site } from "@/lib/site";
 import { Mark } from "./brand/Logo";
 import { openCookieSettings } from "./CookieConsent";
+import { TLink } from "./Transition";
 
+// Pasek przewijany w JS: prędkość zmienia się płynnie (bez skoków przy najechaniu)
 function Marquee({ href }: { href: string }) {
+  const track = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const speed = useRef(1);
+  const target = useRef(1);
+  const { scrollY } = useScroll();
+  const velocity = useVelocity(scrollY);
+
+  useAnimationFrame((_, delta) => {
+    const el = track.current;
+    if (!el) return;
+    const dt = Math.min(delta, 50) / 1000;
+    // przewijanie strony lekko przyspiesza pasek
+    const boost = Math.min(2.5, Math.abs(velocity.get()) / 1200);
+    speed.current += (target.current + boost - speed.current) * Math.min(1, dt * 3);
+    const half = el.scrollWidth / 2;
+    let next = x.get() - 70 * speed.current * dt;
+    if (next <= -half) next += half;
+    x.set(next);
+  });
+
   const item = (k: number) => (
     <span key={k} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
       Zacznijmy projekt
       <span className="inline-block size-[0.16em] bg-accent" />
     </span>
   );
+
   return (
-    <a href={href} className="group block overflow-hidden border-y border-line py-8 sm:py-12" aria-label="Zacznijmy projekt — przejdź do kontaktu">
-      <div className="h-display flex w-max animate-[footer-marquee_28s_linear_infinite] text-[clamp(3.5rem,10vw,9.5rem)] text-ink transition-colors duration-500 group-hover:text-accent-2 group-hover:[animation-duration:14s]">
+    <TLink
+      href={href}
+      label="Kontakt"
+      className="group block overflow-hidden border-y border-line py-8 sm:py-12"
+      aria-label="Zacznijmy projekt — przejdź do kontaktu"
+      onPointerEnter={() => (target.current = 0.25)}
+      onPointerLeave={() => (target.current = 1)}
+    >
+      <motion.div ref={track} style={{ x }} className="h-display flex w-max text-[clamp(3.5rem,10vw,9.5rem)] text-ink transition-colors duration-700 group-hover:text-accent-2">
         {[0, 1, 2, 3, 4, 5].map(item)}
-      </div>
-      <style>{`@keyframes footer-marquee { to { transform: translateX(-50%) } }`}</style>
-    </a>
+      </motion.div>
+    </TLink>
   );
 }
 
@@ -48,6 +78,9 @@ export default function Footer() {
             <a href={`mailto:${site.email}`} className="link-u mt-6 inline-block text-[17px]">
               {site.email}
             </a>
+            <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="link-u mt-2 block w-fit text-[15px] text-muted hover:text-ink">
+              {site.phone}
+            </a>
           </div>
           {cols.map((c) => (
             <div key={c.title}>
@@ -55,9 +88,15 @@ export default function Footer() {
               <ul className="space-y-2.5 text-[15px]">
                 {c.links.map((l) => (
                   <li key={l.label}>
-                    <a href={l.href} {...("ext" in l ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="link-u text-muted transition-colors hover:text-ink">
-                      {l.label}
-                    </a>
+                    {"ext" in l ? (
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-u text-muted transition-colors hover:text-ink">
+                        {l.label}
+                      </a>
+                    ) : (
+                      <TLink href={l.href} label={l.label} className="link-u text-muted transition-colors hover:text-ink">
+                        {l.label}
+                      </TLink>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -67,14 +106,19 @@ export default function Footer() {
             <p className="mb-5 text-[13px] text-dim">Informacje</p>
             <ul className="space-y-2.5 text-[15px]">
               <li>
-                <Link href="/regulamin" className="link-u text-muted transition-colors hover:text-ink">
+                <TLink href="/regulamin" label="Regulamin" className="link-u text-muted transition-colors hover:text-ink">
                   Regulamin
-                </Link>
+                </TLink>
               </li>
               <li>
-                <Link href="/polityka-prywatnosci" className="link-u text-muted transition-colors hover:text-ink">
+                <TLink href="/polityka-prywatnosci" label="Polityka prywatności" className="link-u text-muted transition-colors hover:text-ink">
                   Polityka prywatności
-                </Link>
+                </TLink>
+              </li>
+              <li>
+                <TLink href="/konto" label="Panel klienta" className="link-u text-muted transition-colors hover:text-ink">
+                  Panel klienta
+                </TLink>
               </li>
               <li>
                 <button type="button" onClick={openCookieSettings} className="link-u text-muted transition-colors hover:text-ink">
@@ -82,9 +126,9 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <Link href="/brand" className="link-u text-muted transition-colors hover:text-ink">
+                <TLink href="/brand" label="Logo" className="link-u text-muted transition-colors hover:text-ink">
                   Logo
-                </Link>
+                </TLink>
               </li>
             </ul>
           </div>

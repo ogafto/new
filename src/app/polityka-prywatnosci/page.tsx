@@ -50,11 +50,13 @@ const sections: LegalSection[] = [
   {
     title: "Pliki cookies",
     items: [
-      "Strona może używać niezbędnych plików cookies i pamięci przeglądarki do prawidłowego działania.",
-      "Jeżeli zostaną dodane narzędzia analityczne (np. Google Analytics), strona poprosi o zgodę przed ich uruchomieniem.",
-      "Możesz zarządzać plikami cookies w ustawieniach swojej przeglądarki.",
+      "Strona używa niezbędnych plików cookies, w tym ciasteczka „afto_consent”, które zapamiętuje Twój wybór dotyczący cookies przez 180 dni.",
+      "Za Twoją zgodą strona może używać cookies analitycznych (Google Analytics 4) do anonimowych statystyk odwiedzin oraz marketingowych do pomiaru skuteczności reklam.",
+      "Cookies opcjonalne są ładowane dopiero po wyrażeniu zgody. Zgodę możesz w każdej chwili zmienić lub wycofać, klikając „Ustawienia cookies” w stopce strony.",
+      "Możesz też zarządzać plikami cookies w ustawieniach swojej przeglądarki.",
     ],
   },
+
 ];
 
 export default function PolitykaPrywatnosci() {

@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Host_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import Providers from "@/components/Providers";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const host = Host_Grotesk({ variable: "--font-host", subsets: ["latin", "latin-ext"] });
+// Satoshi (Fontshare, ITF Free Font License — patrz src/fonts/Satoshi-LICENSE.txt)
+const satoshi = localFont({ src: "../fonts/Satoshi-Variable.woff2", variable: "--font-satoshi", weight: "300 900", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -32,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pl" className={host.variable}>
+    <html lang="pl" className={satoshi.variable}>
       <body>
         <Providers>{children}</Providers>
       </body>

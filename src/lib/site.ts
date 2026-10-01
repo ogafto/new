@@ -82,6 +82,7 @@ export type Project = {
   scope: string[];
   palette: string[];
   image: string; // zdjęcie realizacji w /public/prace (najlepiej 1600×1200, JPG)
+  gallery?: string[]; // dodatkowe zdjęcia na podstronie realizacji
 };
 
 // Przykładowe realizacje — podmień zdjęcia i opisy na swoje. Nowa praca = nowy obiekt w tablicy.

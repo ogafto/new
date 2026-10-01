@@ -3,25 +3,24 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Grid, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer, MeshTransmissionMaterial } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 /*
- * Monogram "af." wytłoczony z dokładnej geometrii logo (src/lib/logo.ts).
- * Układ SVG (y w dół) → świat 3D: X = x − 22, Y = 25 − y. Grubość linii logo = 5.
+ * Szklany monogram "af." wytłoczony z geometrii logo (src/lib/logo.ts).
+ * Za nim linie (line-art) i wędrująca wiązka światła — szkło je załamuje.
+ * Układ SVG (y w dół) → 3D: X = x − 22, Y = 25 − y.
  */
 
 const VIOLET = new THREE.Color("#8b6cff");
 
-function shapes() {
-  // pierścień "a" — środek (16,31), r 9 ± 2.5
+function logoShapes() {
   const ring = new THREE.Shape();
   ring.absarc(-6, -6, 11.5, 0, Math.PI * 2, false);
   const hole = new THREE.Path();
   hole.absarc(-6, -6, 6.5, 0, Math.PI * 2, true);
   ring.holes.push(hole);
 
-  // trzon "f" z łukiem — obrys linii o szerokości 5
   const stem = new THREE.Shape();
   stem.moveTo(0.5, -17.5);
   stem.lineTo(0.5, 8);
@@ -33,7 +32,6 @@ function shapes() {
   stem.lineTo(5.5, -17.5);
   stem.closePath();
 
-  // poprzeczka "f"
   const bar = new THREE.Shape();
   bar.moveTo(3, -1.5);
   bar.lineTo(12.5, -1.5);
@@ -41,7 +39,6 @@ function shapes() {
   bar.lineTo(3, 3.5);
   bar.closePath();
 
-  // kropka
   const dot = new THREE.Shape();
   dot.moveTo(12.5, -17.5);
   dot.lineTo(17.5, -17.5);
@@ -52,23 +49,105 @@ function shapes() {
   return { body: [ring, stem, bar], dot };
 }
 
-const extrude = { depth: 4, bevelEnabled: true, bevelThickness: 0.7, bevelSize: 0.55, bevelSegments: 6, curveSegments: 64 };
+const extrude = { depth: 5, bevelEnabled: true, bevelThickness: 1.1, bevelSize: 0.9, bevelSegments: 8, curveSegments: 72 };
 
-function Monogram({ ready }: { ready: boolean }) {
+// Zegar z ograniczonym krokiem — po pauzie (sekcja poza ekranem) nic nie skacze
+function useSafeTime() {
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += Math.min(dt, 1 / 30);
+  });
+  return t;
+}
+
+function Backdrop() {
+  const beam = useRef<THREE.Mesh>(null);
+  const time = useSafeTime();
+  const { lines, glow, beamTex, cx } = useMemo(() => {
+    // linie wygaszane z dala od monogramu (jasność koloru = widoczność na czarnym tle)
+    const pts: number[] = [];
+    const cols: number[] = [];
+    const cx = typeof window !== "undefined" && window.innerWidth / window.innerHeight > 1.15 ? 26 : 0;
+    for (let x = -150; x <= 150; x += 4) {
+      const k = 0.13 * Math.exp(-Math.pow((x - cx) / 38, 2));
+      for (const y of [-60, 60]) {
+        pts.push(x, y, 0);
+        cols.push(k * 0.85, k * 0.8, k);
+      }
+    }
+    const lines = new THREE.BufferGeometry();
+    lines.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    lines.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+    // miękka poświata z gradientu radialnego
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const ctx = c.getContext("2d")!;
+    const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, "rgba(139,108,255,0.14)");
+    g.addColorStop(0.5, "rgba(90,60,200,0.06)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 256, 256);
+    const glow = new THREE.CanvasTexture(c);
+    // wiązka: miękki pionowy pasek wygaszany na końcach
+    const b = document.createElement("canvas");
+    b.width = 32;
+    b.height = 256;
+    const bx = b.getContext("2d")!;
+    const gy = bx.createLinearGradient(0, 0, 0, 256);
+    gy.addColorStop(0, "rgba(255,255,255,0)");
+    gy.addColorStop(0.5, "rgba(255,255,255,1)");
+    gy.addColorStop(1, "rgba(255,255,255,0)");
+    bx.fillStyle = gy;
+    bx.fillRect(0, 0, 32, 256);
+    bx.globalCompositeOperation = "destination-in";
+    const gx = bx.createLinearGradient(0, 0, 32, 0);
+    gx.addColorStop(0, "rgba(0,0,0,0)");
+    gx.addColorStop(0.5, "rgba(0,0,0,1)");
+    gx.addColorStop(1, "rgba(0,0,0,0)");
+    bx.fillStyle = gx;
+    bx.fillRect(0, 0, 32, 256);
+    const beamTex = new THREE.CanvasTexture(b);
+    return { lines, glow, beamTex, cx };
+  }, []);
+
+  useFrame(() => {
+    if (beam.current) beam.current.position.x = cx - 32 + ((time.current * 9) % 64);
+  });
+
+  return (
+    <group position={[0, 0, -30]}>
+      <lineSegments geometry={lines}>
+        <lineBasicMaterial vertexColors />
+      </lineSegments>
+      {/* wiązka światła przesuwająca się za szkłem */}
+      <mesh ref={beam} position={[0, 0, 1]}>
+        <planeGeometry args={[3, 70]} />
+        <meshBasicMaterial map={beamTex} color={new THREE.Color("#c9bcff").multiplyScalar(1.1)} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+      {/* miękkie fioletowe światło */}
+      <mesh position={[cx, 2, -2]}>
+        <planeGeometry args={[130, 130]} />
+        <meshBasicMaterial map={glow} transparent depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function Monogram({ ready, mobile }: { ready: boolean; mobile: boolean }) {
   const group = useRef<THREE.Group>(null);
   const { size } = useThree();
   const pointer = useRef(new THREE.Vector2());
-  const start = useRef<number | null>(null);
+  const intro = useRef(0);
+  const time = useSafeTime();
 
-  const { bodyGeo, dotGeo, edges } = useMemo(() => {
-    const s = shapes();
-    const bodyGeo = new THREE.ExtrudeGeometry(s.body, extrude);
-    bodyGeo.translate(0, 0, -2);
-    const dotGeo = new THREE.ExtrudeGeometry(s.dot, extrude);
-    dotGeo.translate(0, 0, -2);
-    // krawędzie bryły jako linie — line-art w 3D
-    const edges = new THREE.EdgesGeometry(bodyGeo, 30);
-    return { bodyGeo, dotGeo, edges };
+  const { body, dot } = useMemo(() => {
+    const s = logoShapes();
+    const body = new THREE.ExtrudeGeometry(s.body, extrude);
+    body.translate(0, 0, -2.5);
+    const dot = new THREE.ExtrudeGeometry(s.dot, extrude);
+    dot.translate(0, 0, -2.5);
+    return { body, dot };
   }, []);
 
   useEffect(() => {
@@ -79,82 +158,45 @@ function Monogram({ ready }: { ready: boolean }) {
 
   const wide = size.width / size.height > 1.15;
 
-  useFrame((state, dt) => {
+  useFrame((_, rawDt) => {
     const g = group.current;
     if (!g) return;
-    if (ready && start.current === null) start.current = state.clock.elapsedTime;
-    const t = start.current === null ? 0 : state.clock.elapsedTime - start.current;
-    const intro = Math.min(1, t / 2.2);
-    const e = 1 - Math.pow(1 - intro, 4);
-    const time = state.clock.elapsedTime;
+    const dt = Math.min(rawDt, 1 / 30);
+    if (ready) intro.current = Math.min(1, intro.current + dt / 2.4);
+    const e = 1 - Math.pow(1 - intro.current, 4);
+    const t = time.current;
 
-    const targetY = Math.sin(time * 0.35) * 0.35 + pointer.current.x * 0.45 + (1 - e) * -1.6;
-    const targetX = -pointer.current.y * 0.18 + Math.sin(time * 0.5) * 0.04;
-    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, targetY, 3, dt);
-    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, targetX, 3, dt);
-    g.position.y = (wide ? 6 : 12) + Math.sin(time * 0.8) * 0.8;
-    g.position.x = wide ? Math.min(28, (size.width / size.height) * 12) : 0;
-    g.scale.setScalar((wide ? 0.78 : 0.62) * (0.6 + 0.4 * e));
+    const ry = Math.sin(t * 0.3) * 0.42 + pointer.current.x * 0.35 - (1 - e) * 1.2;
+    const rx = -pointer.current.y * 0.15 + Math.sin(t * 0.45) * 0.05;
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, ry, 2.5, dt);
+    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, rx, 2.5, dt);
+    g.position.set(wide ? Math.min(26, (size.width / size.height) * 11) : 0, (wide ? 3 : 22) + Math.sin(t * 0.7) * 0.7, 0);
+    g.scale.setScalar((wide ? 0.95 : 0.7) * (0.75 + 0.25 * e));
   });
 
   return (
     <group ref={group}>
-      <mesh geometry={bodyGeo}>
-        <meshPhysicalMaterial color="#2c2a38" metalness={0.75} roughness={0.32} clearcoat={1} clearcoatRoughness={0.15} envMapIntensity={1.6} />
+      <mesh geometry={body}>
+        <MeshTransmissionMaterial
+          samples={mobile ? 4 : 8}
+          resolution={mobile ? 512 : 1024}
+          thickness={6}
+          roughness={0.04}
+          ior={1.45}
+          chromaticAberration={0.08}
+          anisotropy={0.2}
+          distortion={0.08}
+          distortionScale={0.4}
+          temporalDistortion={0.05}
+          backside
+          backsideThickness={2}
+          color="#ece8ff"
+          background={new THREE.Color("#07070a")}
+        />
       </mesh>
-      <lineSegments geometry={edges}>
-        <lineBasicMaterial color="#cfc4ff" transparent opacity={0.35} />
-      </lineSegments>
-      <mesh geometry={dotGeo}>
-        <meshStandardMaterial color={VIOLET} emissive={VIOLET} emissiveIntensity={2.2} toneMapped={false} />
+      <mesh geometry={dot}>
+        <meshStandardMaterial color={VIOLET} emissive={VIOLET} emissiveIntensity={1.8} toneMapped={false} />
       </mesh>
-      <pointLight position={[15, -15, 8]} color="#8b6cff" intensity={600} distance={60} />
-      <Orbits />
-    </group>
-  );
-}
-
-// Liniowe orbity z punktami światła
-function Orbits() {
-  const ref = useRef<THREE.Group>(null);
-  const rings = useMemo(
-    () => [
-      { r: 29, tilt: [1.2, 0.2, 0], speed: 0.12, color: "#8b6cff", opacity: 0.75, light: 2.4 },
-      { r: 34, tilt: [1.45, -0.5, 0.3], speed: -0.08, color: "#ffffff", opacity: 0.12, light: 0 },
-      { r: 24, tilt: [0.5, 0.9, 0], speed: 0.16, color: "#b4a2ff", opacity: 0.3, light: 1.6 },
-    ],
-    [],
-  );
-  const dots = useRef<(THREE.Mesh | null)[]>([]);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    rings.forEach((r, i) => {
-      const d = dots.current[i];
-      if (d) {
-        const a = t * r.speed * 4 + i * 2;
-        d.position.set(Math.cos(a) * r.r, Math.sin(a) * r.r, 0);
-      }
-    });
-    if (ref.current) ref.current.rotation.z = t * 0.03;
-  });
-
-  return (
-    <group ref={ref}>
-      {rings.map((r, i) => (
-        <group key={i} rotation={r.tilt as [number, number, number]}>
-          <mesh>
-            <torusGeometry args={[r.r, 0.06, 8, 256]} />
-            <meshBasicMaterial color={r.color} transparent opacity={r.opacity} toneMapped={r.light === 0} />
-          </mesh>
-          {r.light > 0 && (
-            <mesh ref={(m) => void (dots.current[i] = m)}>
-              <sphereGeometry args={[0.45, 16, 16]} />
-              <meshBasicMaterial color={new THREE.Color(r.color).multiplyScalar(r.light)} toneMapped={false} />
-            </mesh>
-          )}
-        </group>
-      ))}
     </group>
   );
 }
@@ -162,39 +204,17 @@ function Orbits() {
 export default function LogoScene({ ready, active }: { ready: boolean; active: boolean }) {
   const mobile = typeof window !== "undefined" && window.innerWidth < 768;
   return (
-    <Canvas
-      dpr={[1, mobile ? 1.5 : 2]}
-      frameloop={active ? "always" : "never"}
-      camera={{ position: [0, 4, 92], fov: 32 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-    >
+    <Canvas dpr={[1, mobile ? 1.5 : 2]} frameloop={active ? "always" : "demand"} camera={{ position: [0, 0, 95], fov: 30 }} gl={{ antialias: true, powerPreference: "high-performance" }}>
       <color attach="background" args={["#07070a"]} />
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[-20, 30, 40]} intensity={1.4} color="#ffffff" />
-      <directionalLight position={[40, -10, 20]} intensity={1.2} color="#8b6cff" />
-      <fog attach="fog" args={["#07070a", 90, 190]} />
-      <Monogram ready={ready} />
-      <Grid
-        position={[0, -30, 0]}
-        args={[400, 400]}
-        cellSize={6}
-        cellThickness={0.6}
-        cellColor="#1d1b26"
-        sectionSize={30}
-        sectionThickness={1}
-        sectionColor="#3a2f6b"
-        fadeDistance={190}
-        fadeStrength={1.6}
-        infiniteGrid
-      />
+      <Backdrop />
+      <Monogram ready={ready} mobile={mobile} />
       <Environment resolution={256}>
-        <Lightformer form="rect" intensity={6} color="#8b6cff" position={[-30, 10, 20]} scale={[10, 40, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
-        <Lightformer form="rect" intensity={4} color="#ffffff" position={[30, 25, 25]} scale={[20, 6, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
-        <Lightformer form="ring" intensity={3} color="#b4a2ff" position={[0, -20, 30]} scale={18} onUpdate={(s) => s.lookAt(0, 0, 0)} />
-        <Lightformer form="rect" intensity={2} color="#4b3aa8" position={[0, 40, -30]} scale={[60, 10, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
+        <Lightformer form="rect" intensity={4} color="#ffffff" position={[25, 30, 30]} scale={[30, 4, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
+        <Lightformer form="rect" intensity={2.5} color="#8b6cff" position={[-35, 0, 20]} scale={[6, 60, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
+        <Lightformer form="rect" intensity={2} color="#ffffff" position={[0, -30, 25]} scale={[50, 3, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
       </Environment>
       <EffectComposer multisampling={0}>
-        <Bloom mipmapBlur intensity={1.1} luminanceThreshold={1} luminanceSmoothing={0.2} />
+        <Bloom mipmapBlur intensity={0.8} luminanceThreshold={1} luminanceSmoothing={0.25} />
       </EffectComposer>
     </Canvas>
   );

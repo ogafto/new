@@ -1,97 +1,54 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
+import { useRef, useState } from "react";
+import Link from "next/link";
+import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
 import { projects, serviceName, services, type Project, type ServiceId } from "@/lib/site";
 import { FadeUp, Heading } from "../ui/Reveal";
-import ProjectDrawer from "./ProjectDrawer";
+import { Arrow } from "../ui/Button";
 
 type Filter = "all" | ServiceId;
 const ease = [0.16, 1, 0.3, 1] as const;
-const PAGE = 6;
+const PAGE = 7;
 
-// Kółko "Zobacz" podążające za kursorem
-function CursorBubble({ show }: { show: boolean }) {
-  const x = useMotionValue(-200);
-  const y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 380, damping: 32, mass: 0.5 });
-  const sy = useSpring(y, { stiffness: 380, damping: 32, mass: 0.5 });
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
-      x.set(e.clientX);
-      y.set(e.clientY);
-    };
-    window.addEventListener("pointermove", move);
-    return () => window.removeEventListener("pointermove", move);
-  }, [x, y]);
+// Karta = zdjęcie. Podpis leży na zdjęciu, obraz lekko "płynie" przy przewijaniu.
+export function ProjectCard({ p, wide = false, priority = false }: { p: Project; wide?: boolean; priority?: boolean }) {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["-6%", "6%"]);
+
   return (
-    <motion.div className="pointer-events-none fixed top-0 left-0 z-40 hidden [@media(pointer:fine)]:block" style={{ x: sx, y: sy }} aria-hidden>
-      <motion.div
-        className="-translate-x-1/2 -translate-y-1/2 grid size-[92px] place-items-center rounded-full bg-accent text-[14px] font-medium text-white"
-        initial={false}
-        animate={{ scale: show ? 1 : 0 }}
-        transition={{ duration: 0.4, ease }}
-      >
-        Zobacz
-      </motion.div>
-    </motion.div>
-  );
-}
+    <Link ref={ref} href={`/realizacje/${p.slug}`} className="group relative block overflow-hidden rounded-[24px] bg-surface" aria-label={`${p.name} — ${serviceName(p.category)}`}>
+      <div className={`relative ${wide ? "aspect-[4/3] md:aspect-[21/9]" : "aspect-[4/3]"}`}>
+        <motion.img
+          src={p.image}
+          alt=""
+          loading={priority ? "eager" : "lazy"}
+          className="absolute inset-x-0 -top-[7%] h-[114%] w-full object-cover transition-transform duration-[1.4s] ease-out-expo group-hover:scale-[1.04]"
+          style={{ y }}
+        />
+        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgb(7_7_10/0.85),rgb(7_7_10/0.15)_45%,transparent_70%)]" />
+        <span className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/10 ring-inset" />
 
-// Układ redakcyjny: duży / mały na zmianę
-const layout = ["lg:col-span-7", "lg:col-span-5 lg:mt-32", "lg:col-span-5", "lg:col-span-7 lg:mt-32"];
+        <span className="absolute top-5 left-5 rounded-full bg-black/35 px-3 py-1.5 text-[13px] text-white/85 backdrop-blur-md">{serviceName(p.category)}</span>
+        <span className="absolute top-5 right-5 grid size-11 scale-75 place-items-center rounded-full bg-white text-bg opacity-0 transition-all duration-500 ease-out-expo group-hover:scale-100 group-hover:opacity-100">
+          <Arrow />
+        </span>
 
-function Card({ p, i, onOpen, onHover }: { p: Project; i: number; onOpen: () => void; onHover: (v: boolean) => void }) {
-  return (
-    <motion.li layout className={layout[i % 4]} exit={{ opacity: 0 }} transition={{ duration: 0.5, ease }}>
-      <button
-        type="button"
-        onClick={onOpen}
-        onPointerEnter={(e) => e.pointerType === "mouse" && onHover(true)}
-        onPointerLeave={() => onHover(false)}
-        className="group block w-full text-left [@media(pointer:fine)]:cursor-none"
-      >
-        <motion.div
-          className="edge relative aspect-[4/3] overflow-hidden rounded-[22px] bg-surface"
-          initial={{ clipPath: "inset(18% 0 0 0 round 22px)", opacity: 0 }}
-          whileInView={{ clipPath: "inset(0% 0 0 0 round 22px)", opacity: 1 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 1.3, ease }}
-        >
-          <motion.img
-            src={p.image}
-            alt={`${p.name} — ${p.client}`}
-            loading="lazy"
-            className="absolute inset-0 size-full object-cover transition-transform duration-[1.4s] ease-out-expo group-hover:scale-[1.045]"
-            initial={{ scale: 1.15 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.6, ease }}
-          />
-          {/* smuga światła */}
-          <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(110deg,transparent_35%,rgb(180_162_255/0.22)_50%,transparent_65%)] transition-transform duration-[1.3s] ease-out-expo group-hover:translate-x-full" />
-        </motion.div>
-
-        <div className="relative mt-5 flex items-baseline justify-between gap-6 pt-4">
-          <span className="absolute top-0 left-0 h-px w-full bg-line" />
-          <span className="absolute top-0 left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
-          <span className="flex items-baseline gap-4">
-            <span className="text-[13px] text-dim tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-            <span className="h-display text-[28px] tracking-[-0.03em] lg:text-[34px]">{p.name}</span>
+        <span className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-6 sm:inset-x-8 sm:bottom-7">
+          <span>
+            <span className="h-display block text-[30px] text-white transition-transform duration-700 ease-out-expo group-hover:-translate-y-1 sm:text-[40px]">{p.name}</span>
+            <span className="mt-1.5 block text-[14px] text-white/65">{p.client}</span>
           </span>
-          <span className="text-right text-[14px] text-muted">
-            {serviceName(p.category)} <span className="text-dim">· {p.year}</span>
-          </span>
-        </div>
-      </button>
-    </motion.li>
+          <span className="text-[14px] text-white/55 tabular-nums">{p.year}</span>
+        </span>
+      </div>
+    </Link>
   );
 }
 
 export default function Work() {
   const [filter, setFilter] = useState<Filter>("all");
-  const [open, setOpen] = useState<number | null>(null);
-  const [hover, setHover] = useState(false);
   const [all, setAll] = useState(false);
 
   const list = filter === "all" ? projects : projects.filter((p) => p.category === filter);
@@ -100,19 +57,18 @@ export default function Work() {
     { id: "all", label: "Wszystkie", count: projects.length },
     ...services.map((s) => ({ id: s.id, label: s.plural, count: projects.filter((p) => p.category === s.id).length })).filter((f) => f.count > 0),
   ];
-  const close = useCallback(() => setOpen(null), []);
 
   return (
-    <section id="realizacje" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-44">
-      <div className="mb-16 flex flex-col justify-between gap-10 lg:mb-24 lg:flex-row lg:items-end">
+    <section id="realizacje" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-40">
+      <div className="mb-14 flex flex-col justify-between gap-10 lg:mb-20 lg:flex-row lg:items-end">
         <div>
           <FadeUp>
             <p className="kicker">Realizacje</p>
           </FadeUp>
-          <Heading className="mt-7 text-[clamp(2.8rem,6.5vw,6.6rem)]" lines={["Wybrane", <span key="2" className="text-muted">projekty</span>]} />
+          <Heading className="mt-7 text-[clamp(2.8rem,6.5vw,6.4rem)]" lines={["Wybrane", <span key="2" className="text-muted">projekty</span>]} />
         </div>
         <FadeUp delay={0.1}>
-          <div className="flex flex-wrap gap-x-7 gap-y-3" role="group" aria-label="Filtruj realizacje">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtruj realizacje">
             {filters.map((f) => (
               <button
                 key={f.id}
@@ -122,27 +78,46 @@ export default function Work() {
                   setAll(false);
                 }}
                 aria-pressed={filter === f.id}
-                className={`relative pb-2 text-[15px] transition-colors ${filter === f.id ? "text-ink" : "text-muted hover:text-ink"}`}
+                className={`relative h-10 rounded-full px-4 text-[14px] transition-colors duration-300 ${filter === f.id ? "text-bg" : "text-muted hover:text-ink"}`}
               >
-                {f.label}
-                <sup className="ml-1 text-[11px] text-dim">{f.count}</sup>
-                {filter === f.id && <motion.span layoutId="work-filter" className="absolute inset-x-0 bottom-0 h-px bg-accent" />}
+                {filter === f.id ? (
+                  <motion.span layoutId="work-filter" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                ) : (
+                  <span className="absolute inset-0 rounded-full border border-line-2" />
+                )}
+                <span className="relative">
+                  {f.label} <span className="opacity-50">{f.count}</span>
+                </span>
               </button>
             ))}
           </div>
         </FadeUp>
       </div>
 
-      <ul className="grid gap-x-10 gap-y-20 lg:grid-cols-12 lg:gap-y-28">
+      <ul className="grid gap-5 md:grid-cols-2 lg:gap-6">
         <AnimatePresence mode="popLayout">
-          {visible.map((p, i) => (
-            <Card key={`${filter}-${p.slug}`} p={p} i={i} onOpen={() => setOpen(i)} onHover={setHover} />
-          ))}
+          {visible.map((p, i) => {
+            const wide = i === 0 && filter === "all";
+            return (
+              <motion.li
+                key={`${filter}-${p.slug}`}
+                layout
+                className={wide ? "md:col-span-2" : ""}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ delay: (i % 2) * 0.08, duration: 1.1, ease }}
+              >
+                <ProjectCard p={p} wide={wide} />
+              </motion.li>
+            );
+          })}
         </AnimatePresence>
       </ul>
 
       {list.length > PAGE && !all && (
-        <div className="mt-24 flex justify-center">
+        <div className="mt-16 flex justify-center">
           <button type="button" onClick={() => setAll(true)} className="group btn btn-outline">
             <span className="roll">
               <span>Pokaż wszystkie — {list.length}</span>
@@ -151,9 +126,6 @@ export default function Work() {
           </button>
         </div>
       )}
-
-      <CursorBubble show={hover && open === null} />
-      <ProjectDrawer list={list} index={open} onClose={close} onNav={setOpen} />
     </section>
   );
 }

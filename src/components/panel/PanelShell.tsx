@@ -147,8 +147,8 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
         <Wordmark className="h-[19px] w-auto" />
       </Link>
       <nav className="mt-10 flex-1 space-y-7 overflow-y-auto" aria-label="Panel" data-lenis-prevent>
-        {nav.map((g) => (
-          <div key={g.group}>
+        {nav.map((g, gi) => (
+          <motion.div key={g.group} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + gi * 0.08, duration: 0.7, ease }}>
             <p className="mb-2 px-3 text-[12px] text-dim">{g.group}</p>
             <ul className="space-y-0.5">
               {g.links.map((l) => {
@@ -172,7 +172,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
                 );
               })}
             </ul>
-          </div>
+          </motion.div>
         ))}
       </nav>
       <div className="mt-6 space-y-2">
@@ -198,7 +198,14 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
   return (
     <div className="min-h-[100svh] lg:grid lg:grid-cols-[264px_1fr]">
-      <aside className="sticky top-0 hidden h-[100svh] border-r border-line bg-bg/60 px-4 py-6 backdrop-blur-xl lg:block">{side}</aside>
+      <motion.aside
+        className="sticky top-0 hidden h-[100svh] border-r border-line bg-bg/60 px-4 py-6 backdrop-blur-xl lg:block"
+        initial={{ opacity: 0, x: -24 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.9, ease }}
+      >
+        {side}
+      </motion.aside>
 
       <AnimatePresence>
         {menu && (
@@ -213,7 +220,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
       <div className="relative min-w-0">
         <div className="pointer-events-none fixed top-0 right-0 size-[700px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.08),transparent)]" aria-hidden />
-        <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg/70 px-5 py-3 backdrop-blur-xl sm:px-8">
+        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.8, ease }} className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg/70 px-5 py-3 backdrop-blur-xl sm:px-8">
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => setMenu(true)} className="grid size-10 place-items-center rounded-full border border-line-2 lg:hidden" aria-label="Menu">
               <Icon d={ICONS.menu} className="size-[18px]" />
@@ -224,7 +231,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
             {admin && <Live />}
             {admin && <Bell notes={notes} />}
           </div>
-        </header>
+        </motion.header>
         <main className="relative mx-auto max-w-[1240px] px-5 py-8 sm:px-8 lg:py-10">{children}</main>
       </div>
     </div>

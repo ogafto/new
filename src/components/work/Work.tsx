@@ -25,6 +25,36 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 const slideOf = (p: number, n: number) => Math.min(n - 1, Math.max(0, p * n - EXPAND));
 const revealOf = (s: number, i: number) => (i === 0 ? 1 : smooth(clamp((s - (i - 1) - 0.2) / 0.6)));
 
+// kolor z palety projektu → tło pokazu na telefonie (najbardziej nasycony = poświata)
+const rgb = (hex: string) => {
+  let h = hex.replace("#", "").slice(0, 6);
+  if (h.length === 3) h = [...h].map((c) => c + c).join("");
+  const n = parseInt(h.padEnd(6, "0"), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+function backdrop(palette: string[]) {
+  const cols = palette.filter((c) => /^#[0-9a-f]{3,8}$/i.test(c)).map(rgb);
+  const sat = (c: number[]) => Math.max(...c) - Math.min(...c);
+  const glow = [...cols].sort((a, b) => sat(b) - sat(a))[0] ?? [139, 108, 255];
+  const base = cols[0] ?? [20, 18, 28];
+  const second = cols.find((c) => c !== glow && sat(c) > 40) ?? glow;
+  const a = (c: number[], o: number) => `rgb(${c.join(" ")} / ${o})`;
+  return {
+    glow: a(glow, 0.45),
+    background: `radial-gradient(80% 42% at 50% 40%, ${a(glow, 0.32)}, transparent 72%), radial-gradient(70% 35% at 85% 95%, ${a(second, 0.16)}, transparent 70%), linear-gradient(180deg, ${a(base, 0.6)} 0%, rgb(7 7 10) 88%)`,
+  };
+}
+
+// ekran pionowy: obszar na kartę projektu (między licznikiem u góry a opisem u dołu)
+const STAGE = { top: 136, bottom: 280, side: 20 };
+function cardRect(w: number, h: number) {
+  const sh = Math.max(120, h - STAGE.top - STAGE.bottom);
+  const cw = Math.min(w - STAGE.side * 2, (sh * 4) / 3);
+  const ch = cw * 0.75;
+  const top = STAGE.top + (sh - ch) / 2;
+  return { t: (top / h) * 100, b: ((h - top - ch) / h) * 100, x: ((w - cw) / 2 / w) * 100 };
+}
+
 function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progress: MotionValue<number> }) {
   const reveal = useTransform(progress, (v) => revealOf(slideOf(v, n), i));
   const covered = useTransform(progress, (v) => (i < n - 1 ? revealOf(slideOf(v, n), i + 1) : 0));
@@ -33,11 +63,33 @@ function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progre
   const y = useTransform(reveal, (r) => `${(1 - r) * 18}%`);
   const scale = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => 1 + (1 - r) * 0.18 + c * 0.08);
   const shade = useTransform(covered, (c) => c * 0.65);
+  // telefon: karta wjeżdża z dołu, przechylona w 3D, i prostuje się; przykryta — cofa się w głąb
+  const cardY = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => `${(1 - r) * 55 - c * 14}%`);
+  const cardTilt = useTransform(reveal, (r) => (1 - r) * 28);
+  const cardScale = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => 0.9 + r * 0.1 - c * 0.1);
+  const alt = `${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`;
+  const bg = backdrop(p.palette);
   return (
     <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: clip, zIndex: i }}>
-      <motion.div className="absolute inset-0" style={{ y, scale }}>
-        <Image src={p.image} alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
+      {/* ekran poziomy: zdjęcie na cały kadr */}
+      <motion.div className="absolute inset-0 hidden landscape:block" style={{ y, scale }}>
+        <Image src={p.image} alt={alt} fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
       </motion.div>
+
+      {/* ekran pionowy (telefon, tablet): cały projekt jako karta na tle w kolorach marki */}
+      <div className="absolute inset-0 landscape:hidden" style={{ background: bg.background }}>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.035)_1px,transparent_1px)] bg-[size:calc((100%-40px)/4)_100%] bg-[position:20px_0] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
+        <div className="absolute grid place-items-center [container-type:size] [perspective:1100px]" style={{ top: STAGE.top, bottom: STAGE.bottom, left: STAGE.side, right: STAGE.side }}>
+          <motion.div
+            className="relative aspect-[4/3] w-[min(100cqw,133.33cqh)] overflow-hidden rounded-[18px] ring-1 ring-white/15"
+            style={{ y: cardY, rotateX: cardTilt, scale: cardScale, transformOrigin: "50% 100%", boxShadow: `0 40px 90px -30px ${bg.glow}, 0 20px 40px -20px rgb(0 0 0 / 0.8)` }}
+          >
+            <Image src={p.image} alt="" fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
+            <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-[linear-gradient(160deg,rgb(255_255_255/0.14),transparent_35%)]" />
+          </motion.div>
+        </div>
+      </div>
+
       <motion.div className="absolute inset-0 bg-bg" style={{ opacity: shade }} />
     </motion.div>
   );
@@ -70,21 +122,38 @@ export default function Work({ projects }: { projects: Project[] }) {
   const lenis = useLenis();
   const [current, setCurrent] = useState(0);
   const narrow = useMotionValue(0);
+  const boxT = useMotionValue(30);
+  const boxB = useMotionValue(30);
+  const boxX = useMotionValue(12);
+  const wordShift = useMotionValue(0);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const on = () => narrow.set(mq.matches ? 1 : 0);
+    const mq = window.matchMedia("(orientation: portrait)");
+    const on = () => {
+      narrow.set(mq.matches ? 1 : 0);
+      const r = cardRect(window.innerWidth, window.innerHeight);
+      boxT.set(r.t);
+      boxB.set(r.b);
+      boxX.set(r.x);
+      // napis „Portfolio” na środku karty, nie ekranu
+      wordShift.set(mq.matches ? ((r.t + (100 - r.t - r.b) / 2 - 50) / 100) * window.innerHeight : 0);
+    };
     on();
     mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, [narrow]);
+    window.addEventListener("resize", on);
+    return () => {
+      mq.removeEventListener("change", on);
+      window.removeEventListener("resize", on);
+    };
+  }, [narrow, boxT, boxB, boxX, wordShift]);
 
   const { scrollYProgress } = useScroll({ target: wrap, offset: ["start start", "end end"] });
   const expand = useTransform(scrollYProgress, (v) => smooth(clamp((v * N) / EXPAND)));
-  const frame = useTransform([expand, narrow] as MotionValue<number>[], ([e, n]: number[]) => {
-    const [t, x] = n ? [30, 12] : [27, 33];
-    const r = 32 - e * 8;
-    return `inset(${t * (1 - e) + 1.2 * e}% ${x * (1 - e) + 0.9 * e}% ${t * (1 - e) + 1.2 * e}% ${x * (1 - e) + 0.9 * e}% round ${r}px)`;
+  const frame = useTransform([expand, narrow, boxT, boxB, boxX] as MotionValue<number>[], ([e, n, bt, bb, bx]: number[]) => {
+    const [t, b, x] = n ? [bt, bb, bx] : [27, 27, 33];
+    const [et, ex] = n ? [0, 0] : [1.2, 0.9];
+    const r = n ? 18 * (1 - e) : 32 - e * 8;
+    return `inset(${t * (1 - e) + et * e}% ${x * (1 - e) + ex * e}% ${b * (1 - e) + et * e}% ${x * (1 - e) + ex * e}% round ${r}px)`;
   });
   const wordScale = useTransform(expand, [0, 1], [1, 0.86]);
   const wordOpacity = useTransform(expand, [0, 0.7], [1, 0]);
@@ -168,7 +237,7 @@ export default function Work({ projects }: { projects: Project[] }) {
               </div>
 
               {/* pasek postępu */}
-              <div className="pointer-events-auto absolute top-1/2 right-5 hidden -translate-y-1/2 flex-col gap-2 sm:right-10 md:flex" role="tablist" aria-label="Projekty">
+              <div className="pointer-events-auto absolute top-1/2 right-5 hidden -translate-y-1/2 flex-col gap-2 sm:right-10 md:landscape:flex" role="tablist" aria-label="Projekty">
                 {list.map((proj, i) => (
                   <button
                     key={proj.slug}
@@ -188,11 +257,11 @@ export default function Work({ projects }: { projects: Project[] }) {
           </motion.div>
 
           {/* napis nad ramką (odwrócone kolory) — znika, gdy ramka wypełnia ekran */}
-          <motion.div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center mix-blend-difference" style={{ scale: wordScale, opacity: wordOpacity }}>
+          <motion.div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center mix-blend-difference" style={{ scale: wordScale, opacity: wordOpacity, y: wordShift }}>
             <h2 id="portfolio-title" className="h-display text-[clamp(4.5rem,21vw,22rem)] leading-[0.8] tracking-[-0.06em] text-white">
               Portfolio
             </h2>
-            <p className="mt-6 text-[14px] text-white/70">Wybrane projekty · 0{N}</p>
+            <p className="mt-6 hidden text-[14px] text-white/70 landscape:block">Wybrane projekty · 0{N}</p>
           </motion.div>
         </div>
       </div>

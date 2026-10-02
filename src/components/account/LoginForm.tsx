@@ -1,27 +1,37 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
 import { login } from "@/app/konto/actions";
 import Input from "../ui/Input";
-import { pulse } from "./AuthShell";
+import { pulse, useHandoff } from "./AuthShell";
 import { Alert, AuthTitle, Submit, Success } from "./ui";
 
-export default function LoginForm({ next }: { next: string }) {
-  const router = useRouter();
+/*
+ * `signedIn` = adres panelu, gdy sesja już istnieje (strona przekazuje go zamiast redirectu
+ * podczas odświeżenia po zalogowaniu). Formularz sam pokazuje sukces i płynnie przechodzi do panelu.
+ */
+export default function LoginForm({ next, signedIn }: { next: string; signedIn?: string }) {
+  const handoff = useHandoff();
   const [error, setError] = useState("");
   const [scope, animate] = useAnimate();
-  const [done, setDone] = useState(false);
+  const [target, setTarget] = useState(signedIn ?? "");
+  const [returning] = useState(!!signedIn);
   const [pending, start] = useTransition();
 
+  useEffect(() => {
+    if (!target) return;
+    pulse();
+    return handoff(target, returning ? 900 : 1400);
+  }, [target, returning, handoff]);
+
   return (
-    <AnimatePresence mode="wait">
-      {done ? (
-        <Success key="ok" title="Witaj ponownie." text="Otwieram Twój panel…" />
+    <AnimatePresence mode="popLayout" initial={false}>
+      {target ? (
+        <Success key="ok" title={returning ? "Jesteś zalogowany." : "Witaj ponownie."} text="Otwieram Twój panel…" bar={returning ? 0.9 : 1.4} />
       ) : (
-        <motion.div key="form" exit={{ opacity: 0, y: -10, filter: "blur(6px)" }} transition={{ duration: 0.4 }}>
+        <motion.div key="form" exit={{ opacity: 0, y: -10, filter: "blur(6px)" }} transition={{ duration: 0.25 }}>
           <AuthTitle kicker="Logowanie" title="Witaj ponownie" text="Zaloguj się, żeby zobaczyć swój projekt." />
           <form
             ref={scope}
@@ -33,11 +43,8 @@ export default function LoginForm({ next }: { next: string }) {
                 setError("");
                 f.set("next", next);
                 const r = await login(undefined, f);
-                if (r?.done) {
-                  pulse();
-                  setDone(true);
-                  setTimeout(() => router.push(r.done!), 1300);
-                } else {
+                if (r?.done) setTarget(r.done);
+                else {
                   setError(r?.error ?? "Nie udało się zalogować.");
                   animate(scope.current, { x: [0, -10, 9, -6, 4, 0] }, { duration: 0.5 });
                 }

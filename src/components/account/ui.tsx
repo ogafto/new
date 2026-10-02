@@ -200,9 +200,9 @@ export function Strength({ value }: { value: string }) {
 }
 
 // Sukces: rysujący się znaczek
-export function Success({ title, text }: { title: string; text: string }) {
+export function Success({ title, text, bar }: { title: string; text: string; bar?: number }) {
   return (
-    <motion.div className="flex flex-col items-center py-6 text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
+    <motion.div className="flex flex-col items-center py-6 text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.45 }}>
       <div className="relative grid size-24 place-items-center">
         <motion.span className="absolute inset-0 rounded-full bg-accent/30 blur-2xl" initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 1 }} />
         <svg viewBox="0 0 64 64" className="relative size-20" fill="none" aria-hidden>
@@ -212,6 +212,11 @@ export function Success({ title, text }: { title: string; text: string }) {
       </div>
       <h2 className="h-display mt-6 text-[34px]">{title}</h2>
       <p className="mt-2 text-[15px] text-muted">{text}</p>
+      {bar && (
+        <span className="mt-7 block h-px w-40 overflow-hidden rounded-full bg-white/10" aria-hidden>
+          <motion.span className="block h-full origin-left bg-gradient-to-r from-accent to-accent-2" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.3, duration: bar, ease: [0.65, 0, 0.35, 1] }} />
+        </span>
+      )}
     </motion.div>
   );
 }

@@ -4,12 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { logout, resend, verify } from "@/app/konto/actions";
-import { pulse } from "./AuthShell";
+import { pulse, useHandoff } from "./AuthShell";
 import { Alert, AuthTitle, Slots, Success, type SlotState } from "./ui";
 
 // Krok weryfikacji e-maila: 6 cyfr z maila → konto aktywne
 export default function VerifyStep({ email, initialError }: { email: string; initialError?: string }) {
   const router = useRouter();
+  const handoff = useHandoff();
   const [code, setCode] = useState("");
   const [state, setState] = useState<SlotState>("idle");
   const [error, setError] = useState(initialError ?? "");
@@ -29,7 +30,7 @@ export default function VerifyStep({ email, initialError }: { email: string; ini
         setState("ok");
         pulse();
         setTimeout(() => setDone(true), 700);
-        setTimeout(() => router.push(r.done!), 2300);
+        handoff(r.done!, 2100);
       } else {
         setState("error");
         setError(r?.error ?? "Nieprawidłowy kod.");
@@ -42,9 +43,9 @@ export default function VerifyStep({ email, initialError }: { email: string; ini
     });
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="popLayout" initial={false}>
       {done ? (
-        <Success key="ok" title="Witamy w afto." text="Konto gotowe — otwieram Twój panel." />
+        <Success key="ok" title="Witamy w afto." text="Konto gotowe — otwieram Twój panel." bar={1.2} />
       ) : (
         <motion.div key="verify" exit={{ opacity: 0, y: -10, filter: "blur(6px)" }}>
           <AuthTitle

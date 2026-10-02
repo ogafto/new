@@ -10,11 +10,15 @@
       "files": {
         "mp4": {
           "path": "/brand/discord/zapowiedz-01-konstrukcja.mp4",
-          "size": 217000
+          "size": 319479
         },
         "gif": {
           "path": "/brand/discord/zapowiedz-01-konstrukcja.gif",
-          "size": 2246390
+          "size": 2297299
+        },
+        "poster": {
+          "path": "/brand/discord/zapowiedz-01-konstrukcja-poster.jpg",
+          "size": 14727
         }
       }
     },
@@ -33,6 +37,10 @@
         "gif": {
           "path": "/brand/discord/zapowiedz-02-publikacja.gif",
           "size": 3468180
+        },
+        "poster": {
+          "path": "/brand/discord/zapowiedz-02-publikacja-poster.jpg",
+          "size": 22762
         }
       }
     },
@@ -46,11 +54,15 @@
       "files": {
         "mp4": {
           "path": "/brand/discord/zapowiedz-03-rozmowa.mp4",
-          "size": 310250
+          "size": 462073
         },
         "gif": {
           "path": "/brand/discord/zapowiedz-03-rozmowa.gif",
-          "size": 2398419
+          "size": 2514659
+        },
+        "poster": {
+          "path": "/brand/discord/zapowiedz-03-rozmowa-poster.jpg",
+          "size": 21185
         }
       }
     },
@@ -64,11 +76,15 @@
       "files": {
         "mp4": {
           "path": "/brand/discord/zapowiedz-04-premiera.mp4",
-          "size": 236443
+          "size": 327596
         },
         "gif": {
           "path": "/brand/discord/zapowiedz-04-premiera.gif",
-          "size": 2859893
+          "size": 2828747
+        },
+        "poster": {
+          "path": "/brand/discord/zapowiedz-04-premiera-poster.jpg",
+          "size": 19860
         }
       }
     },
@@ -82,11 +98,15 @@
       "files": {
         "mp4": {
           "path": "/brand/discord/zapowiedz-05-odliczanie.mp4",
-          "size": 137462
+          "size": 187691
         },
         "gif": {
           "path": "/brand/discord/zapowiedz-05-odliczanie.gif",
-          "size": 987849
+          "size": 977972
+        },
+        "poster": {
+          "path": "/brand/discord/zapowiedz-05-odliczanie-poster.jpg",
+          "size": 12998
         }
       }
     }
@@ -103,11 +123,11 @@
       "files": {
         "mp4": {
           "path": "/brand/banners/baner-01-haslo.mp4",
-          "size": 75671
+          "size": 101129
         },
         "gif": {
           "path": "/brand/banners/baner-01-haslo.gif",
-          "size": 684814
+          "size": 708384
         },
         "png": {
           "path": "/brand/banners/baner-01-haslo.png",
@@ -126,11 +146,11 @@
       "files": {
         "mp4": {
           "path": "/brand/banners/baner-02-siatka.mp4",
-          "size": 99272
+          "size": 134374
         },
         "gif": {
           "path": "/brand/banners/baner-02-siatka.gif",
-          "size": 1366200
+          "size": 1490007
         },
         "png": {
           "path": "/brand/banners/baner-02-siatka.png",
@@ -149,11 +169,11 @@
       "files": {
         "mp4": {
           "path": "/brand/banners/baner-03-uslugi.mp4",
-          "size": 641182
+          "size": 892565
         },
         "gif": {
           "path": "/brand/banners/baner-03-uslugi.gif",
-          "size": 4810642
+          "size": 4924762
         },
         "png": {
           "path": "/brand/banners/baner-03-uslugi.png",
@@ -187,11 +207,11 @@
       "files": {
         "mp4": {
           "path": "/brand/banners/baner-05-status.mp4",
-          "size": 89736
+          "size": 124516
         },
         "gif": {
           "path": "/brand/banners/baner-05-status.gif",
-          "size": 558442
+          "size": 585657
         },
         "png": {
           "path": "/brand/banners/baner-05-status.png",

@@ -72,11 +72,19 @@ function pathLength(d) {
   for (const [, cmd, args] of d.matchAll(/([MVHvha])([^MVHvha]*)/g)) {
     const n = (args.match(/-?\d*\.?\d+/g) ?? []).map(Number);
     if (cmd === "M") [x, y] = n;
-    else if (cmd === "V") (len += Math.abs(n[0] - y), (y = n[0]));
-    else if (cmd === "H") (len += Math.abs(n[0] - x), (x = n[0]));
-    else if (cmd === "v") (len += Math.abs(n[0]), (y += n[0]));
-    else if (cmd === "h") (len += Math.abs(n[0]), (x += n[0]));
-    else if (cmd === "a") {
+    else if (cmd === "V") {
+      len += Math.abs(n[0] - y);
+      y = n[0];
+    } else if (cmd === "H") {
+      len += Math.abs(n[0] - x);
+      x = n[0];
+    } else if (cmd === "v") {
+      len += Math.abs(n[0]);
+      y += n[0];
+    } else if (cmd === "h") {
+      len += Math.abs(n[0]);
+      x += n[0];
+    } else if (cmd === "a") {
       const [R, , , , , dx, dy] = n;
       len += 2 * R * Math.asin(Math.min(1, Math.hypot(dx, dy) / (2 * R)));
       x += dx;
@@ -97,8 +105,13 @@ function contour(g, { ink = INK, hole = C.bg, line = 0.5 } = {}) {
         let x = +x0, y = +y0, v = +v0;
         if (cmd === "V") y += Math.sign(v - y) * line;
         else if (cmd === "H") x += Math.sign(v - x) * line;
-        else if (cmd === "v") (y += Math.sign(v) * line, (v -= Math.sign(v) * line));
-        else (x += Math.sign(v) * line, (v -= Math.sign(v) * line));
+        else if (cmd === "v") {
+          y += Math.sign(v) * line;
+          v -= Math.sign(v) * line;
+        } else {
+          x += Math.sign(v) * line;
+          v -= Math.sign(v) * line;
+        }
         const d2 = `M${r(x, 3)} ${r(y, 3)}${cmd}${r(v, 3)}${rest}`;
         const L = pathLength(d2);
         return `<path d="${d2}" stroke="${col}" stroke-width="${w}" stroke-dasharray="${r(L - line, 3)} ${r(L + 10)}"/>`;

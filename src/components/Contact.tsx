@@ -386,7 +386,7 @@ export default function Contact() {
             <p className="kicker">Kontakt</p>
           </FadeUp>
           <Heading
-            className="mt-7 text-[clamp(2.8rem,5.6vw,5.4rem)]"
+            className="mt-7 text-[clamp(2.6rem,4.3vw,4.4rem)]"
             lines={[
               "Porozmawiajmy",
               <span key="2" className="text-muted">

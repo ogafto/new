@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion, Reorder } from "motion/react";
 import { deleteEntry, moveEntry, saveEntry, uploadCmsImage } from "@/app/panel/cms/actions";
 import type { Collection, Entry, Field } from "@/lib/cms-schema";
+import { shrinkImage } from "@/lib/shrink";
 import { Badge, Btn, Card, ConfirmBtn, ease, Empty, field, ICONS, Icon, Label, Toggle } from "./kit";
 
 export type ColWithEntries = Collection & { entries: Entry[] };
@@ -16,8 +17,8 @@ function ImageField({ siteId, value, onChange }: { siteId: string; value: string
     if (!f) return;
     setErr("");
     const fd = new FormData();
-    fd.append("file", f);
     start(async () => {
+      fd.append("file", await shrinkImage(f));
       const r = await uploadCmsImage(siteId, fd);
       if (r.url) onChange(r.url);
       else setErr(r.error ?? "Błąd");

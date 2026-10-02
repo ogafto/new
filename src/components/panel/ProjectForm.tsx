@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { saveProject } from "@/app/panel/admin/portfolio/actions";
+import { shrinkInput } from "@/lib/shrink";
 import type { AdminProject } from "@/lib/projects";
 import { serviceName, services, type ServiceId } from "@/lib/site";
 import { Alert } from "../account/ui";
@@ -38,12 +39,16 @@ function Drop({ name, current, onPreview, multiple = false, onFiles }: { name: s
         if (multiple) for (const f of Array.from(input.current.files ?? [])) dt.items.add(f);
         for (const f of Array.from(e.dataTransfer.files)) if (f.type.startsWith("image/")) dt.items.add(f);
         input.current.files = dt.files;
+        shrinkInput(input.current);
         use(multiple ? e.dataTransfer.files : dt.files);
       }}
       onClick={() => input.current?.click()}
       className={`group relative grid cursor-pointer place-items-center overflow-hidden rounded-2xl border border-dashed transition-colors duration-300 ${over ? "border-accent bg-accent/[0.08]" : "border-line-2 hover:border-white/30"} ${multiple ? "h-28" : "aspect-[4/3]"}`}
     >
-      <input ref={input} type="file" name={name} accept="image/*" multiple={multiple} className="hidden" onChange={(e) => use(e.target.files)} />
+      <input ref={input} type="file" name={name} accept="image/*" multiple={multiple} className="hidden" onChange={(e) => {
+          use(e.target.files);
+          shrinkInput(e.target);
+        }} />
       {!multiple && preview ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}

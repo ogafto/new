@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { site } from "@/lib/site";
+import { env } from "@/lib/env";
 import { run } from "@/lib/db";
 import { id } from "@/lib/auth/crypto";
 
@@ -81,7 +82,7 @@ async function sendResend(d: Payload) {
   if (!key) return null;
   const resend = new Resend(key);
   const { error } = await resend.emails.send({
-    from: process.env.CONTACT_FROM || `${site.domain} <formularz@${site.domain}>`,
+    from: env.contactFrom() || `${site.domain} <formularz@${site.domain}>`,
     to: process.env.CONTACT_TO || site.email,
     replyTo: d.email,
     subject: `Nowe zapytanie — ${d.name}`,

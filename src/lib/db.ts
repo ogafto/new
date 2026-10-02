@@ -6,7 +6,10 @@ import { createClient, type Client, type InValue } from "@libsql/client";
  * (DATABASE_URL=libsql://… + DATABASE_AUTH_TOKEN). Schemat tworzy się sam przy starcie.
  */
 
-const url = process.env.DATABASE_URL || "file:./data/afto.db";
+import { env } from "./env";
+
+// Na Vercelu dysk jest tylko do odczytu — baza musi być zewnętrzna (Turso, libsql://…)
+const url = env.dbUrl() || (process.env.VERCEL ? "" : "file:./data/afto.db");
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (
@@ -194,9 +197,11 @@ const VERSION = 3;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {
+  if (!url) throw new Error("Brak DATABASE_URL — na Vercelu ustaw bazę Turso (libsql://…) i DATABASE_AUTH_TOKEN.");
+  if (/^postgres(ql)?:/.test(url)) throw new Error("DATABASE_URL wskazuje na Postgresa — ta strona używa bazy libSQL/Turso (adres libsql://…).");
   if (url.startsWith("file:")) mkdirSync("data", { recursive: true });
-  const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN || undefined });
-  await client.execute("PRAGMA foreign_keys = ON");
+  const client = createClient({ url, authToken: env.dbToken() || undefined });
+  await client.execute("PRAGMA foreign_keys = ON").catch(() => {});
   await client.batch(SCHEMA, "write");
   await migrate(client);
   return client;

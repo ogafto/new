@@ -1,8 +1,9 @@
 import { render } from "@react-email/render";
 import { Resend } from "resend";
 import { site } from "./site";
+import { env } from "./env";
 
-export const baseUrl = () => (process.env.NEXT_PUBLIC_SITE_URL || site.url).replace(/\/$/, "");
+export const baseUrl = () => (env.siteUrl() || site.url).replace(/\/$/, "");
 
 /**
  * Wysyła mail przez Resend. Bez klucza (dev) wypisuje treść w konsoli serwera,
@@ -19,7 +20,7 @@ export async function sendMail({ to, subject, react }: { to: string; subject: st
   }
 
   const { error } = await new Resend(key).emails.send({
-    from: process.env.MAIL_FROM || process.env.CONTACT_FROM || `${site.domain} <konto@${site.domain}>`,
+    from: env.mailFrom() || `${site.domain} <konto@${site.domain}>`,
     to,
     subject,
     html,

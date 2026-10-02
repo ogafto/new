@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { id } from "./auth/crypto";
+import { env } from "./env";
 
 /*
  * Zapis wgranych plików.
@@ -27,12 +28,13 @@ export async function saveImage(file: File, folder = "") {
   const d = new Date();
   const rel = [folder, String(d.getFullYear()), String(d.getMonth() + 1).padStart(2, "0"), `${id()}.webp`].filter(Boolean).join("/");
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (env.blobToken()) {
     const { put } = await import("@vercel/blob");
     const blob = await put(`uploads/${rel}`, out, { access: "public", contentType: "image/webp" });
     return { url: blob.url, width: meta.width, height: meta.height };
   }
 
+  if (process.env.VERCEL) throw new Error("Na Vercelu zdjęcia wymagają Vercel Blob — podłącz Blob do projektu (BLOB_READ_WRITE_TOKEN).");
   const target = path.join(UPLOAD_DIR, rel);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, out);

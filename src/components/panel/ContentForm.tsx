@@ -8,8 +8,9 @@ import type { Content } from "@/lib/content";
 import type { ServiceId } from "@/lib/site";
 import { Badge, Btn, Card, ConfirmBtn, ease, field, Icon, ICONS, Label, Tabs, Toggle } from "./kit";
 
-type Section = "hero" | "notice" | "contact" | "services" | "process" | "seo" | "legal" | "history";
+type Section = "soon" | "hero" | "notice" | "contact" | "services" | "process" | "seo" | "legal" | "history";
 const SECTIONS: { value: Section; label: string }[] = [
+  { value: "soon", label: "Tryb zapowiedzi" },
   { value: "hero", label: "Strona główna" },
   { value: "notice", label: "Ogłoszenie i status" },
   { value: "contact", label: "Kontakt" },
@@ -90,6 +91,74 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     <span className="text-accent-2">{c.hero.accent || defaults.hero.accent}</span>
                   </p>
                   <p className="mt-5 max-w-[380px] border-t border-line pt-4 text-[13.5px] leading-relaxed text-muted">{c.hero.text || defaults.hero.text}</p>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {tab === "soon" && (
+            <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+              <Card glow={c.soon.enabled}>
+                <div className={`mb-5 flex items-start justify-between gap-4 rounded-2xl border p-4 transition-colors ${c.soon.enabled ? "border-amber-300/30 bg-amber-300/[0.07]" : "border-line"}`}>
+                  <div>
+                    <h2 className="text-[16px] font-medium">{c.soon.enabled ? "Strona jest ukryta" : "Strona jest widoczna"}</h2>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-dim">
+                      {c.soon.enabled
+                        ? "Odwiedzający widzą tylko ekran zapowiedzi. Ty (zalogowany admin) widzisz pełną stronę. Panel i logowanie działają normalnie."
+                        : "Włącz, żeby zamiast strony pokazać ekran „Coś nowego nadchodzi” z przyciskiem Discorda."}
+                    </p>
+                  </div>
+                  <Toggle label="" checked={c.soon.enabled} onChange={(v) => set("soon", { ...c.soon, enabled: v })} />
+                </div>
+                <div className="grid gap-4">
+                  <Label label="Mały napis nad tytułem">
+                    <input className={`${field} h-11`} maxLength={40} value={c.soon.kicker} onChange={(e) => set("soon", { ...c.soon, kicker: e.target.value })} />
+                  </Label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Label label="Tytuł">
+                      <input className={`${field} h-11`} maxLength={40} value={c.soon.title} onChange={(e) => set("soon", { ...c.soon, title: e.target.value })} />
+                    </Label>
+                    <Label label="Druga linia (podświetlona)">
+                      <input className={`${field} h-11`} maxLength={40} value={c.soon.accent} onChange={(e) => set("soon", { ...c.soon, accent: e.target.value })} />
+                    </Label>
+                  </div>
+                  <Label label="Opis">
+                    <textarea rows={3} maxLength={240} className={`${field} resize-none py-3`} value={c.soon.text} onChange={(e) => set("soon", { ...c.soon, text: e.target.value })} />
+                  </Label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Label label="Tekst przycisku">
+                      <input className={`${field} h-11`} maxLength={40} value={c.soon.button} onChange={(e) => set("soon", { ...c.soon, button: e.target.value })} />
+                    </Label>
+                    <Label label="Link do Discorda" hint="Puste = link z zakładki Kontakt">
+                      <input type="url" className={`${field} h-11`} value={c.soon.link} onChange={(e) => set("soon", { ...c.soon, link: e.target.value })} placeholder="https://discord.gg/…" />
+                    </Label>
+                  </div>
+                  <Label label="Odliczanie do (opcjonalnie)" hint="Pokaże licznik dni, godzin, minut i sekund">
+                    <div className="flex gap-2">
+                      <input type="datetime-local" className={`${field} h-11`} value={c.soon.date} onChange={(e) => set("soon", { ...c.soon, date: e.target.value })} />
+                      {c.soon.date && (
+                        <Btn type="button" size="sm" variant="ghost" className="!h-11" onClick={() => set("soon", { ...c.soon, date: "" })}>
+                          Usuń
+                        </Btn>
+                      )}
+                    </div>
+                  </Label>
+                </div>
+              </Card>
+              <Card pad={false} className="min-h-[420px]">
+                <div className="absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,rgb(139_108_255/0.35),transparent_70%),radial-gradient(30%_30%_at_50%_45%,rgb(180_162_255/0.25),transparent_70%)]" aria-hidden />
+                <div className="relative flex h-full min-h-[420px] flex-col items-center justify-center p-8 text-center">
+                  <p className="kicker">{c.soon.kicker || "afto.works"}</p>
+                  <p className="h-display mt-5 text-[clamp(2rem,4.4vw,3.4rem)] leading-[0.95]">
+                    {c.soon.title || "Coś nowego"}
+                    <br />
+                    <span className="text-accent-2">{c.soon.accent || "nadchodzi."}</span>
+                  </p>
+                  <p className="mt-4 max-w-[340px] text-[13px] leading-relaxed text-muted">{c.soon.text}</p>
+                  <span className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#5865F2] px-5 text-[13.5px] font-medium text-white">{c.soon.button || "Dołącz na Discordzie"}</span>
+                  <a href="/wkrotce" target="_blank" className="mt-6 text-[12.5px] text-dim underline decoration-white/20 underline-offset-4 hover:text-ink">
+                    Otwórz pełny podgląd ↗
+                  </a>
                 </div>
               </Card>
             </div>

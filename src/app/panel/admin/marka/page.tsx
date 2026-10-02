@@ -32,12 +32,28 @@ function files(v: unknown): GenFile[] {
 }
 const posterOf = (e: Raw) => str(e.poster) ?? str(((e.files as Raw | undefined)?.poster as Raw | undefined)?.path);
 
+// manifesty bez pola `section` — przypisanie po nazwie grupy
+function sectionFor(group: string, animated: boolean) {
+  const g = group.toLowerCase();
+  if (g.includes("nowej strony")) return "Zapowiedź nowej strony";
+  if (g.includes("starsze") || g.includes("discorda")) return "Archiwum";
+  if (g.includes("zapowied") || g.includes("nadchodzi")) return "Zapowiedzi";
+  if (g.includes("weryfik")) return "Weryfikacja";
+  if (g.includes("hasł") || (animated && g.includes("baner"))) return "Banery z hasłem";
+  if (g.includes("animacje logo") || (animated && g.includes("logo"))) return "Logo animowane";
+  if (g.includes("propozycj")) return "Propozycje logo";
+  if (g.includes("logo")) return "Logo";
+  if (g.includes("baner")) return "Banery";
+  return group;
+}
+
 function entry(e: Raw, fallback: { group: string; category?: "animacje" | "grafiki" }): Generated {
   const fs = files(e.files);
   const animated = fs.some((f) => ["mp4", "webm", "gif"].includes(f.kind));
   return {
     id: str(e.id) ?? fs[0]?.url ?? Math.random().toString(36),
     category: (str(e.category) as Generated["category"]) ?? fallback.category ?? (animated ? "animacje" : "grafiki"),
+    section: str(e.section) ?? sectionFor(str(e.group) ?? fallback.group, animated),
     group: str(e.group) ?? fallback.group,
     title: str(e.title) ?? str(e.name) ?? "Bez nazwy",
     description: str(e.description) ?? str(e.desc),

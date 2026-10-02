@@ -11,6 +11,7 @@ import QuickActions from "@/components/panel/QuickActions";
 import { financeSummary, zl } from "@/lib/finance";
 import { listLogs } from "@/lib/logs";
 import CockpitHero, { Activity } from "@/components/panel/CockpitHero";
+import { getContent } from "@/lib/content-server";
 
 export const metadata: Metadata = { title: "Kokpit" };
 
@@ -38,12 +39,14 @@ export default async function Cockpit() {
     listLogs({ limit: 7 }),
     live(),
   ]);
+  const soon = (await getContent()).soon.enabled;
   const t = today();
   const conv = k.cur.visitors ? Math.round((funnel[2].n / k.cur.visitors) * 1000) / 10 : 0;
 
   return (
     <>
       <CockpitHero
+        soon={soon}
         greeting={`${greet()}, ${admin.name.split(" ")[0]}.`}
         date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
         stats={[

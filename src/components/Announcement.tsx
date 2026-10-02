@@ -8,7 +8,29 @@ import { useLoaded } from "./Providers";
 import { TLink } from "./Transition";
 
 // Pasek ogłoszeń z panelu (Treści strony → Ogłoszenie) — pływająca kapsuła na dole, do zamknięcia
+// Admin w trybie zapowiedzi widzi pełną stronę — przypominajka, że inni widzą ekran „Coś nowego nadchodzi”
+function SoonPreview() {
+  return (
+    <div className="soon-preview fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-[60] -translate-x-1/2 sm:bottom-6">
+      <a href="/panel/admin/tresci#soon" className="edge flex items-center gap-2.5 rounded-full bg-surface/90 py-2 pr-4 pl-3 text-[12.5px] whitespace-nowrap text-muted shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl hover:text-ink">
+        <span className="relative flex size-2">
+          <span className="absolute inset-0 animate-ping rounded-full bg-amber-300/70" />
+          <span className="relative size-2 rounded-full bg-amber-300" />
+        </span>
+        Tryb zapowiedzi włączony — widzisz podgląd
+      </a>
+    </div>
+  );
+}
+
 export default function Announcement() {
+  const soon = content().soon.enabled;
+  const path = usePathname();
+  if (soon) return /^\/(konto|panel)/.test(path) ? null : <SoonPreview />;
+  return <Notice />;
+}
+
+function Notice() {
   const a = content().announcement;
   const loaded = useLoaded();
   const path = usePathname();

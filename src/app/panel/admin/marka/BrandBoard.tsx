@@ -10,9 +10,27 @@ import { addBrandColor, deleteBrandAsset, deleteBrandColor, registerBrandAsset, 
 /* ---------- typy ---------- */
 
 export type GenFile = { kind: string; url: string; bytes?: number; label?: string };
-export type Generated = { id: string; category: "animacje" | "grafiki"; group: string; title: string; description?: string; w?: number; h?: number; duration?: number; poster?: string; bg?: string; files: GenFile[] };
+export type Generated = { id: string; category: "animacje" | "grafiki"; section?: string; group: string; title: string; description?: string; w?: number; h?: number; duration?: number; poster?: string; bg?: string; files: GenFile[] };
 export type PaletteColor = { name: string; hex: string; note?: string };
 type Tab = "animacje" | "grafiki" | "kolory";
+
+// Podkategorie (kolejność i opisy); nieznane sekcje trafiają na koniec
+const SECTIONS: Record<"animacje" | "grafiki", { name: string; text: string }[]> = {
+  animacje: [
+    { name: "Zapowiedzi", text: "„Coś nadchodzi” — hype na Discorda i social media, każda w innym stylu." },
+    { name: "Zapowiedź nowej strony", text: "Teasery premiery nowej odsłony afto.works." },
+    { name: "Banery z hasłem", text: "Animowane banery z hasłem marki — embedy i nagłówki." },
+    { name: "Weryfikacja", text: "Embedy „Zweryfikuj się” dla bota na Discordzie." },
+    { name: "Logo animowane", text: "Monogram i logotyp w ruchu — awatary, posty, intro." },
+    { name: "Archiwum", text: "Wcześniejsze wersje zapowiedzi." },
+  ],
+  grafiki: [
+    { name: "Banery", text: "Statyczne banery 1500 × 300 pod embedy bota." },
+    { name: "Logo", text: "Oficjalne pliki logo — SVG i PNG." },
+    { name: "Propozycje logo", text: "Warianty znaku: ikony, awatary, układy, pieczęć." },
+  ],
+};
+const MINE = "Twoje pliki";
 
 const VIDEO = ["mp4", "webm"];
 const ACCEPT: Record<"animacje" | "grafiki", string> = { animacje: ".mp4,.webm,.gif", grafiki: ".png,.jpg,.jpeg,.webp,.svg,.pdf,.gif" };
@@ -331,12 +349,29 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
     history.replaceState(null, "", `#${t}`);
   };
 
-  const groups = useMemo(() => {
-    const m = new Map<string, Generated[]>();
-    for (const g of generated.filter((x) => x.category === tab)) m.set(g.group, [...(m.get(g.group) ?? []), g]);
-    return [...m.entries()];
+  const [section, setSection] = useState<string>("all");
+  // sekcje → grupy → elementy
+  const sections = useMemo(() => {
+    if (tab === "kolory") return [];
+    const known = SECTIONS[tab];
+    const m = new Map<string, Map<string, Generated[]>>();
+    for (const g of generated.filter((x) => x.category === tab)) {
+      const sec = g.section ?? g.group;
+      const groups = m.get(sec) ?? new Map<string, Generated[]>();
+      groups.set(g.group, [...(groups.get(g.group) ?? []), g]);
+      m.set(sec, groups);
+    }
+    const order = (n: string) => {
+      const i = known.findIndex((k) => k.name === n);
+      return i < 0 ? 99 : i;
+    };
+    return [...m.entries()].sort((a, b) => order(a[0]) - order(b[0])).map(([name, groups]) => ({ name, text: known.find((k) => k.name === name)?.text, groups: [...groups.entries()], n: [...groups.values()].reduce((x, y) => x + y.length, 0) }));
   }, [generated, tab]);
   const mine = own.filter((a) => a.category === tab);
+  const pickTab = (t: Tab) => {
+    setSection("all");
+    pick(t);
+  };
   const count = (t: "animacje" | "grafiki") => generated.filter((g) => g.category === t).length + own.filter((a) => a.category === t).length;
 
   const tabs: { id: Tab; label: string; icon: string; n: number }[] = [
@@ -349,7 +384,7 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
     <div>
       <div className="-mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0" data-lenis-prevent>
         {tabs.map((t) => (
-          <button key={t.id} type="button" onClick={() => pick(t.id)} className={`relative flex shrink-0 items-center gap-2.5 rounded-2xl px-4 py-3 text-[14px] transition-colors ${tab === t.id ? "text-ink" : "text-muted hover:text-ink"}`}>
+          <button key={t.id} type="button" onClick={() => pickTab(t.id)} className={`relative flex shrink-0 items-center gap-2.5 rounded-2xl px-4 py-3 text-[14px] transition-colors ${tab === t.id ? "text-ink" : "text-muted hover:text-ink"}`}>
             {tab === t.id && <motion.span layoutId="brand-tab" className="edge absolute inset-0 rounded-2xl bg-white/[0.06]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
             <Icon d={t.icon} className="relative size-4" />
             <span className="relative">{t.label}</span>
@@ -382,40 +417,64 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
             </div>
           ) : (
             <div className="space-y-10">
-              <section>
-                <Uploader category={tab} blob={blob} />
-                {mine.length > 0 && (
-                  <>
-                    <h2 className="mt-8 mb-4 flex items-center gap-2 text-[15px] text-dim">
-                      Twoje pliki <span className="rounded-full bg-white/[0.05] px-1.5 text-[11.5px]">{mine.length}</span>
-                    </h2>
-                    <motion.div layout className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                      <AnimatePresence>
-                        {mine.map((a) => (
-                          <OwnCard key={a.id} a={a} onOpen={() => setPreview({ title: a.name, url: a.url, kind: a.kind })} />
-                        ))}
-                      </AnimatePresence>
-                    </motion.div>
-                  </>
-                )}
-              </section>
+              {/* podkategorie */}
+              <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-lenis-prevent>
+                {[{ name: "all", label: "Wszystkie", n: sections.reduce((x, y) => x + y.n, 0) + mine.length }, ...sections.map((x) => ({ name: x.name, label: x.name, n: x.n })), ...(mine.length ? [{ name: MINE, label: MINE, n: mine.length }] : [])].map((c) => (
+                  <button key={c.name} type="button" onClick={() => setSection(c.name)} className={`relative shrink-0 rounded-full px-3.5 py-2 text-[13px] whitespace-nowrap transition-colors ${section === c.name ? "text-ink" : "text-muted hover:text-ink"}`}>
+                    {section === c.name && <motion.span layoutId={`brand-sec-${tab}`} className="absolute inset-0 rounded-full border border-accent/30 bg-accent/12" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
+                    <span className="relative">
+                      {c.label} <span className="ml-1 text-[11.5px] text-dim tabular-nums">{c.n}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-              {groups.map(([name, items]) => (
-                <section key={name}>
-                  <div className="mb-4 flex items-baseline justify-between gap-4">
-                    <h2 className="text-[17px] tracking-[-0.01em]">{name}</h2>
-                    <span className="text-[12.5px] text-dim">{items.length}</span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {items.map((g) => {
-                      const wide = !!(g.w && g.h && g.w / g.h > 2.4);
-                      const main = g.files.find((f) => VIDEO.includes(f.kind)) ?? g.files.find((f) => ["png", "svg", "gif", "jpg"].includes(f.kind)) ?? g.files[0];
-                      return <GenCard key={g.id} g={g} wide={wide} onOpen={() => main && setPreview({ title: g.title, url: main.url, kind: main.kind, poster: g.poster, bg: g.bg })} />;
-                    })}
-                  </div>
+              {(section === "all" || section === MINE) && (
+                <section>
+                  <Uploader category={tab} blob={blob} />
+                  {mine.length > 0 && (
+                    <>
+                      <h2 className="mt-8 mb-4 flex items-center gap-2 text-[15px] text-dim">
+                        {MINE} <span className="rounded-full bg-white/[0.05] px-1.5 text-[11.5px]">{mine.length}</span>
+                      </h2>
+                      <motion.div layout className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        <AnimatePresence>
+                          {mine.map((a) => (
+                            <OwnCard key={a.id} a={a} onOpen={() => setPreview({ title: a.name, url: a.url, kind: a.kind })} />
+                          ))}
+                        </AnimatePresence>
+                      </motion.div>
+                    </>
+                  )}
                 </section>
-              ))}
-              {!groups.length && !mine.length && <Empty icon={ICONS.upload} title="Pusto" text="Dodaj pierwsze pliki — przeciągnij je na pole powyżej." />}
+              )}
+
+              {sections
+                .filter((x) => section === "all" || section === x.name)
+                .map((sec) => (
+                  <section key={sec.name} className="space-y-6">
+                    <div className="border-b border-line pb-4">
+                      <div className="flex items-baseline justify-between gap-4">
+                        <h2 className="h-display text-[clamp(1.5rem,2.4vw,2rem)]">{sec.name}</h2>
+                        <span className="text-[12.5px] text-dim tabular-nums">{sec.n}</span>
+                      </div>
+                      {sec.text && <p className="mt-1 text-[13.5px] text-dim">{sec.text}</p>}
+                    </div>
+                    {sec.groups.map(([name, items]) => (
+                      <div key={name}>
+                        {sec.groups.length > 1 && <h3 className="mb-3 text-[14px] text-muted">{name}</h3>}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {items.map((g) => {
+                            const wide = !!(g.w && g.h && g.w / g.h > 2.4);
+                            const main = g.files.find((f) => VIDEO.includes(f.kind)) ?? g.files.find((f) => ["png", "svg", "gif", "jpg"].includes(f.kind)) ?? g.files[0];
+                            return <GenCard key={g.id} g={g} wide={wide} onOpen={() => main && setPreview({ title: g.title, url: main.url, kind: main.kind, poster: g.poster, bg: g.bg })} />;
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+                ))}
+              {!sections.length && !mine.length && <Empty icon={ICONS.upload} title="Pusto" text="Dodaj pierwsze pliki — przeciągnij je na pole powyżej." />}
             </div>
           )}
         </motion.div>

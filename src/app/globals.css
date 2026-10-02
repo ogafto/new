@@ -304,3 +304,16 @@ body {
     transform: translate3d(-4%, 6%, 0) rotate(-6deg) scale(0.97);
   }
 }
+@keyframes shine {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+/* podgląd admina nie pokazuje się na samym ekranie zapowiedzi */
+body:has([data-soon]) .soon-preview,
+html:has(body [data-panel]) .soon-preview {
+  display: none;
+}

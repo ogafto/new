@@ -9,7 +9,7 @@ import { Card, CardHead, Count, ease, Icon, ICONS } from "./kit";
 
 type S = { label: string; value: number; suffix?: string; href?: string; live?: boolean };
 
-export default function CockpitHero({ greeting, date, stats, children }: { greeting: string; date: string; stats: S[]; children?: React.ReactNode }) {
+export default function CockpitHero({ greeting, date, stats, soon, children }: { greeting: string; date: string; stats: S[]; soon?: boolean; children?: React.ReactNode }) {
   return (
     <motion.section
       className="edge relative mb-4 overflow-hidden rounded-[28px] bg-surface/70 p-6 sm:p-8 lg:mb-5 lg:p-10"
@@ -25,9 +25,19 @@ export default function CockpitHero({ greeting, date, stats, children }: { greet
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
-          <motion.p className="text-[13px] text-dim first-letter:uppercase" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.8 }}>
-            {date}
-          </motion.p>
+          <motion.div className="flex flex-wrap items-center gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.8 }}>
+            <p className="text-[13px] text-dim first-letter:uppercase">{date}</p>
+            <Link
+              href="/panel/admin/tresci#soon"
+              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-[12px] transition-colors ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200 hover:bg-emerald-400/15"}`}
+            >
+              <span className="relative flex size-1.5">
+                <span className={`absolute inset-0 animate-ping rounded-full ${soon ? "bg-amber-300/80" : "bg-emerald-400/80"}`} />
+                <span className={`relative size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400"}`} />
+              </span>
+              {soon ? "Tryb zapowiedzi — strona ukryta" : "Strona online"}
+            </Link>
+          </motion.div>
           <h1 className="h-display mt-2 overflow-hidden pb-[0.08em] text-[clamp(2.2rem,4.6vw,3.8rem)]">
             <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ delay: 0.1, duration: 1, ease }}>
               {greeting}

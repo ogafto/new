@@ -12,6 +12,7 @@ export type ServiceContent = { price: number; time: string; description: string 
 export type StepContent = { title: string; lead: string; text: string; points: string[] };
 export type Announcement = { enabled: boolean; text: string; label: string; link: string };
 export type Availability = { open: boolean; text: string };
+export type Soon = { enabled: boolean; kicker: string; title: string; accent: string; text: string; button: string; link: string; date: string };
 
 export type Content = {
   email: string;
@@ -24,6 +25,7 @@ export type Content = {
   announcement: Announcement;
   availability: Availability;
   steps: StepContent[];
+  soon: Soon;
 };
 
 export const DEFAULT_HERO = {
@@ -47,6 +49,16 @@ const base = {
 const baseSteps: StepContent[] = steps.map((x) => ({ title: x.title, lead: x.lead, text: x.text, points: [...x.points] }));
 export const DEFAULT_ANNOUNCEMENT: Announcement = { enabled: false, text: "Nowa odsłona afto.works już online.", label: "Zobacz portfolio", link: "/portfolio" };
 export const DEFAULT_AVAILABILITY: Availability = { open: true, text: "Przyjmuję nowe projekty" };
+export const DEFAULT_SOON: Soon = {
+  enabled: false,
+  kicker: "afto.works",
+  title: "Coś nowego",
+  accent: "nadchodzi.",
+  text: "Pracuję nad nową odsłoną. Dołącz na Discordzie, żeby dowiedzieć się pierwszy — i zobaczyć więcej wcześniej.",
+  button: "Dołącz na Discordzie",
+  link: "",
+  date: "",
+};
 
 const baseServices = Object.fromEntries(services.map((s) => [s.id, { price: s.price, time: s.time, description: s.description }])) as Record<ServiceId, ServiceContent>;
 
@@ -58,6 +70,7 @@ export const defaultContent = (): Content => ({
   announcement: { ...DEFAULT_ANNOUNCEMENT },
   availability: { ...DEFAULT_AVAILABILITY },
   steps: structuredClone(baseSteps),
+  soon: { ...DEFAULT_SOON },
 });
 
 /** Scala zapisane dane z domyślnymi (brakujące pola = domyślne) */
@@ -78,6 +91,7 @@ export function mergeContent(saved: Partial<Content> | null | undefined): Conten
     seo: pick(d.seo, saved.seo),
     announcement: { ...pick(d.announcement, saved.announcement), enabled: typeof saved.announcement?.enabled === "boolean" ? saved.announcement.enabled : d.announcement.enabled },
     availability: { ...pick(d.availability, saved.availability), open: typeof saved.availability?.open === "boolean" ? saved.availability.open : d.availability.open },
+    soon: { ...pick(d.soon, saved.soon), enabled: typeof saved.soon?.enabled === "boolean" ? saved.soon.enabled : false, link: typeof saved.soon?.link === "string" ? saved.soon.link : "", date: typeof saved.soon?.date === "string" ? saved.soon.date : "" },
     steps: d.steps.map((st, i) => {
       const v = saved.steps?.[i];
       return { ...pick({ title: st.title, lead: st.lead, text: st.text }, v), points: Array.isArray(v?.points) && v.points.length ? v.points.map(String).slice(0, 5) : st.points };

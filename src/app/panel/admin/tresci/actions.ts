@@ -14,10 +14,13 @@ export async function saveSiteContent(c: Content, section: string): Promise<{ ok
     if (!Number.isFinite(Number(s.price)) || Number(s.price) < 0) return { error: `Nieprawidłowa cena (${id}).` };
     s.price = Math.round(Number(s.price));
   }
+  if (c.soon.link && !/^https?:\/\//.test(c.soon.link)) return { error: "Link do Discorda musi zaczynać się od https://" };
   if (c.announcement.link && !/^(https?:\/\/|\/)/.test(c.announcement.link)) return { error: "Link ogłoszenia: adres zaczynający się od / albo https://" };
   c.steps = c.steps.map((st) => ({ ...st, points: st.points.map((x) => x.trim()).filter(Boolean) }));
   await saveContent(c, { actor: admin.email, section });
   await log("content", `Zaktualizowano treści strony: ${section}`, { actor: admin.email });
+  const before = await import("@/lib/content-server").then((m) => m.contentHistory()).then((h) => h[0]?.value.soon.enabled);
+  if (before !== c.soon.enabled) await log("settings", c.soon.enabled ? "Włączono tryb zapowiedzi — strona ukryta dla odwiedzających" : "Wyłączono tryb zapowiedzi — strona znów widoczna", { level: "warn", actor: admin.email });
   // cała strona korzysta z tych treści (stopka, kontakt, ceny, SEO)
   revalidatePath("/", "layout");
   return { ok: "Zapisano — zmiany są już na stronie." };

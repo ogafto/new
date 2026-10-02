@@ -1,17 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdminToken, soonEnabled } from "@/lib/gate";
 
 /*
- * Przekierowania zanim cokolwiek się wyrenderuje (bez „pustej karty” logowania czy pustego panelu):
- * - bez ciasteczka sesji → /panel/* prowadzi do logowania,
- * - zalogowany (podpowiedź roli w ciasteczku afto_role) → /konto, logowanie i rejestracja prowadzą prosto do panelu,
- * - admin wchodzący na /panel → od razu /panel/admin.
- * Pełna weryfikacja sesji i tak jest w layoutach; ?sesja=0 (wygasła sesja) wyłącza skrót, żeby nie było pętli.
+ * 1) Panel i konto — przekierowania zanim cokolwiek się wyrenderuje (bez „pustej karty”):
+ *    - bez sesji → /panel/* prowadzi do logowania,
+ *    - zalogowany (podpowiedź roli afto_role) → /konto, logowanie i rejestracja prowadzą prosto do panelu,
+ *    - admin na /panel → /panel/admin. ?sesja=0 (wygasła sesja) wyłącza skrót, żeby nie było pętli.
+ * 2) Tryb zapowiedzi: gdy włączony w panelu, publiczne strony pokazują /wkrotce
+ *    (adres w pasku zostaje ten sam). Admin z ważną sesją widzi pełną stronę.
  */
-export function proxy(request: NextRequest) {
+
+// zawsze dostępne, także w trybie zapowiedzi
+const OPEN = /^\/(konto|panel|api|media|platnosc|wkrotce|_next|brand|prace|favicon|icon|apple-icon|manifest|robots|opengraph-image)/;
+
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const session = request.cookies.has("afto_session");
+  const session = request.cookies.get("afto_session")?.value;
   const role = request.cookies.get("afto_role")?.value;
-  const home = role === "admin" ? "/panel/admin" : "/panel";
   const go = (to: string) => NextResponse.redirect(new URL(to, request.url));
 
   if (pathname.startsWith("/panel")) {
@@ -24,9 +29,25 @@ export function proxy(request: NextRequest) {
     return;
   }
 
-  if (session && role && !searchParams.has("sesja")) return go(home);
+  if (/^\/konto(\/logowanie|\/rejestracja)?$/.test(pathname)) {
+    if (session && role && !searchParams.has("sesja")) return go(role === "admin" ? "/panel/admin" : "/panel");
+    return;
+  }
+
+  if (OPEN.test(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return;
+  if (!(await soonEnabled())) return;
+  if (role === "admin" && (await isAdminToken(session))) {
+    const res = NextResponse.next();
+    res.headers.set("x-afto-preview", "1");
+    return res;
+  }
+  const res = NextResponse.rewrite(new URL("/wkrotce", request.url));
+  res.headers.set("x-robots-tag", "noindex");
+  res.headers.set("cache-control", "no-store");
+  return res;
 }
 
 export const config = {
-  matcher: ["/panel/:path*", "/konto", "/konto/logowanie", "/konto/rejestracja"],
+  // wszystko poza plikami Next.js i statycznymi
+  matcher: ["/((?!_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|mp4|webm|woff2?|txt|xml|json)$).*)"],
 };

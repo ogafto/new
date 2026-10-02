@@ -184,51 +184,30 @@ const direct = [
   { label: "Discord", value: "Napisz na Discordzie", href: discord, kind: "discord" as const },
 ];
 
-// Wiersz kontaktu: duża typografia, tekst „przewija się” w fiolet, linia rysuje się pod spodem
-function Row({ c, i }: { c: (typeof direct)[number]; i: number }) {
+// Bezpośredni kontakt — prosto, jak kolumny w stopce
+function DirectItem({ c }: { c: (typeof direct)[number] }) {
   const [copied, setCopied] = useState(false);
-  const copy = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard?.writeText(c.copy ?? c.value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    });
-  };
   return (
-    <motion.li initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: i * 0.08, duration: 0.9, ease }}>
-      <a
-        href={c.href}
-        {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        className="group relative flex flex-col gap-3 border-b border-line py-7 sm:flex-row sm:items-center sm:gap-8 sm:py-9"
-      >
-        <span className="absolute inset-x-0 -bottom-px h-px origin-left scale-x-0 bg-gradient-to-r from-accent via-accent-2 to-transparent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
-        <span className="flex w-28 shrink-0 items-center gap-3 text-[13px] text-dim transition-colors duration-500 group-hover:text-accent-2">
-          <span className="text-[11px] tabular-nums">0{i + 1}</span>
-          {c.label}
-        </span>
-        <span className="roll h-display min-w-0 flex-1 text-[clamp(1.2rem,2.8vw,2.15rem)] leading-[1.15]">
-          <span className="truncate">{c.value}</span>
-          <span aria-hidden className="truncate text-accent-2">
-            {c.value}
-          </span>
-        </span>
-        <span className="flex shrink-0 items-center gap-2 max-sm:absolute max-sm:top-6 max-sm:right-0">
-          {c.copy && (
-            <button type="button" onClick={copy} className="relative h-10 overflow-hidden rounded-full px-4 text-[13px] text-muted transition-colors hover:bg-white/5 hover:text-ink" aria-label={`Kopiuj: ${c.value}`}>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span key={String(copied)} className="inline-block" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={{ duration: 0.2 }}>
-                  {copied ? "Skopiowano ✓" : "Kopiuj"}
-                </motion.span>
-              </AnimatePresence>
-            </button>
-          )}
-          <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-accent group-hover:text-white max-sm:size-10">
-            <Arrow className="size-4" />
-          </span>
-        </span>
+    <li className="group flex items-center gap-4">
+      <a href={c.href} {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="flex min-w-0 items-baseline gap-4">
+        <span className="w-16 shrink-0 text-[13px] text-dim">{c.label}</span>
+        <span className="link-u truncate text-[17px] text-muted transition-colors group-hover:text-ink">{c.value}</span>
       </a>
-    </motion.li>
+      {c.copy && (
+        <button
+          type="button"
+          onClick={() =>
+            navigator.clipboard?.writeText(c.copy!).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1600);
+            })
+          }
+          className="shrink-0 text-[12.5px] text-dim opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:text-ink focus-visible:opacity-100"
+        >
+          {copied ? "Skopiowano ✓" : "Kopiuj"}
+        </button>
+      )}
+    </li>
   );
 }
 
@@ -355,328 +334,316 @@ export default function Contact() {
   const summary = [serviceLabel, d.budget, d.message && step > 2 ? "Opis projektu" : ""].map((t, i) => ({ t, i })).filter((x) => x.t && x.i < step);
 
   return (
-    <section id="kontakt" className="relative overflow-clip pt-20 pb-32 lg:pb-44">
-      {/* delikatna poświata za sekcją */}
-      <div className="pointer-events-none absolute top-[45%] left-1/2 h-[700px] w-[min(1100px,100vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgb(139_108_255/0.12),transparent)]" aria-hidden />
-
-      <div className="relative mx-auto max-w-[880px] px-5 sm:px-8">
-        <div className="flex flex-col items-center text-center">
+    <section id="kontakt" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-40">
+      <div className="grid grid-cols-1 gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+        {/* lewa kolumna: nagłówek + bezpośredni kontakt (jak w stopce) */}
+        <div className="flex flex-col">
           <FadeUp>
             <p className="kicker">Kontakt</p>
           </FadeUp>
           <Heading
-            className="mt-7 text-[clamp(2.8rem,6.6vw,5.8rem)]"
+            className="mt-7 text-[clamp(2.8rem,5.6vw,5.4rem)]"
             lines={[
-              "Opowiedz mi",
+              "Porozmawiajmy",
               <span key="2" className="text-muted">
-                o swoim projekcie
+                o Twoim projekcie
               </span>,
             ]}
           />
           <FadeUp delay={0.1}>
-            <p className="mt-6 text-[17px] text-muted">Cztery krótkie pytania — zajmie to mniej niż minutę.</p>
+            <p className="mt-6 max-w-[380px] text-[17px] leading-relaxed text-muted">Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.</p>
+          </FadeUp>
+
+          <FadeUp delay={0.15} className="mt-14 lg:mt-auto lg:pt-14">
+            <p className="text-[13px] text-dim">Wolisz bezpośrednio?</p>
+            <ul className="mt-4 space-y-3">
+              {direct.map((c) => (
+                <DirectItem key={c.label} c={c} />
+              ))}
+            </ul>
           </FadeUp>
         </div>
 
-        <div className="relative mt-14">
-          {/* zorza: obracający się, rozmyty gradient wystający zza krawędzi karty */}
-          <div className="pointer-events-none absolute -inset-[2px] overflow-hidden rounded-[38px]" aria-hidden>
-            <div className="absolute top-1/2 left-1/2 aspect-square w-[160%] -translate-x-1/2 -translate-y-1/2 animate-[spin_9s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_0%,#8b6cff_12%,transparent_26%,transparent_50%,#b4a2ff_62%,transparent_76%)] will-change-transform" />
-          </div>
-          <div className="pointer-events-none absolute -inset-10 -z-0 rounded-[60px] bg-[radial-gradient(50%_50%_at_50%_50%,rgb(139_108_255/0.18),transparent)]" aria-hidden />
-          <motion.div
-            className="relative overflow-hidden rounded-[36px] bg-[#0c0b11] shadow-[0_50px_120px_-40px_rgb(139_108_255/0.45)]"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 1.1, ease }}
-          >
-            <div className="pointer-events-none absolute -top-40 left-1/2 size-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.2),transparent)]" aria-hidden />
+        <motion.div
+          className="edge relative min-w-0 overflow-hidden rounded-[28px] bg-surface"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 1.1, ease }}
+        >
+          <div className="pointer-events-none absolute -top-40 left-1/2 size-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.12),transparent)]" aria-hidden />
 
-            <AnimatePresence mode="wait" initial={false}>
-              {status.state === "sent" ? (
-                <motion.div key="ok" className="relative flex flex-col items-center px-6 py-20 text-center sm:py-24" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                  <div className="relative">
-                    <Burst />
-                    <svg viewBox="0 0 64 64" className="relative size-20" fill="none" aria-hidden>
-                      <motion.circle cx="32" cy="32" r="30" stroke="var(--color-accent)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease }} />
-                      <motion.path
-                        d="M20 33l8 8 16-17"
-                        stroke="var(--color-accent-2)"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ delay: 0.5, duration: 0.6, ease }}
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="h-display mt-8 text-[clamp(2.4rem,5vw,3.6rem)]">Dziękuję{sender ? `, ${sender}` : ""}.</h3>
-                  <p className="mt-3 max-w-sm text-[17px] text-muted">Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.</p>
-                  <div className="mt-6 flex flex-wrap justify-center gap-2">
-                    {[serviceLabel, d.budget, d.timeline].filter(Boolean).map((t) => (
-                      <span key={t} className="rounded-full border border-line-2 px-3 py-1 text-[13px] text-muted">
-                        {t}
-                      </span>
+          <AnimatePresence mode="wait" initial={false}>
+            {status.state === "sent" ? (
+              <motion.div key="ok" className="relative flex flex-col items-center px-6 py-20 text-center sm:py-24" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                <div className="relative">
+                  <Burst />
+                  <svg viewBox="0 0 64 64" className="relative size-20" fill="none" aria-hidden>
+                    <motion.circle cx="32" cy="32" r="30" stroke="var(--color-accent)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease }} />
+                    <motion.path
+                      d="M20 33l8 8 16-17"
+                      stroke="var(--color-accent-2)"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.5, duration: 0.6, ease }}
+                    />
+                  </svg>
+                </div>
+                <h3 className="h-display mt-8 text-[clamp(2.4rem,5vw,3.6rem)]">Dziękuję{sender ? `, ${sender}` : ""}.</h3>
+                <p className="mt-3 max-w-sm text-[17px] text-muted">Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.</p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {[serviceLabel, d.budget, d.timeline].filter(Boolean).map((t) => (
+                    <span key={t} className="rounded-full border border-line-2 px-3 py-1 text-[13px] text-muted">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <button type="button" onClick={reset} className="link-u mt-8 text-[15px]">
+                  Napisz ponownie
+                </button>
+              </motion.div>
+            ) : (
+              <motion.form key="form" onSubmit={submit} noValidate className="relative p-6 sm:p-12" exit={{ opacity: 0 }}>
+                {/* postęp */}
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-[13px] text-dim tabular-nums">
+                    Krok <span className="text-ink">{step + 1}</span> z 4
+                  </p>
+                  <div className="grid w-[min(320px,60%)] grid-cols-4 gap-1.5">
+                    {stepNames.map((n, i) => (
+                      <button key={n} type="button" disabled={i > step} onClick={() => i < step && go(i)} className="group text-left disabled:cursor-default" aria-label={`Krok ${i + 1}: ${n}`}>
+                        <span className="block h-1 overflow-hidden rounded-full bg-white/10">
+                          <motion.span
+                            className="block h-full rounded-full bg-gradient-to-r from-accent to-accent-2"
+                            initial={false}
+                            animate={{ width: i < step ? "100%" : i === step ? "45%" : "0%" }}
+                            transition={{ duration: 0.7, ease }}
+                          />
+                        </span>
+                        <span className={`mt-1.5 hidden text-[11.5px] transition-colors sm:block ${i === step ? "text-ink" : i < step ? "text-muted group-hover:text-ink" : "text-dim"}`}>{n}</span>
+                      </button>
                     ))}
                   </div>
-                  <button type="button" onClick={reset} className="link-u mt-8 text-[15px]">
-                    Napisz ponownie
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.form key="form" onSubmit={submit} noValidate className="relative p-6 sm:p-12" exit={{ opacity: 0 }}>
-                  {/* postęp */}
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-[13px] text-dim tabular-nums">
-                      Krok <span className="text-ink">{step + 1}</span> z 4
-                    </p>
-                    <div className="grid w-[min(320px,60%)] grid-cols-4 gap-1.5">
-                      {stepNames.map((n, i) => (
-                        <button key={n} type="button" disabled={i > step} onClick={() => i < step && go(i)} className="group text-left disabled:cursor-default" aria-label={`Krok ${i + 1}: ${n}`}>
-                          <span className="block h-1 overflow-hidden rounded-full bg-white/10">
-                            <motion.span
-                              className="block h-full rounded-full bg-gradient-to-r from-accent to-accent-2"
-                              initial={false}
-                              animate={{ width: i < step ? "100%" : i === step ? "45%" : "0%" }}
-                              transition={{ duration: 0.7, ease }}
-                            />
-                          </span>
-                          <span className={`mt-1.5 hidden text-[11.5px] transition-colors sm:block ${i === step ? "text-ink" : i < step ? "text-muted group-hover:text-ink" : "text-dim"}`}>{n}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                </div>
 
-                  {/* wybrane wcześniej */}
-                  <div className="mt-6 flex min-h-[30px] flex-wrap gap-2">
-                    <AnimatePresence>
-                      {summary.map((x) => (
-                        <motion.button
-                          key={x.i}
-                          type="button"
-                          onClick={() => go(x.i)}
-                          className="group flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 py-1 pr-2.5 pl-3 text-[12.5px] text-accent-2 transition-colors hover:border-accent/60"
-                          initial={{ opacity: 0, scale: 0.8, y: 6 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          layout
-                        >
-                          {x.t}
-                          <span className="text-[11px] opacity-50 transition-opacity group-hover:opacity-100">zmień</span>
-                        </motion.button>
-                      ))}
-                    </AnimatePresence>
-                  </div>
-
-                  <AnimatePresence mode="wait" custom={dir} initial={false}>
-                    <motion.div
-                      key={step}
-                      custom={dir}
-                      variants={{
-                        in: (k: number) => ({ opacity: 0, x: 50 * k, filter: "blur(8px)" }),
-                        show: { opacity: 1, x: 0, filter: "blur(0px)" },
-                        out: (k: number) => ({ opacity: 0, x: -50 * k, filter: "blur(8px)" }),
-                      }}
-                      initial="in"
-                      animate="show"
-                      exit="out"
-                      transition={{ duration: 0.45, ease }}
-                      className="mt-4"
-                    >
-                      <h3 className="h-display text-[clamp(2rem,4.4vw,3.2rem)]">
-                        {questions[step].split(" ").map((w, i) => (
-                          <motion.span key={i} className="mr-[0.25em] inline-block" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.05, duration: 0.6, ease }}>
-                            {w}
-                          </motion.span>
-                        ))}
-                      </h3>
-
-                      {step === 0 && (
-                        <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                          {options.map((o, i) => {
-                            const on = d.services.includes(o.id);
-                            return (
-                              <motion.button
-                                key={o.id}
-                                type="button"
-                                aria-pressed={on}
-                                onClick={() => toggle(o.id)}
-                                onPointerEnter={() => setHov(o.id)}
-                                onPointerLeave={() => setHov(null)}
-                                className={`group relative flex items-center gap-4 overflow-hidden rounded-[22px] border p-4 text-left transition-colors duration-300 sm:p-5 ${
-                                  on ? "border-accent bg-accent/[0.12]" : "border-line-2 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]"
-                                }`}
-                                initial={{ opacity: 0, y: 14 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <ServiceIcon id={o.id} on={on} hover={hov === o.id} />
-                                <span className="min-w-0 flex-1">
-                                  <span className="block text-[17px] text-ink">{o.name}</span>
-                                  <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{o.meta}</span>
-                                </span>
-                                <Check on={on} />
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {step === 1 && (
-                        <div className="mt-8 grid gap-2.5 sm:grid-cols-2">
-                          {budgets.map((b, i) => {
-                            const on = d.budget === b.v;
-                            return (
-                              <motion.button
-                                key={b.v}
-                                type="button"
-                                aria-pressed={on}
-                                onClick={() => pickAndNext(() => set("budget")(b.v), 2)}
-                                className={`group flex items-center justify-between gap-4 rounded-[20px] border px-5 py-4 text-left transition-colors duration-300 ${on ? "border-accent bg-accent/[0.12]" : "border-line-2 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]"}`}
-                                initial={{ opacity: 0, y: 14 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
-                                whileHover={{ y: -2 }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <span>
-                                  <span className="block text-[20px] tracking-[-0.02em] text-ink">{b.v}</span>
-                                  <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{b.hint}</span>
-                                </span>
-                                <Check on={on} />
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {step === 2 && (
-                        <div className="mt-8 space-y-6">
-                          <div>
-                            <Input name="message" label="Czym zajmuje się firma? Co chcesz osiągnąć?" area value={d.message} onChange={set("message")} autoFocus />
-                            <div className="mt-2 flex justify-between px-1 text-[12px] text-dim">
-                              <span>np. „Piekarnia we Wrocławiu, chcemy przyjmować zamówienia online”</span>
-                              <span className={`tabular-nums ${d.message.trim().length >= 10 ? "text-emerald-300" : ""}`}>{d.message.trim().length >= 10 ? "✓" : `${d.message.trim().length}/10`}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="mb-3 text-[14px] text-muted">Kiedy chcesz zacząć? (opcjonalnie)</p>
-                            <div className="flex flex-wrap gap-2">
-                              {timelines.map((t) => (
-                                <button
-                                  key={t}
-                                  type="button"
-                                  onClick={() => set("timeline")(d.timeline === t ? "" : t)}
-                                  className={`relative h-11 rounded-full px-4 text-[14px] transition-colors ${d.timeline === t ? "text-white" : "text-muted hover:text-ink"}`}
-                                >
-                                  {d.timeline === t ? (
-                                    <motion.span layoutId="ct-time" className="absolute inset-0 rounded-full bg-accent" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
-                                  ) : (
-                                    <span className="absolute inset-0 rounded-full border border-line-2" />
-                                  )}
-                                  <span className="relative">{t}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {step === 3 && (
-                        <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                          <Input name="name" label="Imię i nazwisko" required autoComplete="name" value={d.name} onChange={set("name")} className="sm:col-span-2" autoFocus />
-                          <Input name="email" label="Adres e-mail" type="email" required autoComplete="email" inputMode="email" value={d.email} onChange={set("email")} />
-                          <Input name="phone" label="Numer telefonu" type="tel" required autoComplete="tel" inputMode="tel" value={d.phone} onChange={set("phone")} />
-                          <label className="mt-2 flex cursor-pointer items-start gap-3 text-[13.5px] leading-relaxed text-muted sm:col-span-2">
-                            <input type="checkbox" checked={consent} onChange={(e) => (setConsent(e.target.checked), setError(""))} className="peer sr-only" />
-                            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border border-line-2 transition-colors peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50 [&>svg]:scale-0 peer-checked:[&>svg]:scale-100">
-                              <svg width="11" height="11" viewBox="0 0 10 10" className="transition-transform duration-300" aria-hidden>
-                                <path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </span>
-                            <span>
-                              Akceptuję{" "}
-                              <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4 hover:decoration-white">
-                                politykę prywatności
-                              </Link>{" "}
-                              i zgadzam się na kontakt w sprawie zapytania.
-                            </span>
-                          </label>
-                        </div>
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                  <input name="company" tabIndex={-1} autoComplete="off" className="absolute -left-[9999px] size-px opacity-0" aria-hidden />
-
-                  <AnimatePresence mode="wait">
-                    {(error || status.state === "error") && (
-                      <motion.p
-                        key={error + status.message}
-                        role="alert"
-                        className="mt-5 text-[14px] text-red-300"
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: [0, -6, 6, -3, 0] }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.4 }}
+                {/* wybrane wcześniej */}
+                <div className="mt-6 flex min-h-[30px] flex-wrap gap-2">
+                  <AnimatePresence>
+                    {summary.map((x) => (
+                      <motion.button
+                        key={x.i}
+                        type="button"
+                        onClick={() => go(x.i)}
+                        className="group flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 py-1 pr-2.5 pl-3 text-[12.5px] text-accent-2 transition-colors hover:border-accent/60"
+                        initial={{ opacity: 0, scale: 0.8, y: 6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        layout
                       >
-                        {error || `${status.message} Zadzwoń: ${site.phone}`}
-                      </motion.p>
-                    )}
+                        {x.t}
+                        <span className="text-[11px] opacity-50 transition-opacity group-hover:opacity-100">zmień</span>
+                      </motion.button>
+                    ))}
                   </AnimatePresence>
+                </div>
 
-                  {/* nawigacja */}
-                  <div className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6">
-                    {step > 0 ? (
-                      <button type="button" onClick={() => go(step - 1)} className="group flex h-12 items-center gap-2 rounded-full px-3 text-[15px] text-muted transition-colors hover:text-ink">
-                        <span className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-1">←</span>
-                        Wstecz
-                      </button>
-                    ) : (
-                      <span className="text-[13px] text-dim">
-                        <AnimatePresence mode="wait" initial={false}>
-                          <motion.span key={d.services.length} className="inline-block" initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={{ duration: 0.25 }}>
-                            {d.services.length ? `Wybrano: ${d.services.length}` : "Możesz wybrać kilka"}
-                          </motion.span>
-                        </AnimatePresence>
-                      </span>
+                <AnimatePresence mode="wait" custom={dir} initial={false}>
+                  <motion.div
+                    key={step}
+                    custom={dir}
+                    variants={{
+                      in: (k: number) => ({ opacity: 0, x: 50 * k, filter: "blur(8px)" }),
+                      show: { opacity: 1, x: 0, filter: "blur(0px)" },
+                      out: (k: number) => ({ opacity: 0, x: -50 * k, filter: "blur(8px)" }),
+                    }}
+                    initial="in"
+                    animate="show"
+                    exit="out"
+                    transition={{ duration: 0.45, ease }}
+                    className="mt-4"
+                  >
+                    <h3 className="h-display text-[clamp(1.9rem,3.4vw,2.8rem)]">
+                      {questions[step].split(" ").map((w, i) => (
+                        <motion.span key={i} className="mr-[0.25em] inline-block" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.05, duration: 0.6, ease }}>
+                          {w}
+                        </motion.span>
+                      ))}
+                    </h3>
+
+                    {step === 0 && (
+                      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                        {options.map((o, i) => {
+                          const on = d.services.includes(o.id);
+                          return (
+                            <motion.button
+                              key={o.id}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => toggle(o.id)}
+                              onPointerEnter={() => setHov(o.id)}
+                              onPointerLeave={() => setHov(null)}
+                              className={`group relative flex items-center gap-4 overflow-hidden rounded-[22px] border p-4 text-left transition-colors duration-300 sm:p-5 ${
+                                on ? "border-accent bg-accent/[0.12]" : "border-line-2 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]"
+                              }`}
+                              initial={{ opacity: 0, y: 14 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <ServiceIcon id={o.id} on={on} hover={hov === o.id} />
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-[17px] text-ink">{o.name}</span>
+                                <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{o.meta}</span>
+                              </span>
+                              <Check on={on} />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
                     )}
-                    {
-                      <Magnetic strength={0.12}>
-                        <button
-                          type="submit"
-                          disabled={status.state === "sending" || (step === 0 && !d.services.length) || (step === 1 && !d.budget)}
-                          className="group relative ml-auto flex h-[60px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2 pl-7 text-[16px] font-medium text-bg transition-opacity duration-500 disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_90%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_90%_50%)]" />
-                          <span className="relative transition-colors duration-500 group-hover:text-white">{step < 3 ? "Dalej" : status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
-                          <span className="relative grid size-11 place-items-center overflow-hidden rounded-full bg-bg text-ink">
-                            <Arrow className={`size-4 transition-transform duration-500 ease-out-expo ${step < 3 ? "rotate-45 group-hover:translate-x-0.5" : "group-hover:translate-x-5 group-hover:-translate-y-5"}`} />
-                            {step === 3 && <Arrow className="absolute size-4 -translate-x-5 translate-y-5 transition-transform duration-500 ease-out-expo group-hover:translate-x-0 group-hover:translate-y-0" />}
-                          </span>
-                        </button>
-                      </Magnetic>
-                    }
-                  </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
 
-        {/* bezpośrednio — redakcyjna lista jak reszta strony */}
-        <div className="mt-28">
-          <FadeUp>
-            <p className="kicker">Wolisz bezpośrednio?</p>
-          </FadeUp>
-          <ul className="mt-8 border-t border-line">
-            {direct.map((c, i) => (
-              <Row key={c.label} c={c} i={i} />
-            ))}
-          </ul>
-        </div>
+                    {step === 1 && (
+                      <div className="mt-8 grid gap-2.5 sm:grid-cols-2">
+                        {budgets.map((b, i) => {
+                          const on = d.budget === b.v;
+                          return (
+                            <motion.button
+                              key={b.v}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => pickAndNext(() => set("budget")(b.v), 2)}
+                              className={`group flex items-center justify-between gap-4 rounded-[20px] border px-5 py-4 text-left transition-colors duration-300 ${on ? "border-accent bg-accent/[0.12]" : "border-line-2 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]"}`}
+                              initial={{ opacity: 0, y: 14 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
+                              whileHover={{ y: -2 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <span>
+                                <span className="block text-[20px] tracking-[-0.02em] text-ink">{b.v}</span>
+                                <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{b.hint}</span>
+                              </span>
+                              <Check on={on} />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {step === 2 && (
+                      <div className="mt-8 space-y-6">
+                        <div>
+                          <Input name="message" label="Czym zajmuje się firma? Co chcesz osiągnąć?" area value={d.message} onChange={set("message")} autoFocus />
+                          <div className="mt-2 flex justify-between px-1 text-[12px] text-dim">
+                            <span>np. „Piekarnia we Wrocławiu, chcemy przyjmować zamówienia online”</span>
+                            <span className={`tabular-nums ${d.message.trim().length >= 10 ? "text-emerald-300" : ""}`}>{d.message.trim().length >= 10 ? "✓" : `${d.message.trim().length}/10`}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="mb-3 text-[14px] text-muted">Kiedy chcesz zacząć? (opcjonalnie)</p>
+                          <div className="flex flex-wrap gap-2">
+                            {timelines.map((t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => set("timeline")(d.timeline === t ? "" : t)}
+                                className={`relative h-11 rounded-full px-4 text-[14px] transition-colors ${d.timeline === t ? "text-white" : "text-muted hover:text-ink"}`}
+                              >
+                                {d.timeline === t ? (
+                                  <motion.span layoutId="ct-time" className="absolute inset-0 rounded-full bg-accent" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                                ) : (
+                                  <span className="absolute inset-0 rounded-full border border-line-2" />
+                                )}
+                                <span className="relative">{t}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {step === 3 && (
+                      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                        <Input name="name" label="Imię i nazwisko" required autoComplete="name" value={d.name} onChange={set("name")} className="sm:col-span-2" autoFocus />
+                        <Input name="email" label="Adres e-mail" type="email" required autoComplete="email" inputMode="email" value={d.email} onChange={set("email")} />
+                        <Input name="phone" label="Numer telefonu" type="tel" required autoComplete="tel" inputMode="tel" value={d.phone} onChange={set("phone")} />
+                        <label className="mt-2 flex cursor-pointer items-start gap-3 text-[13.5px] leading-relaxed text-muted sm:col-span-2">
+                          <input type="checkbox" checked={consent} onChange={(e) => (setConsent(e.target.checked), setError(""))} className="peer sr-only" />
+                          <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border border-line-2 transition-colors peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50 [&>svg]:scale-0 peer-checked:[&>svg]:scale-100">
+                            <svg width="11" height="11" viewBox="0 0 10 10" className="transition-transform duration-300" aria-hidden>
+                              <path d="M2 5.2l2 2 4-4.4" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                          <span>
+                            Akceptuję{" "}
+                            <Link href="/polityka-prywatnosci" className="text-ink underline decoration-white/30 underline-offset-4 hover:decoration-white">
+                              politykę prywatności
+                            </Link>{" "}
+                            i zgadzam się na kontakt w sprawie zapytania.
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+                <input name="company" tabIndex={-1} autoComplete="off" className="absolute -left-[9999px] size-px opacity-0" aria-hidden />
+
+                <AnimatePresence mode="wait">
+                  {(error || status.state === "error") && (
+                    <motion.p
+                      key={error + status.message}
+                      role="alert"
+                      className="mt-5 text-[14px] text-red-300"
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: [0, -6, 6, -3, 0] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      {error || `${status.message} Zadzwoń: ${site.phone}`}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                {/* nawigacja */}
+                <div className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6">
+                  {step > 0 ? (
+                    <button type="button" onClick={() => go(step - 1)} className="group flex h-12 items-center gap-2 rounded-full px-3 text-[15px] text-muted transition-colors hover:text-ink">
+                      <span className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-1">←</span>
+                      Wstecz
+                    </button>
+                  ) : (
+                    <span className="text-[13px] text-dim">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span key={d.services.length} className="inline-block" initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={{ duration: 0.25 }}>
+                          {d.services.length ? `Wybrano: ${d.services.length}` : "Możesz wybrać kilka"}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>
+                  )}
+                  {
+                    <Magnetic strength={0.12}>
+                      <button
+                        type="submit"
+                        disabled={status.state === "sending" || (step === 0 && !d.services.length) || (step === 1 && !d.budget)}
+                        className="group relative ml-auto flex h-[60px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2 pl-7 text-[16px] font-medium text-bg transition-opacity duration-500 disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_90%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_90%_50%)]" />
+                        <span className="relative transition-colors duration-500 group-hover:text-white">{step < 3 ? "Dalej" : status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
+                        <span className="relative grid size-11 place-items-center overflow-hidden rounded-full bg-bg text-ink">
+                          <Arrow className={`size-4 transition-transform duration-500 ease-out-expo ${step < 3 ? "rotate-45 group-hover:translate-x-0.5" : "group-hover:translate-x-5 group-hover:-translate-y-5"}`} />
+                          {step === 3 && <Arrow className="absolute size-4 -translate-x-5 translate-y-5 transition-transform duration-500 ease-out-expo group-hover:translate-x-0 group-hover:translate-y-0" />}
+                        </span>
+                      </button>
+                    </Magnetic>
+                  }
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );

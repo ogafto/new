@@ -365,133 +365,168 @@ export function DesignArt() {
   );
 }
 
-/* ---------- 4. Wdrożenie: kod pisze się sam, a obok składa się strona ---------- */
+/* ---------- 4. Wdrożenie: kursor układa stronę z klocków i ją publikuje ---------- */
 
-// linie kodu (tokeny z kolorami) — każda „buduje” jeden element strony
-const code: { t: string; c: string }[][] = [
-  [{ t: "<Nav ", c: "#b4a2ff" }, { t: "logo", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"twoja.firma"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
-  [{ t: "<Hero ", c: "#b4a2ff" }, { t: "title", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"Twoja marka"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
-  [{ t: "<Button ", c: "#b4a2ff" }, { t: "href", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"/kontakt"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
-  [{ t: "<Gallery ", c: "#b4a2ff" }, { t: "animate", c: "#9b98a8" }, { t: " />", c: "#b4a2ff" }],
-  [{ t: "deploy", c: "#efedf5" }, { t: "(", c: "#615e6e" }, { t: '"twojafirma.pl"', c: "#6ee7b7" }, { t: ")", c: "#615e6e" }],
+type BuildKey = "p0" | "p1" | "p2" | "p3" | "s0" | "s1" | "s2" | "s3" | "pub" | "rest";
+const blocks = [
+  { label: "Menu", icon: "M4 7h16M4 12h10M4 17h16" },
+  { label: "Nagłówek", icon: "M5 6h14M5 11h9M5 17h11" },
+  { label: "Przycisk", icon: "M4 9.5a3 3 0 013-3h10a3 3 0 013 3v5a3 3 0 01-3 3H7a3 3 0 01-3-3z" },
+  { label: "Galeria", icon: "M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z" },
 ];
-const LINE = 1.05; // s na linię
+// klatki sceny: [czas, cel kursora, przeciągany klocek, ile wstawiono, publikacja 0/1/2]
+type Frame = [number, BuildKey, number | null, number, number];
+const B0 = 0.5;
+const STEP_B = 1.55;
+const buildFrames: Frame[] = [
+  [0, "rest", null, 0, 0],
+  ...blocks.flatMap((_, i): Frame[] => {
+    const t = B0 + i * STEP_B;
+    return [
+      [t, `p${i}` as BuildKey, null, i, 0],
+      [t + 0.45, `p${i}` as BuildKey, i, i, 0],
+      [t + 0.55, `s${i}` as BuildKey, i, i, 0],
+      [t + 1.25, `s${i}` as BuildKey, null, i + 1, 0],
+    ];
+  }),
+  [B0 + 4 * STEP_B + 0.1, "pub", null, 4, 0],
+  [B0 + 4 * STEP_B + 0.75, "pub", null, 4, 1],
+  [B0 + 4 * STEP_B + 1.9, "rest", null, 4, 2],
+];
 
-function CodeLine({ tokens, delay }: { tokens: { t: string; c: string }[]; delay: number }) {
-  const text = tokens.map((x) => x.t).join("");
-  return (
-    <motion.span
-      className="block overflow-hidden whitespace-nowrap"
-      initial={{ width: "0ch" }}
-      animate={{ width: `${text.length}ch` }}
-      transition={{ delay, duration: text.length * 0.028, ease: "linear" }}
-    >
-      {tokens.map((x, i) => (
-        <span key={i} style={{ color: x.c }}>
-          {x.t}
+function Block({ i, small = false }: { i: number; small?: boolean }) {
+  // zawartość wstawionego klocka w podglądzie strony
+  if (i === 0)
+    return (
+      <div className="flex items-center justify-between">
+        <span className={`font-medium text-ink ${small ? "text-[9px]" : "text-[11px]"}`}>
+          twoja.firma<span className="text-accent">.</span>
         </span>
+        <span className="flex gap-1.5">
+          {[0, 1, 2].map((d) => (
+            <span key={d} className="h-1 w-4 rounded-full bg-white/35" />
+          ))}
+        </span>
+      </div>
+    );
+  if (i === 1)
+    return (
+      <p className="text-[clamp(18px,2.2vw,26px)] leading-[1.05] font-medium tracking-[-0.03em] text-ink">
+        Twoja <span className="text-accent-2">marka</span>
+      </p>
+    );
+  if (i === 2)
+    return (
+      <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-ink pr-1 pl-3 text-[10px] font-medium text-bg">
+        Kontakt <span className="grid size-5 place-items-center rounded-full bg-accent text-[9px] text-white">↗</span>
+      </span>
+    );
+  return (
+    <div className="grid h-full grid-cols-3 gap-1.5">
+      {["linear-gradient(160deg,#2a2140,#14111d)", "linear-gradient(160deg,#c9b8ff,#5b3fd6)", "linear-gradient(160deg,#efe9ff,#8b6cff)"].map((g) => (
+        <span key={g} className="h-full rounded-md" style={{ backgroundImage: g }} />
       ))}
-    </motion.span>
+    </div>
   );
 }
 
 export function LaunchArt() {
-  const { ref, k, inView } = useLoop(10500);
-  // n = ile linii już „wykonano”
-  const n = useTimeline(code.map((_, i) => [0.4 + i * LINE + 0.8, i + 1]), k, inView);
-  const live = n >= code.length;
-  const pop = { initial: { opacity: 0, y: 10, scale: 0.9 }, animate: { opacity: 1, y: 0, scale: 1 }, transition: { type: "spring", stiffness: 320, damping: 22 } } as const;
+  const { ref, k, inView } = useLoop(11000);
+  const { box, pos, reg } = useTargets<BuildKey>();
+  const f = buildFrames[useTimeline(buildFrames.map((fr, i) => [fr[0], i]), k, inView)];
+  const [, aim, drag, filled, pub] = f;
+  const live = pub === 2;
+  const slotH = ["h-5", "h-11", "h-8", "h-[64px]"];
 
   return (
-    <div ref={ref} className="absolute inset-0 flex items-center gap-[5%] max-sm:flex-col max-sm:justify-center max-sm:gap-6">
-      {inView && (
-        <>
-          {/* kod */}
-          <div key={`c${k}`} className="w-[46%] shrink-0 font-mono max-sm:w-full text-[11px] leading-[2.1] sm:text-[12.5px]">
-            {code.map((line, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="w-3 text-right text-white/20 tabular-nums">{i + 1}</span>
-                <span className="relative">
-                  <CodeLine tokens={line} delay={0.4 + i * LINE} />
-                  {i === Math.min(n, code.length - 1) && !live && <span className="absolute top-1/2 -right-1.5 h-[1.2em] w-[2px] -translate-y-1/2 animate-pulse bg-accent-2" />}
+    <div ref={ref} className="absolute inset-0">
+      <div ref={box} className="absolute inset-0 flex items-center gap-[6%] max-sm:flex-col max-sm:justify-center max-sm:gap-5">
+        {/* klocki do przeciągnięcia */}
+        <div className="flex shrink-0 flex-col gap-2 max-sm:flex-row max-sm:flex-wrap max-sm:justify-center">
+          <p className="mb-1 text-[11px] tracking-[0.04em] text-dim max-sm:hidden">Elementy</p>
+          {blocks.map((b, i) => {
+            const used = i < filled || drag === i;
+            return (
+              <motion.span
+                key={b.label}
+                ref={reg(`p${i}` as BuildKey)}
+                className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] py-2 pr-4 pl-2.5 text-[12.5px] text-muted"
+                animate={{ opacity: used ? 0.3 : 1, scale: drag === i ? 0.94 : 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="grid size-6 place-items-center rounded-lg bg-white/[0.06] text-ink">
+                  <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d={b.icon} />
+                  </svg>
                 </span>
+                {b.label}
+              </motion.span>
+            );
+          })}
+        </div>
+
+        {/* strona, która powstaje */}
+        <div className="relative w-full flex-1 max-sm:max-w-[300px]">
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-2 text-[11.5px]">
+              <span className="relative flex size-2">
+                {live && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />}
+                <motion.span className="relative size-2 rounded-full" animate={{ backgroundColor: live ? "#34d399" : "#615e6e" }} />
+              </span>
+              <span className={live ? "text-ink" : "text-dim"}>twojafirma.pl</span>
+            </span>
+            <motion.span
+              ref={reg("pub")}
+              className="relative flex h-7 items-center overflow-hidden rounded-full px-3 text-[11px] font-medium"
+              animate={{ backgroundColor: live ? "#10b981" : pub === 1 ? "#8b6cff" : filled === 4 ? "#efedf5" : "rgba(255,255,255,0.06)", color: pub >= 1 ? "#fff" : filled === 4 ? "#07070a" : "#615e6e", scale: pub === 1 ? [1, 0.9, 1] : 1 }}
+              transition={{ duration: 0.35 }}
+            >
+              {pub === 1 && <motion.span className="absolute inset-y-0 left-0 bg-white/30" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.1, ease: "easeInOut" }} />}
+              <span className="relative">{live ? "✓ Online" : pub === 1 ? "Publikuję…" : "Opublikuj"}</span>
+            </motion.span>
+          </div>
+          <motion.div
+            className="relative space-y-2.5 overflow-hidden rounded-2xl border p-3"
+            animate={{ borderColor: live ? "rgba(139,108,255,0.6)" : "rgba(255,255,255,0.1)", backgroundColor: live ? "rgba(139,108,255,0.06)" : "rgba(255,255,255,0.015)" }}
+            transition={{ duration: 0.6 }}
+          >
+            {blocks.map((_, i) => (
+              <div key={i} ref={reg(`s${i}` as BuildKey)} className={`relative ${slotH[i]}`}>
+                <AnimatePresence initial={false}>
+                  {i < filled ? (
+                    <motion.div key={`f${k}-${i}`} className="absolute inset-0 flex flex-col items-stretch justify-center [&>span]:self-start" initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 420, damping: 24 }}>
+                      <Block i={i} />
+                    </motion.div>
+                  ) : (
+                    <motion.span key={`e${i}`} className={`absolute inset-0 rounded-lg border border-dashed transition-colors ${drag === i ? "border-accent-2 bg-accent/10" : "border-white/10"}`} exit={{ opacity: 0 }} />
+                  )}
+                </AnimatePresence>
               </div>
             ))}
-          </div>
+            {live && <motion.span key={`sw${k}`} className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/15 to-transparent" initial={{ x: "0%" }} animate={{ x: "400%" }} transition={{ duration: 1.2, ease: "easeInOut" }} />}
+          </motion.div>
+        </div>
+        <span ref={reg("rest")} className="absolute right-[4%] bottom-[8%] size-1" />
+      </div>
 
-          {/* strona, która powstaje z kodu */}
-          <div key={`s${k}`} className="relative flex-1 max-sm:w-[80%] max-sm:flex-none">
-            <motion.div
-              className="relative overflow-hidden rounded-[18px] border bg-[#0d0c13] p-3.5"
-              animate={{ borderColor: live ? "rgba(139,108,255,0.55)" : "rgba(255,255,255,0.1)", boxShadow: live ? "0 30px 80px -30px rgba(139,108,255,0.7)" : "0 0 0 rgba(0,0,0,0)" }}
-              transition={{ duration: 0.6 }}
+      {/* przeciągany klocek jedzie razem z kursorem */}
+      {inView && (
+        <AnimatePresence>
+          {drag !== null && pos[aim] && (
+            <motion.span
+              key={`d${k}-${drag}`}
+              className="pointer-events-none absolute top-0 left-0 z-20 flex items-center gap-2 rounded-xl border border-accent/60 bg-surface-2 py-2 pr-4 pl-3 text-[12.5px] text-ink shadow-[0_20px_40px_-12px_rgb(139_108_255/0.5)]"
+              initial={{ opacity: 0, scale: 0.9, x: pos[aim]!.x - 30, y: pos[aim]!.y - 16, rotate: 0 }}
+              animate={{ opacity: 1, scale: 1, x: pos[aim]!.x - 30, y: pos[aim]!.y - 16, rotate: -3 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: "spring", stiffness: 90, damping: 18, mass: 0.9 }}
             >
-              <div className="flex h-5 items-center justify-between">
-                {n >= 1 ? (
-                  <motion.span {...pop} className="text-[10px] font-medium text-ink">
-                    twoja.firma<span className="text-accent">.</span>
-                  </motion.span>
-                ) : (
-                  <span className="h-2 w-12 rounded bg-white/[0.06]" />
-                )}
-                <span className="flex gap-1.5">
-                  {[0, 1, 2].map((d) => (
-                    <motion.span key={d} className="h-1 w-4 rounded-full" animate={{ backgroundColor: n >= 1 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.06)" }} transition={{ delay: d * 0.06 }} />
-                  ))}
-                </span>
-              </div>
-              <div className="mt-4 h-[52px]">
-                {n >= 2 ? (
-                  <motion.p {...pop} className="text-[22px] leading-[1.05] font-medium tracking-[-0.03em] text-ink sm:text-[26px]">
-                    Twoja <span className="text-accent-2">marka</span>
-                  </motion.p>
-                ) : (
-                  <>
-                    <span className="block h-3.5 w-4/5 rounded bg-white/[0.06]" />
-                    <span className="mt-2 block h-3.5 w-1/2 rounded bg-white/[0.06]" />
-                  </>
-                )}
-              </div>
-              <div className="mt-2 h-7">
-                {n >= 3 ? (
-                  <motion.span {...pop} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-ink pr-1 pl-3 text-[10px] font-medium text-bg">
-                    Kontakt <span className="grid size-5 place-items-center rounded-full bg-accent text-[9px] text-white">↗</span>
-                  </motion.span>
-                ) : (
-                  <span className="block h-7 w-20 rounded-full bg-white/[0.06]" />
-                )}
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-1.5">
-                {[0, 1, 2].map((d) => (
-                  <motion.span
-                    key={d}
-                    className="aspect-[4/5] rounded-lg"
-                    animate={
-                      n >= 4
-                        ? { backgroundImage: ["linear-gradient(160deg,#2a2140,#14111d)", "linear-gradient(160deg,#c9b8ff,#5b3fd6)", "linear-gradient(160deg,#efe9ff,#8b6cff)"][d], y: [8, 0], opacity: 1 }
-                        : { backgroundImage: "linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.06))", y: 0, opacity: 1 }
-                    }
-                    transition={{ delay: d * 0.1, duration: 0.5, ease }}
-                  />
-                ))}
-              </div>
-              {/* przebieg światła przy publikacji */}
-              {live && <motion.span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent" initial={{ x: "0%" }} animate={{ x: "400%" }} transition={{ duration: 1.1, ease: "easeInOut" }} />}
-            </motion.div>
-            <div className="mt-3 h-6 text-center">
-              {live && (
-                <motion.span {...pop} className="inline-flex items-center gap-2 text-[12px] text-emerald-200">
-                  <span className="relative flex size-2">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />
-                    <span className="relative size-2 rounded-full bg-emerald-400" />
-                  </span>
-                  twojafirma.pl jest online
-                </motion.span>
-              )}
-            </div>
-          </div>
-        </>
+              {blocks[drag].label}
+            </motion.span>
+          )}
+        </AnimatePresence>
       )}
+      {inView && <Cursor at={pos[aim]} clicks={filled + pub} />}
     </div>
   );
 }

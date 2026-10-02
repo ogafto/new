@@ -209,9 +209,15 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
       <AnimatePresence>
         {menu && (
-          <motion.div className="fixed inset-0 z-[70] lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenu(false)} />
-            <motion.aside className="absolute inset-y-0 left-0 w-[280px] border-r border-line bg-bg px-4 py-6" initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }} transition={{ duration: 0.45, ease }}>
+          <motion.div className="fixed inset-0 z-[70] bg-[rgb(4_4_6/0.82)] backdrop-blur-[6px] lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0" onClick={() => setMenu(false)} />
+            <motion.aside
+              className="absolute inset-y-0 left-0 w-[min(84vw,300px)] border-r border-line bg-bg px-4 pt-[calc(env(safe-area-inset-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-[30px_0_80px_-20px_rgb(0_0_0/0.8)]"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.5, ease }}
+            >
               {side}
             </motion.aside>
           </motion.div>
@@ -220,7 +226,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
       <div className="relative min-w-0">
         <div className="pointer-events-none fixed top-0 right-0 size-[700px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.08),transparent)]" aria-hidden />
-        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.8, ease }} className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg/70 px-5 py-3 backdrop-blur-xl sm:px-8">
+        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.8, ease }} className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 sm:px-8 lg:bg-bg/70 lg:pt-3 lg:backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => setMenu(true)} className="grid size-10 place-items-center rounded-full border border-line-2 lg:hidden" aria-label="Menu">
               <Icon d={ICONS.menu} className="size-[18px]" />

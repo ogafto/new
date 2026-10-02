@@ -75,13 +75,14 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
 
       <motion.div
         ref={hero}
-        className="relative mx-auto mt-16 aspect-[4/3] max-w-[1400px] overflow-hidden px-0 sm:px-10 md:aspect-[16/9]"
+        className="relative mx-auto mt-12 max-w-[1400px] px-5 sm:mt-16 sm:px-10"
         initial={{ clipPath: "inset(14% 8% 0% 8% round 28px)", y: 40 }}
         animate={show ? { clipPath: "inset(0% 0% 0% 0% round 0px)", y: 0 } : {}}
         transition={{ delay: 0.3, duration: 1.3, ease }}
       >
-        <div className="relative size-full overflow-hidden sm:rounded-[28px]">
-          <motion.div className="absolute inset-x-0 -top-[9%] h-[118%] w-full" style={{ y }}>
+        {/* telefon: całe zdjęcie 4:3 bez przycinania; od sm: szerszy kadr z paralaksą */}
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[18px] ring-1 ring-white/10 sm:rounded-[28px] md:aspect-[16/9]">
+          <motion.div className="absolute inset-0 max-sm:!transform-none sm:inset-x-0 sm:-top-[9%] sm:h-[118%]" style={{ y }}>
             <Image src={p.image} alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill priority sizes="(min-width: 1400px) 1320px, 100vw" className="object-cover" />
           </motion.div>
         </div>

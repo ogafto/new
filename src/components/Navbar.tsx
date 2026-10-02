@@ -40,12 +40,13 @@ export default function Navbar() {
   return (
     <>
       <motion.header
-        className="fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]"
+        className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-500 ${scrolled || open ? "max-md:bg-bg" : ""}`}
         initial={{ y: -100, opacity: 0 }}
         animate={loaded ? { y: hidden ? -100 : 0, opacity: 1 } : {}}
         transition={{ duration: 0.8, ease }}
       >
-        {/* tło wychodzi ponad pasek — na iOS strona rysuje się też pod paskiem statusu */}
+        {/* iOS (Safari 26) wypełnia pas pod paskiem statusu kolorem tła samego <header> — stąd max-md:bg-bg wyżej.
+            Ta warstwa daje rozmycie na komputerze i zapas ponad krawędzią dla starszych iOS. */}
         <div
           className={`pointer-events-none absolute inset-x-0 -top-[120px] bottom-0 transition-opacity duration-500 ${scrolled || open ? "opacity-100" : "opacity-0"} bg-bg/[0.97] md:bg-bg/75 md:backdrop-blur-xl`}
           aria-hidden

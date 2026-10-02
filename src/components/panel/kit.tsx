@@ -324,8 +324,8 @@ export function Modal({ open, onClose, title, children, wide = false }: { open: 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <motion.div className="fixed inset-0 z-[80] flex items-end justify-center bg-[rgb(4_4_6/0.75)] p-0 backdrop-blur-sm sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="absolute inset-0" onClick={onClose} />
           <motion.div
             role="dialog"
             aria-modal="true"

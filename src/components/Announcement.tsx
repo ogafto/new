@@ -5,20 +5,34 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { content } from "@/lib/content";
 import { useLoaded } from "./Providers";
+import { setSitePreview } from "@/app/panel/actions";
 import { TLink } from "./Transition";
 
 // Pasek ogłoszeń z panelu (Treści strony → Ogłoszenie) — pływająca kapsuła na dole, do zamknięcia
 // Admin w trybie zapowiedzi widzi pełną stronę — przypominajka, że inni widzą ekran „Coś nowego nadchodzi”
 function SoonPreview() {
+  const [busy, setBusy] = useState(false);
   return (
     <div className="soon-preview fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-[60] -translate-x-1/2 sm:bottom-6">
-      <a href="/panel/admin/tresci#soon" className="edge flex items-center gap-2.5 rounded-full bg-surface/90 py-2 pr-4 pl-3 text-[12.5px] whitespace-nowrap text-muted shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl hover:text-ink">
+      <div className="edge flex items-center gap-3 rounded-full bg-surface/90 py-1.5 pr-1.5 pl-3.5 text-[12.5px] whitespace-nowrap text-muted shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl">
         <span className="relative flex size-2">
           <span className="absolute inset-0 animate-ping rounded-full bg-amber-300/70" />
           <span className="relative size-2 rounded-full bg-amber-300" />
         </span>
-        Tryb zapowiedzi włączony — widzisz podgląd
-      </a>
+        Podgląd — inni widzą zapowiedź
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await setSitePreview(false);
+            location.reload();
+          }}
+          className="rounded-full bg-ink px-3 py-1.5 text-[12px] font-medium text-bg transition-colors hover:bg-white disabled:opacity-60"
+        >
+          Wyjdź z podglądu
+        </button>
+      </div>
     </div>
   );
 }

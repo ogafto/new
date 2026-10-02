@@ -6,8 +6,8 @@ import { isAdminToken, soonEnabled } from "@/lib/gate";
  *    - bez sesji → /panel/* prowadzi do logowania,
  *    - zalogowany (podpowiedź roli afto_role) → /konto, logowanie i rejestracja prowadzą prosto do panelu,
  *    - admin na /panel → /panel/admin. ?sesja=0 (wygasła sesja) wyłącza skrót, żeby nie było pętli.
- * 2) Tryb zapowiedzi: gdy włączony w panelu, publiczne strony pokazują /wkrotce
- *    (adres w pasku zostaje ten sam). Admin z ważną sesją widzi pełną stronę.
+ * 2) Tryb zapowiedzi: gdy włączony w panelu, wszyscy (także admin) widzą /wkrotce — adres w pasku zostaje ten sam.
+ *    Pełną stronę widzi tylko admin z ważną sesją, który włączył „Podgląd pełnej strony” w panelu (ciasteczko afto_preview).
  */
 
 // zawsze dostępne, także w trybie zapowiedzi
@@ -36,7 +36,7 @@ export async function proxy(request: NextRequest) {
 
   if (OPEN.test(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return;
   if (!(await soonEnabled())) return;
-  if (role === "admin" && (await isAdminToken(session))) {
+  if (role === "admin" && request.cookies.get("afto_preview")?.value === "1" && (await isAdminToken(session))) {
     const res = NextResponse.next();
     res.headers.set("x-afto-preview", "1");
     return res;

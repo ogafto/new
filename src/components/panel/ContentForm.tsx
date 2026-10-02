@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { resetSiteContent, restoreSiteContent, saveSiteContent } from "@/app/panel/admin/tresci/actions";
+import { setSitePreview } from "@/app/panel/actions";
 import type { Content } from "@/lib/content";
 import type { ServiceId } from "@/lib/site";
 import { Badge, Btn, Card, ConfirmBtn, ease, field, Icon, ICONS, Label, Tabs, Toggle } from "./kit";
@@ -104,7 +105,7 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     <h2 className="text-[16px] font-medium">{c.soon.enabled ? "Strona jest ukryta" : "Strona jest widoczna"}</h2>
                     <p className="mt-0.5 text-[13px] leading-relaxed text-dim">
                       {c.soon.enabled
-                        ? "Odwiedzający widzą tylko ekran zapowiedzi. Ty (zalogowany admin) widzisz pełną stronę. Panel i logowanie działają normalnie."
+                        ? "Każdy, kto wejdzie na afto.works (także Ty), widzi ekran zapowiedzi. Panel i logowanie działają normalnie. Pełną stronę zobaczysz przez „Podgląd pełnej strony”."
                         : "Włącz, żeby zamiast strony pokazać ekran „Coś nowego nadchodzi” z przyciskiem Discorda."}
                     </p>
                   </div>
@@ -156,9 +157,23 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                   </p>
                   <p className="mt-4 max-w-[340px] text-[13px] leading-relaxed text-muted">{c.soon.text}</p>
                   <span className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#5865F2] px-5 text-[13.5px] font-medium text-white">{c.soon.button || "Dołącz na Discordzie"}</span>
-                  <a href="/wkrotce" target="_blank" className="mt-6 text-[12.5px] text-dim underline decoration-white/20 underline-offset-4 hover:text-ink">
-                    Otwórz pełny podgląd ↗
-                  </a>
+                  <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12.5px]">
+                    <a href="/wkrotce" target="_blank" className="text-dim underline decoration-white/20 underline-offset-4 hover:text-ink">
+                      Ekran zapowiedzi ↗
+                    </a>
+                    {initial.soon.enabled && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await setSitePreview(true);
+                          window.open("/", "_blank");
+                        }}
+                        className="text-dim underline decoration-white/20 underline-offset-4 hover:text-ink"
+                      >
+                        Podgląd pełnej strony (tylko Ty) ↗
+                      </button>
+                    )}
+                  </div>
                 </div>
               </Card>
             </div>

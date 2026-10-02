@@ -197,6 +197,7 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
   const lit = useRef<SVGPathElement>(null);
   const glow = useRef<SVGPathElement>(null);
   const head = useRef<SVGGElement>(null);
+  const grad = useRef<SVGLinearGradientElement>(null);
 
   useEffect(() => {
     const measure = () => {
@@ -257,6 +258,8 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
       lit.current?.setAttribute("stroke-dashoffset", off);
       glow.current?.setAttribute("stroke-dashoffset", off);
       head.current?.setAttribute("transform", `translate(${pt.x} ${pt.y})`);
+      grad.current?.setAttribute("y1", String(pt.y - 650));
+      grad.current?.setAttribute("y2", String(pt.y));
       head.current?.setAttribute("opacity", v > 0.003 && v < 0.997 ? "1" : "0");
     },
     [geo],
@@ -268,23 +271,26 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
   return (
     <svg className="pointer-events-none absolute top-0 left-0 z-10 overflow-visible" width={geo.w} height={geo.h} viewBox={`0 0 ${geo.w} ${geo.h}`} fill="none" aria-hidden>
       <defs>
-        <linearGradient id="beam-g" x1="0" y1="0" x2="0" y2={geo.h} gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#8b6cff" stopOpacity="0" />
-          <stop offset="0.06" stopColor="#8b6cff" />
-          <stop offset="0.6" stopColor="#b4a2ff" />
-          <stop offset="1" stopColor="#efe9ff" />
+        {/* „ogon komety”: gradient przesuwa się razem z czołem światła */}
+        <linearGradient ref={grad} id="beam-g" x1="0" y1="0" x2="0" y2="600" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#b4a2ff" stopOpacity="0.16" />
+          <stop offset="0.55" stopColor="#8b6cff" stopOpacity="0.55" />
+          <stop offset="0.88" stopColor="#c9b8ff" stopOpacity="0.95" />
+          <stop offset="1" stopColor="#ffffff" />
         </linearGradient>
         <radialGradient id="head-g">
-          <stop offset="0" stopColor="#c9b8ff" stopOpacity="0.9" />
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="0.4" stopColor="#c9b8ff" stopOpacity="0.25" />
           <stop offset="1" stopColor="#8b6cff" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <path ref={base} d={geo.d} stroke="rgba(255,255,255,0.1)" strokeWidth="1.2" strokeDasharray="2 7" strokeLinecap="round" />
-      <path ref={glow} d={geo.d} stroke="url(#beam-g)" strokeWidth="9" strokeOpacity="0.14" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
-      <path ref={lit} d={geo.d} stroke="url(#beam-g)" strokeWidth="2" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
+      <path ref={base} d={geo.d} stroke="rgba(255,255,255,0.07)" strokeWidth="1" strokeDasharray="1.5 8" strokeLinecap="round" />
+      <path ref={glow} d={geo.d} stroke="url(#beam-g)" strokeWidth="7" strokeOpacity="0.12" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
+      <path ref={lit} d={geo.d} stroke="url(#beam-g)" strokeWidth="1.6" strokeLinecap="round" strokeDasharray={geo.len} strokeDashoffset={geo.len} />
       <g ref={head} opacity="0">
-        <circle r="26" fill="url(#head-g)" />
-        <circle r="4.5" fill="#fff" />
+        <circle r="30" fill="url(#head-g)" />
+        <circle r="5.5" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
+        <circle r="3" fill="#fff" />
       </g>
     </svg>
   );
@@ -367,7 +373,7 @@ export default function Process() {
             <Copy i={3} />
           </div>
           <div className="md:order-1">
-            <Open enter="left" className="aspect-[5/4] max-w-[560px]">
+            <Open enter="left" className="aspect-[4/5] max-w-[560px] sm:aspect-[5/4]">
               <LaunchArt />
             </Open>
           </div>

@@ -12,7 +12,6 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
  * Układ SVG (y w dół) → 3D: X = x − 22, Y = 25 − y.
  */
 
-const VIOLET = new THREE.Color("#8b6cff");
 
 function logoShapes() {
   const ring = new THREE.Shape();
@@ -143,7 +142,6 @@ function Monogram({ ready, mobile, center = false }: { ready: boolean; mobile: b
   // „puls” (np. po poprawnym kodzie): obrót o 360° i rozbłysk kropki
   const spin = useRef(0);
   const boost = useRef(0);
-  const glowMat = useRef<THREE.MeshBasicMaterial>(null);
   useEffect(() => {
     const on = () => {
       spin.current += Math.PI * 2;
@@ -153,22 +151,12 @@ function Monogram({ ready, mobile, center = false }: { ready: boolean; mobile: b
     return () => window.removeEventListener("afto:pulse", on);
   }, []);
 
-  // kropka jest teraz ze szkła jak reszta znaku (jedna geometria = jeden przebieg szkła),
-  // a jej fiolet daje miękka poświata ukryta tuż za nią
-  const { body, glowTex } = useMemo(() => {
+  // kropka ze szkła jak reszta znaku (jedna geometria = jeden przebieg szkła)
+  const { body } = useMemo(() => {
     const s = logoShapes();
     const body = new THREE.ExtrudeGeometry([...s.body, s.dot], extrude);
     body.translate(0, 0, -2.5);
-    const c = document.createElement("canvas");
-    c.width = c.height = 128;
-    const ctx = c.getContext("2d")!;
-    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    g.addColorStop(0, "rgba(190,170,255,1)");
-    g.addColorStop(0.35, "rgba(139,108,255,0.75)");
-    g.addColorStop(1, "rgba(139,108,255,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 128, 128);
-    return { body, glowTex: new THREE.CanvasTexture(c) };
+    return { body };
   }, []);
 
   useEffect(() => {
@@ -199,7 +187,6 @@ function Monogram({ ready, mobile, center = false }: { ready: boolean; mobile: b
       g.position.set(wide ? Math.min(26, (size.width / size.height) * 11) : 0, (wide ? 3 : 22) + Math.sin(t * 0.7) * 0.7, 0);
       g.scale.setScalar((wide ? 0.95 : 0.7) * (0.75 + 0.25 * e));
     }
-    if (glowMat.current) glowMat.current.opacity = 0.6 + Math.sin(t * 1.6) * 0.1 + boost.current * 0.5;
   });
 
   return (
@@ -222,11 +209,7 @@ function Monogram({ ready, mobile, center = false }: { ready: boolean; mobile: b
           background={new THREE.Color("#07070a")}
         />
       </mesh>
-      {/* fioletowe światło za kropką — szkło je załamuje */}
-      <mesh position={[15, -15, -4.5]}>
-        <planeGeometry args={[11, 11]} />
-        <meshBasicMaterial ref={glowMat} map={glowTex} color={VIOLET} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
-      </mesh>
+
     </group>
   );
 }

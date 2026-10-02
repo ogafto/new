@@ -181,84 +181,54 @@ function Burst() {
 const direct = [
   { label: "E-mail", value: site.email, short: "Napisz maila", href: `mailto:${site.email}`, copy: site.email, kind: "mail" as const },
   { label: "Telefon", value: site.phone, short: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}`, copy: site.phone, kind: "phone" as const },
-  { label: "Discord", value: "Napisz do mnie na Discordzie", short: "Napisz na Discordzie", href: discord, kind: "discord" as const },
+  { label: "Discord", value: "Napisz na Discordzie", href: discord, kind: "discord" as const },
 ];
 
-function ChannelIcon({ kind }: { kind: "mail" | "phone" | "discord" }) {
-  // każda ikona ma własną mikroanimację po najechaniu (grupa „group/ch”)
-  if (kind === "mail")
-    return (
-      <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 7.5A1.5 1.5 0 014.5 6h15A1.5 1.5 0 0121 7.5v10a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5z" />
-        <path d="M3.5 7l8.5 6.5L20.5 7" className="origin-[50%_30%] transition-transform duration-500 ease-out-expo group-hover/ch:[transform:scaleY(-1)_translateY(-5px)]" />
-      </svg>
-    );
-  if (kind === "phone")
-    return (
-      <svg viewBox="0 0 24 24" className="size-6 group-hover/ch:animate-[ring_0.6s_ease-in-out_2]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M5 4h3.5l1.8 4.5-2.3 1.4a11 11 0 005.6 5.6l1.4-2.3L19.5 15v3.5a1.5 1.5 0 01-1.6 1.5C10.6 19.5 4.5 13.4 4 6.1A1.5 1.5 0 015 4z" />
-        <path d="M15 4.5a5 5 0 014.5 4.5M15 1.5a8 8 0 017.5 7.5" className="opacity-0 transition-opacity duration-300 group-hover/ch:opacity-100" />
-      </svg>
-    );
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-6 transition-transform duration-500 ease-out-expo group-hover/ch:-translate-y-0.5 group-hover/ch:scale-110"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M8.5 7.5c2.3-.7 4.7-.7 7 0M7 17c3.3 1.3 6.7 1.3 10 0M8.5 7.5L7.5 6C5.8 6.4 4.6 7 3.5 8 2.4 10.6 2 13.3 2.4 16c1.2 1 2.6 1.6 4 2l1-1.8M15.5 7.5l1-1.5c1.7.4 2.9 1 4 2 1.1 2.6 1.5 5.3 1.1 8-1.2 1-2.6 1.6-4 2l-1-1.8" />
-      <path d="M9.3 13.2a.9.9 0 100-1.8.9.9 0 000 1.8zM14.7 13.2a.9.9 0 100-1.8.9.9 0 000 1.8z" className="origin-center transition-transform duration-300 group-hover/ch:scale-y-[0.2]" />
-    </svg>
-  );
-}
-
-// Pigułka kontaktu: wypełnia się fioletem od ikony, nad nią dymek z adresem/numerem
-function Channel({ c }: { c: (typeof direct)[number] }) {
+// Wiersz kontaktu: duża typografia, tekst „przewija się” w fiolet, linia rysuje się pod spodem
+function Row({ c, i }: { c: (typeof direct)[number]; i: number }) {
   const [copied, setCopied] = useState(false);
-  const [hover, setHover] = useState(false);
   const copy = (e: React.MouseEvent) => {
-    if (c.kind !== "mail") return;
     e.preventDefault();
-    navigator.clipboard?.writeText(site.email).then(() => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(c.copy ?? c.value).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     });
   };
   return (
-    <div className="relative" onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}>
-      <AnimatePresence>
-        {(hover || copied) && (
-          <motion.span
-            className="pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 z-20 -translate-x-1/2 rounded-xl border border-white/10 bg-surface-2 px-3 py-2 text-[12.5px] whitespace-nowrap text-ink shadow-[0_20px_40px_-12px_rgb(0_0_0/0.8)]"
-            initial={{ opacity: 0, y: 8, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 420, damping: 26 }}
-          >
-            {copied ? "Skopiowano ✓" : c.value}
-            {c.kind === "mail" && !copied && <span className="ml-2 text-dim">· kliknij, aby skopiować</span>}
-            <span className="absolute top-full left-1/2 -mt-1 size-2 -translate-x-1/2 rotate-45 border-r border-b border-white/10 bg-surface-2" />
-          </motion.span>
-        )}
-      </AnimatePresence>
+    <motion.li initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: i * 0.08, duration: 0.9, ease }}>
       <a
         href={c.href}
-        onClick={copy}
         {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        className="group/ch relative flex h-14 items-center gap-3 overflow-hidden rounded-full border border-line-2 bg-white/[0.03] pr-6 pl-1.5 text-[15px] transition-colors duration-500 hover:border-accent/60"
+        className="group relative flex flex-col gap-3 border-b border-line py-7 sm:flex-row sm:items-center sm:gap-8 sm:py-9"
       >
-        <span className="absolute inset-0 bg-gradient-to-r from-accent to-[#6d4fe6] [clip-path:circle(0%_at_28px_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover/ch:[clip-path:circle(160%_at_28px_50%)]" />
-        <span className="relative grid size-11 place-items-center rounded-full bg-white/[0.07] text-ink transition-colors duration-500 group-hover/ch:bg-white/20 group-hover/ch:text-white">
-          <ChannelIcon kind={c.kind} />
+        <span className="absolute inset-x-0 -bottom-px h-px origin-left scale-x-0 bg-gradient-to-r from-accent via-accent-2 to-transparent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
+        <span className="flex w-28 shrink-0 items-center gap-3 text-[13px] text-dim transition-colors duration-500 group-hover:text-accent-2">
+          <span className="text-[11px] tabular-nums">0{i + 1}</span>
+          {c.label}
         </span>
-        <span className="relative text-ink transition-colors duration-500 group-hover/ch:text-white">{c.label}</span>
+        <span className="roll h-display min-w-0 flex-1 text-[clamp(1.2rem,2.8vw,2.15rem)] leading-[1.15]">
+          <span className="truncate">{c.value}</span>
+          <span aria-hidden className="truncate text-accent-2">
+            {c.value}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2 max-sm:absolute max-sm:top-6 max-sm:right-0">
+          {c.copy && (
+            <button type="button" onClick={copy} className="relative h-10 overflow-hidden rounded-full px-4 text-[13px] text-muted transition-colors hover:bg-white/5 hover:text-ink" aria-label={`Kopiuj: ${c.value}`}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span key={String(copied)} className="inline-block" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={{ duration: 0.2 }}>
+                  {copied ? "Skopiowano ✓" : "Kopiuj"}
+                </motion.span>
+              </AnimatePresence>
+            </button>
+          )}
+          <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-accent group-hover:text-white max-sm:size-10">
+            <Arrow className="size-4" />
+          </span>
+        </span>
       </a>
-    </div>
+    </motion.li>
   );
 }
 
@@ -696,26 +666,17 @@ export default function Contact() {
           </motion.div>
         </div>
 
-        {/* bezpośrednio */}
-        <motion.div
-          className="mt-16 rounded-[30px] border border-line bg-gradient-to-br from-white/[0.035] to-transparent p-5 sm:rounded-full sm:p-2.5 sm:pl-8"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.9, ease }}
-        >
-          <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
-            <div className="text-center sm:text-left">
-              <p className="text-[16px] text-ink">Wolisz porozmawiać od razu?</p>
-              <p className="mt-0.5 text-[13.5px] text-dim">Napisz, zadzwoń albo złap mnie na Discordzie.</p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {direct.map((c) => (
-                <Channel key={c.label} c={c} />
-              ))}
-            </div>
-          </div>
-        </motion.div>
+        {/* bezpośrednio — redakcyjna lista jak reszta strony */}
+        <div className="mt-28">
+          <FadeUp>
+            <p className="kicker">Wolisz bezpośrednio?</p>
+          </FadeUp>
+          <ul className="mt-8 border-t border-line">
+            {direct.map((c, i) => (
+              <Row key={c.label} c={c} i={i} />
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

@@ -365,103 +365,133 @@ export function DesignArt() {
   );
 }
 
-/* ---------- 4. Wdrożenie: kursor klika „Opublikuj” ---------- */
+/* ---------- 4. Wdrożenie: kod pisze się sam, a obok składa się strona ---------- */
 
-type LaunchKey = "btn" | "rest";
-const launchScript: [number, number][] = [
-  [0.0, 0], // szkic
-  [1.3, 1], // kursor nad przyciskiem
-  [1.9, 2], // klik → publikowanie
-  [3.6, 3], // opublikowano
-  [4.6, 4], // pierwsze zapytanie od klienta
+// linie kodu (tokeny z kolorami) — każda „buduje” jeden element strony
+const code: { t: string; c: string }[][] = [
+  [{ t: "<Nav ", c: "#b4a2ff" }, { t: "logo", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"twoja.firma"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
+  [{ t: "<Hero ", c: "#b4a2ff" }, { t: "title", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"Twoja marka"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
+  [{ t: "<Button ", c: "#b4a2ff" }, { t: "href", c: "#9b98a8" }, { t: "=", c: "#615e6e" }, { t: '"/kontakt"', c: "#6ee7b7" }, { t: " />", c: "#b4a2ff" }],
+  [{ t: "<Gallery ", c: "#b4a2ff" }, { t: "animate", c: "#9b98a8" }, { t: " />", c: "#b4a2ff" }],
+  [{ t: "deploy", c: "#efedf5" }, { t: "(", c: "#615e6e" }, { t: '"twojafirma.pl"', c: "#6ee7b7" }, { t: ")", c: "#615e6e" }],
 ];
+const LINE = 1.05; // s na linię
+
+function CodeLine({ tokens, delay }: { tokens: { t: string; c: string }[]; delay: number }) {
+  const text = tokens.map((x) => x.t).join("");
+  return (
+    <motion.span
+      className="block overflow-hidden whitespace-nowrap"
+      initial={{ width: "0ch" }}
+      animate={{ width: `${text.length}ch` }}
+      transition={{ delay, duration: text.length * 0.028, ease: "linear" }}
+    >
+      {tokens.map((x, i) => (
+        <span key={i} style={{ color: x.c }}>
+          {x.t}
+        </span>
+      ))}
+    </motion.span>
+  );
+}
 
 export function LaunchArt() {
-  const { ref, k, inView } = useLoop(8500);
-  const { box, pos, reg } = useTargets<LaunchKey>();
-  const phase = useTimeline(launchScript, k, inView);
-  const live = phase >= 3;
+  const { ref, k, inView } = useLoop(10500);
+  // n = ile linii już „wykonano”
+  const n = useTimeline(code.map((_, i) => [0.4 + i * LINE + 0.8, i + 1]), k, inView);
+  const live = n >= code.length;
+  const pop = { initial: { opacity: 0, y: 10, scale: 0.9 }, animate: { opacity: 1, y: 0, scale: 1 }, transition: { type: "spring", stiffness: 320, damping: 22 } } as const;
 
   return (
-    <div ref={ref} className="absolute inset-0">
-      <div ref={box} className="absolute inset-0 flex flex-col items-center justify-center gap-8">
-        {/* adres strony */}
-        <motion.div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] py-2 pr-5 pl-3 text-[14px]" animate={{ borderColor: live ? "rgba(52,211,153,0.35)" : "rgba(255,255,255,0.1)" }}>
-          <span className="relative flex size-2.5">
-            {live && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />}
-            <motion.span className="relative size-2.5 rounded-full" animate={{ backgroundColor: live ? "#34d399" : "#615e6e" }} />
-          </span>
-          <span className="text-muted">https://</span>
-          <span className="-ml-2.5 text-ink">twojafirma.pl</span>
-          <AnimatePresence mode="wait">
-            <motion.span key={String(live)} className={`ml-1 text-[12px] ${live ? "text-emerald-300" : "text-dim"}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
-              {live ? "online" : "wersja robocza"}
-            </motion.span>
-          </AnimatePresence>
-        </motion.div>
-
-        {/* przycisk publikacji */}
-        <div className="relative">
-          <motion.span
-            ref={reg("btn")}
-            className="relative flex h-16 items-center justify-center overflow-hidden rounded-full text-[16px] font-medium"
-            animate={{
-              width: phase === 2 ? 240 : live ? 220 : 230,
-              backgroundColor: live ? "#10b981" : phase >= 1 ? "#8b6cff" : "#efedf5",
-              color: phase >= 1 ? "#ffffff" : "#07070a",
-              scale: phase === 2 ? [1, 0.93, 1] : 1,
-              boxShadow: phase >= 1 ? "0 0 50px rgba(139,108,255,0.55)" : "0 0 0 rgba(0,0,0,0)",
-            }}
-            transition={{ duration: 0.4 }}
-          >
-            {phase === 2 && <motion.span className="absolute inset-y-0 left-0 bg-white/25" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.6, ease: "easeInOut" }} />}
-            <AnimatePresence mode="wait">
-              <motion.span key={phase === 2 ? "p" : live ? "l" : "d"} className="relative flex items-center gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
-                {phase === 2 ? "Publikowanie…" : live ? "✓ Opublikowano" : "Opublikuj stronę ↗"}
-              </motion.span>
-            </AnimatePresence>
-          </motion.span>
-          {/* iskry przy starcie */}
-          {live &&
-            Array.from({ length: 14 }).map((_, i) => {
-              const a = (i / 14) * Math.PI * 2;
-              return (
-                <motion.span
-                  key={`${k}-${i}`}
-                  className="absolute top-1/2 left-1/2 size-1.5 rounded-full"
-                  style={{ background: ["#34d399", "#b4a2ff", "#efe9ff"][i % 3] }}
-                  initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-                  animate={{ x: Math.cos(a) * (130 + (i % 3) * 25), y: Math.sin(a) * (60 + (i % 4) * 12), opacity: 0, scale: 1.3 }}
-                  transition={{ duration: 1.1, ease: "easeOut" }}
-                />
-              );
-            })}
-        </div>
-
-        {/* pierwsze zapytanie od klienta */}
-        <div className="h-[72px]">
-          <AnimatePresence>
-            {phase >= 4 && (
-              <motion.div
-                key={`n-${k}`}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] py-3 pr-5 pl-3 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)]"
-                initial={{ opacity: 0, y: 24, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ type: "spring", stiffness: 300, damping: 22 }}
-              >
-                <span className="grid size-10 place-items-center rounded-xl bg-accent/20 text-[18px]">📩</span>
-                <span>
-                  <span className="block text-[13.5px] text-ink">Nowe zapytanie ze strony</span>
-                  <span className="block text-[12.5px] text-muted">„Dzień dobry, chciałbym umówić wizytę…”</span>
+    <div ref={ref} className="absolute inset-0 flex items-center gap-[5%] max-sm:flex-col max-sm:justify-center max-sm:gap-6">
+      {inView && (
+        <>
+          {/* kod */}
+          <div key={`c${k}`} className="w-[46%] shrink-0 font-mono max-sm:w-full text-[11px] leading-[2.1] sm:text-[12.5px]">
+            {code.map((line, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-3 text-right text-white/20 tabular-nums">{i + 1}</span>
+                <span className="relative">
+                  <CodeLine tokens={line} delay={0.4 + i * LINE} />
+                  {i === Math.min(n, code.length - 1) && !live && <span className="absolute top-1/2 -right-1.5 h-[1.2em] w-[2px] -translate-y-1/2 animate-pulse bg-accent-2" />}
                 </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-        <span ref={reg("rest")} className="absolute right-[18%] bottom-[16%] size-1" />
-      </div>
-      {inView && <Cursor at={phase >= 1 && phase < 3 ? pos.btn : pos.rest} clicks={phase >= 2 ? 1 : 0} />}
+              </div>
+            ))}
+          </div>
+
+          {/* strona, która powstaje z kodu */}
+          <div key={`s${k}`} className="relative flex-1 max-sm:w-[80%] max-sm:flex-none">
+            <motion.div
+              className="relative overflow-hidden rounded-[18px] border bg-[#0d0c13] p-3.5"
+              animate={{ borderColor: live ? "rgba(139,108,255,0.55)" : "rgba(255,255,255,0.1)", boxShadow: live ? "0 30px 80px -30px rgba(139,108,255,0.7)" : "0 0 0 rgba(0,0,0,0)" }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex h-5 items-center justify-between">
+                {n >= 1 ? (
+                  <motion.span {...pop} className="text-[10px] font-medium text-ink">
+                    twoja.firma<span className="text-accent">.</span>
+                  </motion.span>
+                ) : (
+                  <span className="h-2 w-12 rounded bg-white/[0.06]" />
+                )}
+                <span className="flex gap-1.5">
+                  {[0, 1, 2].map((d) => (
+                    <motion.span key={d} className="h-1 w-4 rounded-full" animate={{ backgroundColor: n >= 1 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.06)" }} transition={{ delay: d * 0.06 }} />
+                  ))}
+                </span>
+              </div>
+              <div className="mt-4 h-[52px]">
+                {n >= 2 ? (
+                  <motion.p {...pop} className="text-[22px] leading-[1.05] font-medium tracking-[-0.03em] text-ink sm:text-[26px]">
+                    Twoja <span className="text-accent-2">marka</span>
+                  </motion.p>
+                ) : (
+                  <>
+                    <span className="block h-3.5 w-4/5 rounded bg-white/[0.06]" />
+                    <span className="mt-2 block h-3.5 w-1/2 rounded bg-white/[0.06]" />
+                  </>
+                )}
+              </div>
+              <div className="mt-2 h-7">
+                {n >= 3 ? (
+                  <motion.span {...pop} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-ink pr-1 pl-3 text-[10px] font-medium text-bg">
+                    Kontakt <span className="grid size-5 place-items-center rounded-full bg-accent text-[9px] text-white">↗</span>
+                  </motion.span>
+                ) : (
+                  <span className="block h-7 w-20 rounded-full bg-white/[0.06]" />
+                )}
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-1.5">
+                {[0, 1, 2].map((d) => (
+                  <motion.span
+                    key={d}
+                    className="aspect-[4/5] rounded-lg"
+                    animate={
+                      n >= 4
+                        ? { backgroundImage: ["linear-gradient(160deg,#2a2140,#14111d)", "linear-gradient(160deg,#c9b8ff,#5b3fd6)", "linear-gradient(160deg,#efe9ff,#8b6cff)"][d], y: [8, 0], opacity: 1 }
+                        : { backgroundImage: "linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.06))", y: 0, opacity: 1 }
+                    }
+                    transition={{ delay: d * 0.1, duration: 0.5, ease }}
+                  />
+                ))}
+              </div>
+              {/* przebieg światła przy publikacji */}
+              {live && <motion.span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent" initial={{ x: "0%" }} animate={{ x: "400%" }} transition={{ duration: 1.1, ease: "easeInOut" }} />}
+            </motion.div>
+            <div className="mt-3 h-6 text-center">
+              {live && (
+                <motion.span {...pop} className="inline-flex items-center gap-2 text-[12px] text-emerald-200">
+                  <span className="relative flex size-2">
+                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />
+                    <span className="relative size-2 rounded-full bg-emerald-400" />
+                  </span>
+                  twojafirma.pl jest online
+                </motion.span>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -209,13 +209,20 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
       <AnimatePresence>
         {menu && (
-          <motion.div className="fixed inset-0 z-[70] bg-[rgb(4_4_6/0.82)] backdrop-blur-[6px] lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0" onClick={() => setMenu(false)} />
+          <motion.div className="fixed inset-0 z-[70] bg-bg lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+            <button
+              type="button"
+              onClick={() => setMenu(false)}
+              className="absolute top-[calc(env(safe-area-inset-top)+20px)] right-5 z-10 grid size-10 place-items-center rounded-full border border-line-2"
+              aria-label="Zamknij menu"
+            >
+              <Icon d={ICONS.close} className="size-4" />
+            </button>
             <motion.aside
-              className="absolute inset-y-0 left-0 w-[min(84vw,300px)] border-r border-line bg-bg px-4 pt-[calc(env(safe-area-inset-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-[30px_0_80px_-20px_rgb(0_0_0/0.8)]"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
+              className="absolute inset-0 overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+24px)]"
+              initial={{ y: 16 }}
+              animate={{ y: 0 }}
+              exit={{ y: 16 }}
               transition={{ duration: 0.5, ease }}
             >
               {side}

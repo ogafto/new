@@ -250,9 +250,10 @@ body {
   }
 }
 
-/* drobne ziarno na całej stronie — premium „filmowa” faktura */
-body::after {
-  content: "";
+/* drobne ziarno na całej stronie — premium „filmowa” faktura.
+   Prawdziwy element (nie body::after): Safari 26 sprawdza, co leży 4 px pod górną krawędzią,
+   i barwi pasek statusu tłem navbara — pseudo-element zasłaniał mu navbar. */
+.grain {
   position: fixed;
   inset: 0;
   z-index: 150;

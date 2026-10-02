@@ -69,6 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="pl" className={satoshi.variable}>
       <body>
         <Providers>{children}</Providers>
+        <div className="grain" aria-hidden />
       </body>
     </html>
   );

@@ -167,18 +167,29 @@ const SCHEMA = [
     updated_by TEXT
   )`,
   `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)`,
-  `CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id)`,
-  `CREATE INDEX IF NOT EXISTS invites_email ON invites(email)`,
-  `CREATE INDEX IF NOT EXISTS pv_ts ON pageviews(ts)`,
-  `CREATE INDEX IF NOT EXISTS pv_session ON pageviews(session)`,
-  `CREATE INDEX IF NOT EXISTS pv_visitor ON pageviews(visitor, ts)`,
-  `CREATE INDEX IF NOT EXISTS ev_ts ON events(ts)`,
-  `CREATE INDEX IF NOT EXISTS ev_session ON events(session)`,
-  `CREATE INDEX IF NOT EXISTS orders_due ON orders(due_date)`,
-  `CREATE INDEX IF NOT EXISTS entries_col ON cms_entries(collection_id, sort)`,
+  `CREATE INDEX IF NOT EXISTS afto_sessions_user ON sessions(user_id)`,
+  `CREATE INDEX IF NOT EXISTS afto_invites_email ON invites(email)`,
+  `CREATE INDEX IF NOT EXISTS afto_pv_ts ON pageviews(ts)`,
+  `CREATE INDEX IF NOT EXISTS afto_pv_session ON pageviews(session)`,
+  `CREATE INDEX IF NOT EXISTS afto_pv_visitor ON pageviews(visitor, ts)`,
+  `CREATE INDEX IF NOT EXISTS afto_ev_ts ON events(ts)`,
+  `CREATE INDEX IF NOT EXISTS afto_ev_session ON events(session)`,
+  `CREATE INDEX IF NOT EXISTS afto_orders_due ON orders(due_date)`,
+  `CREATE INDEX IF NOT EXISTS afto_entries_col ON cms_entries(collection_id, sort)`,
 ];
 
 // kolumny dodane później — dopisywane do istniejących baz
+/*
+ * Wszystkie tabele mają prefiks „afto_”, żeby nie kolidowały z tabelami innych aplikacji
+ * w tej samej bazie (np. ze starej strony). Zapytania piszemy z krótkimi nazwami — prefiks
+ * dokleja się automatycznie.
+ */
+const PREFIX = "afto_";
+const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta"];
+// tylko odwołania do tabel (po FROM/JOIN/INTO/UPDATE/…), nie aliasy kolumn typu „COUNT(*) pageviews”
+const TABLE_RE = new RegExp(`\\b(FROM|JOIN|INTO|UPDATE|EXISTS|REFERENCES|ON|TABLE)(\\s+)(${TABLES.join("|")})\\b`, "gi");
+export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${sp}${PREFIX}${t}`);
+
 const COLUMNS: Record<string, Record<string, string>> = {
   users: { phone: "TEXT" },
   pageviews: { seen: "INTEGER" },
@@ -186,14 +197,14 @@ const COLUMNS: Record<string, Record<string, string>> = {
 
 async function migrate(client: Client) {
   for (const [table, cols] of Object.entries(COLUMNS)) {
-    const info = await client.execute(`PRAGMA table_info(${table})`);
+    const info = await client.execute(`PRAGMA table_info(${PREFIX}${table})`);
     const have = new Set(info.rows.map((r) => String(r.name)));
-    for (const [col, type] of Object.entries(cols)) if (!have.has(col)) await client.execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+    for (const [col, type] of Object.entries(cols)) if (!have.has(col)) await client.execute(`ALTER TABLE ${PREFIX}${table} ADD COLUMN ${col} ${type}`);
   }
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 3;
+const VERSION = 4;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {
@@ -202,7 +213,7 @@ async function init() {
   if (url.startsWith("file:")) mkdirSync("data", { recursive: true });
   const client = createClient({ url, authToken: env.dbToken() || undefined });
   await client.execute("PRAGMA foreign_keys = ON").catch(() => {});
-  await client.batch(SCHEMA, "write");
+  await client.batch(SCHEMA.map(sql), "write");
   await migrate(client);
   return client;
 }
@@ -219,18 +230,18 @@ export function db() {
   return g.__afto_db;
 }
 
-export async function one<T>(sql: string, args: InValue[] = []) {
-  const r = await (await db()).execute({ sql, args });
+export async function one<T>(q: string, args: InValue[] = []) {
+  const r = await (await db()).execute({ sql: sql(q), args });
   return (r.rows[0] as unknown as T) ?? null;
 }
 
-export async function all<T>(sql: string, args: InValue[] = []) {
-  const r = await (await db()).execute({ sql, args });
+export async function all<T>(q: string, args: InValue[] = []) {
+  const r = await (await db()).execute({ sql: sql(q), args });
   return r.rows as unknown as T[];
 }
 
-export async function run(sql: string, args: InValue[] = []) {
-  return (await db()).execute({ sql, args });
+export async function run(q: string, args: InValue[] = []) {
+  return (await db()).execute({ sql: sql(q), args });
 }
 
 export type User = {

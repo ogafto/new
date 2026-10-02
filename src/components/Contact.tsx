@@ -34,21 +34,107 @@ type Opt = ServiceId | "anim" | "other";
 const options: { id: Opt; name: string; meta: string }[] = [
   ...services.map((s) => ({ id: s.id as Opt, name: s.name, meta: `od ${s.price} zł · ${s.time}` })),
   { id: "anim", name: "Animacja", meta: "Logo w ruchu, intro, social media" },
-  { id: "other", name: "Coś innego", meta: "Opiszesz w kilku słowach" },
+  { id: "other", name: "Coś innego", meta: "Opiszesz w kolejnym kroku" },
 ];
-
-const icons: Record<Opt, string> = {
-  www: "M3 6.5A1.5 1.5 0 014.5 5h15A1.5 1.5 0 0121 6.5v11a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5zM3 9h18M6 7h.01M8.5 7h.01",
-  shop: "M5 8h14l-1.2 11.1a1 1 0 01-1 .9H7.2a1 1 0 01-1-.9zM9 8V6.5a3 3 0 016 0V8",
-  brand: "M12 3l2.6 5.6L20.5 9l-4.4 4 1.1 6L12 16.2 6.8 19l1.1-6-4.4-4 5.9-.4z",
-  ui: "M4 5h7v7H4zM13 5h7v4h-7zM13 11h7v8h-7zM4 14h7v5H4z",
-  anim: "M5 4.5v15l13-7.5zM3 4v16",
-  other: "M12 5v14M5 12h14",
-};
 
 const empty = { services: [] as Opt[], other: "", budget: "", message: "", timeline: "", name: "", email: "", phone: "" };
 type Data = typeof empty;
 type Status = { state: "idle" | "sending" | "sent" | "error"; message?: string };
+
+/*
+ * Animowane ikony usług — reagują na najechanie (hover) i na wybór (on).
+ * Warianty płyną z kafelka: rest → hover → on.
+ */
+const spring = { type: "spring", stiffness: 380, damping: 18 } as const;
+function ServiceIcon({ id, on, hover }: { id: Opt; on: boolean; hover: boolean }) {
+  const st = on ? "on" : hover ? "hover" : "rest";
+  const svg = (children: React.ReactNode) => (
+    <svg viewBox="0 0 24 24" className="size-[26px] overflow-visible" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {children}
+    </svg>
+  );
+  let art: React.ReactNode;
+  if (id === "www")
+    art = svg(
+      <>
+        <rect x="3" y="4.5" width="18" height="15" rx="2.2" />
+        <path d="M3 8.5h18" />
+        <motion.circle cx="5.6" cy="6.5" r="0.6" fill="currentColor" animate={{ opacity: st === "rest" ? 1 : [1, 0.2, 1] }} transition={{ repeat: st === "rest" ? 0 : Infinity, duration: 1 }} />
+        {[11.5, 14.2, 16.9].map((y, i) => (
+          <motion.path key={y} d={`M6 ${y}h${[12, 9, 6][i]}`} style={{ originX: 0 }} animate={{ scaleX: st === "rest" ? 1 : [0.15, 1] }} transition={{ delay: i * 0.08, duration: 0.5, ease }} />
+        ))}
+      </>,
+    );
+  else if (id === "shop")
+    art = svg(
+      <motion.g animate={{ y: st === "rest" ? 0 : [0, -3, 0], rotate: st === "rest" ? 0 : [0, -8, 6, 0] }} transition={{ duration: 0.6 }} style={{ originX: "50%", originY: "100%" }}>
+        <path d="M5 8.5h14l-1.2 11a1.2 1.2 0 01-1.2 1H7.4a1.2 1.2 0 01-1.2-1z" />
+        <motion.path d="M9 8.5V7a3 3 0 016 0v1.5" animate={{ y: st === "rest" ? 0 : -1.2 }} transition={spring} />
+        <motion.circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none" initial={false} animate={{ scale: on ? 1 : 0 }} transition={spring} />
+      </motion.g>,
+    );
+  else if (id === "brand")
+    art = svg(
+      <>
+        <motion.path
+          d="M12 3l2.6 5.6L20.5 9l-4.4 4 1.1 6L12 16.2 6.8 19l1.1-6-4.4-4 5.9-.4z"
+          animate={{ rotate: st === "rest" ? 0 : 72, scale: st === "on" ? 1.08 : 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 14 }}
+          style={{ originX: "50%", originY: "55%" }}
+        />
+        {[
+          [20, 3],
+          [3.5, 4],
+          [21, 18],
+        ].map(([x, y], i) => (
+          <motion.path
+            key={i}
+            d={`M${x} ${y - 1.2}v2.4M${x - 1.2} ${y}h2.4`}
+            strokeWidth="1.2"
+            initial={false}
+            animate={{ opacity: st === "rest" ? 0 : 1, scale: st === "rest" ? 0 : 1 }}
+            transition={{ delay: i * 0.08, ...spring }}
+          />
+        ))}
+      </>,
+    );
+  else if (id === "ui")
+    art = svg(
+      <>
+        <motion.rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5" animate={st === "rest" ? { x: 0, y: 0 } : { x: 9.5, y: 0 }} transition={spring} />
+        <motion.rect x="13" y="3.5" width="7.5" height="4" rx="1.2" animate={st === "rest" ? { x: 0, y: 0 } : { x: -9.5, y: 0 }} transition={{ ...spring, delay: 0.04 }} />
+        <motion.rect x="13" y="10" width="7.5" height="10.5" rx="1.5" animate={st === "rest" ? { x: 0 } : { x: -9.5 }} transition={{ ...spring, delay: 0.08 }} />
+        <motion.rect x="3.5" y="13.5" width="7.5" height="7" rx="1.5" animate={st === "rest" ? { x: 0 } : { x: 9.5 }} transition={{ ...spring, delay: 0.12 }} />
+      </>,
+    );
+  else if (id === "anim")
+    art = svg(
+      <>
+        <motion.circle cx="12" cy="12" r="9" strokeDasharray="4 3" animate={{ rotate: st === "rest" ? 0 : 180 }} transition={{ duration: 1.2, ease }} style={{ originX: "50%", originY: "50%" }} />
+        <motion.path
+          d="M10 8.5v7l5.5-3.5z"
+          fill={on ? "currentColor" : "none"}
+          animate={{ scale: st === "rest" ? 1 : [1, 1.25, 1], x: st === "rest" ? 0 : [0, 1, 0] }}
+          transition={{ duration: 0.6 }}
+          style={{ originX: "50%", originY: "50%" }}
+        />
+      </>,
+    );
+  else
+    art = svg(
+      <>
+        <motion.path d="M12 5v14M5 12h14" animate={{ rotate: st === "rest" ? 0 : 135 }} transition={{ type: "spring", stiffness: 220, damping: 14 }} style={{ originX: "50%", originY: "50%" }} />
+        <motion.circle cx="12" cy="12" r="9.5" strokeWidth="1" initial={false} animate={{ pathLength: st === "rest" ? 0 : 1, opacity: st === "rest" ? 0 : 0.6 }} transition={{ duration: 0.6, ease }} />
+      </>,
+    );
+  return (
+    <span
+      className={`relative grid size-14 shrink-0 place-items-center rounded-2xl border transition-colors duration-500 ${on ? "border-accent/60 bg-gradient-to-br from-accent/35 to-accent/10 text-white shadow-[0_0_24px_rgb(139_108_255/0.35)]" : "border-line-2 bg-white/[0.03] text-muted group-hover:border-white/20 group-hover:text-ink"}`}
+    >
+      {art}
+    </span>
+  );
+}
 
 function Check({ on }: { on: boolean }) {
   return (
@@ -95,7 +181,7 @@ function Burst() {
 const direct = [
   { label: "E-mail", value: site.email, short: "Napisz maila", href: `mailto:${site.email}`, copy: site.email, kind: "mail" as const },
   { label: "Telefon", value: site.phone, short: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}`, copy: site.phone, kind: "phone" as const },
-  { label: "Discord", value: "Dołącz do rozmowy", short: "Napisz na Discordzie", href: discord, kind: "discord" as const },
+  { label: "Discord", value: "Napisz do mnie na Discordzie", short: "Napisz na Discordzie", href: discord, kind: "discord" as const },
 ];
 
 function ChannelIcon({ kind }: { kind: "mail" | "phone" | "discord" }) {
@@ -131,61 +217,54 @@ function ChannelIcon({ kind }: { kind: "mail" | "phone" | "discord" }) {
   );
 }
 
-function Channel({ c, i }: { c: (typeof direct)[number]; i: number }) {
+// Pigułka kontaktu: wypełnia się fioletem od ikony, nad nią dymek z adresem/numerem
+function Channel({ c }: { c: (typeof direct)[number] }) {
   const [copied, setCopied] = useState(false);
+  const [hover, setHover] = useState(false);
+  const copy = (e: React.MouseEvent) => {
+    if (c.kind !== "mail") return;
+    e.preventDefault();
+    navigator.clipboard?.writeText(site.email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    });
+  };
   return (
-    <motion.div
-      className="group/ch relative overflow-hidden rounded-[26px] border border-line bg-surface/60 transition-colors duration-500 hover:border-accent/40"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ delay: i * 0.08, duration: 0.9, ease }}
-      whileHover={{ y: -4 }}
-      onPointerMove={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
-        e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
-      }}
-    >
-      <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover/ch:opacity-100 [background:radial-gradient(240px_circle_at_var(--mx,50%)_var(--my,50%),rgb(139_108_255/0.18),transparent_70%)]" />
-      <a href={c.href} {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="relative flex flex-col gap-8 p-6">
-        <span className="flex items-start justify-between">
-          <span className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] text-ink ring-1 ring-white/10 transition-colors duration-500 group-hover/ch:from-accent group-hover/ch:to-[#6d4fe6] group-hover/ch:text-white group-hover/ch:ring-accent/50">
-            <ChannelIcon kind={c.kind} />
-          </span>
-          <span className="grid size-10 place-items-center overflow-hidden rounded-full border border-line-2 text-muted transition-all duration-500 ease-out-expo group-hover/ch:rotate-45 group-hover/ch:border-transparent group-hover/ch:bg-ink group-hover/ch:text-bg">
-            <Arrow className="size-3.5" />
-          </span>
+    <div className="relative" onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}>
+      <AnimatePresence>
+        {(hover || copied) && (
+          <motion.span
+            className="pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 z-20 -translate-x-1/2 rounded-xl border border-white/10 bg-surface-2 px-3 py-2 text-[12.5px] whitespace-nowrap text-ink shadow-[0_20px_40px_-12px_rgb(0_0_0/0.8)]"
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 420, damping: 26 }}
+          >
+            {copied ? "Skopiowano ✓" : c.value}
+            {c.kind === "mail" && !copied && <span className="ml-2 text-dim">· kliknij, aby skopiować</span>}
+            <span className="absolute top-full left-1/2 -mt-1 size-2 -translate-x-1/2 rotate-45 border-r border-b border-white/10 bg-surface-2" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+      <a
+        href={c.href}
+        onClick={copy}
+        {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        className="group/ch relative flex h-14 items-center gap-3 overflow-hidden rounded-full border border-line-2 bg-white/[0.03] pr-6 pl-1.5 text-[15px] transition-colors duration-500 hover:border-accent/60"
+      >
+        <span className="absolute inset-0 bg-gradient-to-r from-accent to-[#6d4fe6] [clip-path:circle(0%_at_28px_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover/ch:[clip-path:circle(160%_at_28px_50%)]" />
+        <span className="relative grid size-11 place-items-center rounded-full bg-white/[0.07] text-ink transition-colors duration-500 group-hover/ch:bg-white/20 group-hover/ch:text-white">
+          <ChannelIcon kind={c.kind} />
         </span>
-        <span>
-          <span className="block text-[13px] text-dim">{c.label}</span>
-          <span className="mt-1 block truncate text-[15.5px] tracking-[-0.01em]" title={c.value}>{c.value}</span>
-        </span>
+        <span className="relative text-ink transition-colors duration-500 group-hover/ch:text-white">{c.label}</span>
       </a>
-      {c.copy && (
-        <button
-          type="button"
-          onClick={() =>
-            navigator.clipboard?.writeText(c.copy!).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1600);
-            })
-          }
-          className="absolute right-[68px] top-[34px] rounded-full px-2.5 py-1 text-[12px] text-dim opacity-0 transition-all duration-300 group-hover/ch:opacity-100 hover:bg-white/5 hover:text-ink focus-visible:opacity-100"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span key={String(copied)} className="inline-block" initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -6, opacity: 0 }} transition={{ duration: 0.2 }}>
-              {copied ? "Skopiowano ✓" : "Kopiuj"}
-            </motion.span>
-          </AnimatePresence>
-        </button>
-      )}
-    </motion.div>
+    </div>
   );
 }
 
 export default function Contact() {
   const [step, setStep] = useState(0);
+  const [hov, setHov] = useState<Opt | null>(null);
   const [dir, setDir] = useState(1);
   const [d, setD] = useState<Data>(empty);
   const [consent, setConsent] = useState(false);
@@ -239,18 +318,17 @@ export default function Contact() {
   }, []);
 
   const toggle = (id: Opt) => set("services")(d.services.includes(id) ? d.services.filter((x) => x !== id) : [...d.services, id]);
-  const names = d.services.map((id) => (id === "other" ? d.other.trim() || "Coś innego" : options.find((o) => o.id === id)!.name));
+  const names = d.services.map((id) => options.find((o) => o.id === id)!.name);
   const serviceLabel = names.length > 2 ? `${names[0]} +${names.length - 1}` : names.join(", ");
   const topic = d.services
     .map((id) => {
       const s = services.find((x) => x.id === id);
-      return s ? `${s.name} (od ${s.price} zł)` : id === "anim" ? "Animacja" : `Inne: ${d.other.trim()}`;
+      return s ? `${s.name} (od ${s.price} zł)` : id === "anim" ? "Animacja" : "Coś innego";
     })
     .join(", ");
 
   const validate = (s: number): string => {
     if (s === 0 && !d.services.length) return "Wybierz przynajmniej jedną usługę.";
-    if (s === 0 && d.services.includes("other") && d.other.trim().length < 2) return "Napisz, czego potrzebujesz.";
     if (s === 1 && !d.budget) return "Wybierz budżet.";
     if (s === 2 && d.message.trim().length < 10) return "Napisz kilka słów (min. 10 znaków).";
     if (s === 3) {
@@ -337,12 +415,11 @@ export default function Contact() {
           </div>
           <div className="pointer-events-none absolute -inset-10 -z-0 rounded-[60px] bg-[radial-gradient(50%_50%_at_50%_50%,rgb(139_108_255/0.18),transparent)]" aria-hidden />
           <motion.div
-            layout
             className="relative overflow-hidden rounded-[36px] bg-[#0c0b11] shadow-[0_50px_120px_-40px_rgb(139_108_255/0.45)]"
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 1.1, ease, layout: { duration: 0.5, ease } }}
+            transition={{ duration: 1.1, ease }}
           >
             <div className="pointer-events-none absolute -top-40 left-1/2 size-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.2),transparent)]" aria-hidden />
 
@@ -456,22 +533,17 @@ export default function Contact() {
                                 type="button"
                                 aria-pressed={on}
                                 onClick={() => toggle(o.id)}
+                                onPointerEnter={() => setHov(o.id)}
+                                onPointerLeave={() => setHov(null)}
                                 className={`group relative flex items-center gap-4 overflow-hidden rounded-[22px] border p-4 text-left transition-colors duration-300 sm:p-5 ${
                                   on ? "border-accent bg-accent/[0.12]" : "border-line-2 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]"
                                 }`}
                                 initial={{ opacity: 0, y: 14 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
-                                whileHover={{ y: -2 }}
                                 whileTap={{ scale: 0.98 }}
                               >
-                                <span
-                                  className={`grid size-14 shrink-0 place-items-center rounded-2xl border transition-colors duration-500 ${on ? "border-accent/60 bg-accent/20 text-accent-2" : "border-line-2 bg-white/[0.03] text-muted group-hover:text-ink"}`}
-                                >
-                                  <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                    <motion.path d={icons[o.id]} initial={false} animate={{ pathLength: on ? [0, 1] : 1 }} transition={{ duration: 0.8, ease }} />
-                                  </svg>
-                                </span>
+                                <ServiceIcon id={o.id} on={on} hover={hov === o.id} />
                                 <span className="min-w-0 flex-1">
                                   <span className="block text-[17px] text-ink">{o.name}</span>
                                   <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{o.meta}</span>
@@ -480,13 +552,6 @@ export default function Contact() {
                               </motion.button>
                             );
                           })}
-                          <AnimatePresence>
-                            {d.services.includes("other") && (
-                              <motion.div className="sm:col-span-2" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.4, ease }}>
-                                <Input name="other" label="Czego potrzebujesz? (np. katalog PDF, kampania)" value={d.other} onChange={set("other")} autoFocus />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
                         </div>
                       )}
 
@@ -600,14 +665,20 @@ export default function Contact() {
                         Wstecz
                       </button>
                     ) : (
-                      <span className="text-[13px] text-dim">{step === 0 ? (d.services.length ? `Wybrano: ${d.services.length}` : "Możesz wybrać kilka") : "Kliknij kafelek, żeby przejść dalej"}</span>
+                      <span className="text-[13px] text-dim">
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span key={d.services.length} className="inline-block" initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={{ duration: 0.25 }}>
+                            {d.services.length ? `Wybrano: ${d.services.length}` : "Możesz wybrać kilka"}
+                          </motion.span>
+                        </AnimatePresence>
+                      </span>
                     )}
-                    {(step >= 2 || (step === 0 && d.services.length > 0)) && (
+                    {
                       <Magnetic strength={0.12}>
                         <button
                           type="submit"
-                          disabled={status.state === "sending"}
-                          className="group relative ml-auto flex h-[60px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2 pl-7 text-[16px] font-medium text-bg disabled:opacity-60"
+                          disabled={status.state === "sending" || (step === 0 && !d.services.length) || (step === 1 && !d.budget)}
+                          className="group relative ml-auto flex h-[60px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2 pl-7 text-[16px] font-medium text-bg transition-opacity duration-500 disabled:cursor-not-allowed disabled:opacity-30"
                         >
                           <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_90%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_90%_50%)]" />
                           <span className="relative transition-colors duration-500 group-hover:text-white">{step < 3 ? "Dalej" : status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
@@ -617,7 +688,7 @@ export default function Contact() {
                           </span>
                         </button>
                       </Magnetic>
-                    )}
+                    }
                   </div>
                 </motion.form>
               )}
@@ -626,18 +697,25 @@ export default function Contact() {
         </div>
 
         {/* bezpośrednio */}
-        <div className="mt-20">
-          <div className="flex items-center gap-5">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-line-2" />
-            <p className="text-[14px] text-muted">albo napisz bezpośrednio</p>
-            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-line-2" />
+        <motion.div
+          className="mt-16 rounded-[30px] border border-line bg-gradient-to-br from-white/[0.035] to-transparent p-5 sm:rounded-full sm:p-2.5 sm:pl-8"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.9, ease }}
+        >
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
+            <div className="text-center sm:text-left">
+              <p className="text-[16px] text-ink">Wolisz porozmawiać od razu?</p>
+              <p className="mt-0.5 text-[13.5px] text-dim">Napisz, zadzwoń albo złap mnie na Discordzie.</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {direct.map((c) => (
+                <Channel key={c.label} c={c} />
+              ))}
+            </div>
           </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {direct.map((c, i) => (
-              <Channel key={c.label} c={c} i={i} />
-            ))}
-          </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

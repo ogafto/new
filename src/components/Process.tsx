@@ -174,71 +174,16 @@ function useEnter() {
   };
 }
 
-/* ---------- 1. Dymek: wyskakuje z „ogonka” ---------- */
-function Bubble({ children }: { children: React.ReactNode }) {
+/* ---------- scena bez ramki: każda wjeżdża inaczej ---------- */
+function Open({ children, enter = "up", className = "aspect-square max-w-[520px]" }: { children: React.ReactNode; enter?: "up" | "left" | "zoom" | "right"; className?: string }) {
   const { ref, p } = useEnter();
-  const scale = useTransform(p, [0, 1], [0.55, 1]);
-  const rotate = useTransform(p, [0, 1], [-8, 0]);
-  const opacity = useTransform(p, [0, 0.4], [0, 1]);
+  const y = useTransform(p, [0, 1], [enter === "up" ? 70 : 0, 0]);
+  const x = useTransform(p, [0, 1], [enter === "left" ? -60 : enter === "right" ? 60 : 0, 0]);
+  const scale = useTransform(p, [0, 1], [enter === "zoom" ? 0.85 : 1, 1]);
+  const opacity = useTransform(p, [0, 0.5], [0, 1]);
   const { rx, ry, bind } = useTilt();
   return (
-    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative">
-      <motion.div style={{ scale, rotate, opacity, originX: 0.08, originY: 1 }} className="relative will-change-transform">
-        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-[36px] rounded-bl-[10px] bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08),0_40px_100px_-40px_rgb(139_108_255/0.4)] sm:aspect-[4/3]">
-          <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_10%,rgb(139_108_255/0.12),transparent)]" />
-          {children}
-        </div>
-        {/* ogonek dymka */}
-        <svg viewBox="0 0 40 30" className="absolute -bottom-[22px] left-0 h-[30px] w-[40px]" aria-hidden>
-          <path d="M0 0h28C22 10 12 22 0 28z" fill="var(--color-surface)" />
-          <path d="M28 0C22 10 12 22 0 28" stroke="rgba(255,255,255,0.08)" fill="none" />
-        </svg>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* ---------- 2. Koło: wjeżdża z obrotem, wokół krążą pierścienie ---------- */
-function Circle({ children }: { children: React.ReactNode }) {
-  const { ref, p } = useEnter();
-  const scale = useTransform(p, [0, 1], [0.4, 1]);
-  const opacity = useTransform(p, [0, 0.35], [0, 1]);
-  const rotate = useTransform(p, [0, 1], [-90, 0]);
-  const counter = useTransform(rotate, (r) => -r * 1.5);
-  const { rx, ry, bind } = useTilt();
-  return (
-    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }} {...bind} className="relative mx-auto aspect-square w-full max-w-[500px]">
-      <motion.span style={{ rotate, opacity }} className="absolute -inset-4 rounded-full border border-dashed border-white/10" aria-hidden />
-      <motion.span style={{ rotate: counter, opacity }} className="absolute -inset-9 rounded-full border border-accent/15" aria-hidden>
-        <span className="absolute top-1/2 -left-1 size-2 rounded-full bg-accent-2 shadow-[0_0_12px_#b4a2ff]" />
-      </motion.span>
-      <motion.div style={{ scale, opacity }} className="absolute inset-0 overflow-hidden rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)] will-change-transform">
-        {children}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* ---------- 3. Bez ramki: znak rysuje się prosto na stronie ---------- */
-function Open({ children }: { children: React.ReactNode }) {
-  const { ref, p } = useEnter();
-  const y = useTransform(p, [0, 1], [60, 0]);
-  const { rx, ry, bind } = useTilt();
-  return (
-    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, y, transformPerspective: 1100 }} {...bind} className="relative mx-auto aspect-square w-full max-w-[520px]">
-      {children}
-    </motion.div>
-  );
-}
-
-/* ---------- 4. Kadr kinowy: rozciąga się na szerokość ---------- */
-function Cinema({ children }: { children: React.ReactNode }) {
-  const { ref, p } = useEnter();
-  const scaleX = useTransform(p, [0, 1], [0.78, 1]);
-  const scaleY = useTransform(p, [0, 1], [0.6, 1]);
-  const opacity = useTransform(p, [0, 0.4], [0, 1]);
-  return (
-    <motion.div ref={ref} style={{ scaleX, scaleY, opacity }} className="relative aspect-square w-full overflow-hidden rounded-[32px] bg-surface shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] will-change-transform sm:aspect-[16/9] lg:aspect-[21/9]">
+    <motion.div ref={ref} style={{ rotateX: rx, rotateY: ry, x, y, scale, opacity, transformPerspective: 1100 }} {...bind} className={`relative mx-auto w-full will-change-transform ${className}`}>
       {children}
     </motion.div>
   );
@@ -380,32 +325,32 @@ export default function Process() {
       <div ref={track} className="relative mx-auto mt-24 max-w-[1280px] px-5 sm:px-10 lg:mt-32">
         <Beam track={track} nodes={nodes} />
 
-        {/* 01 — kapsuła z falami rozmowy */}
-        <div className="relative grid items-center gap-10 pb-36 pl-14 md:grid-cols-[0.8fr_1.2fr] md:gap-16 md:pl-0 lg:pb-52">
-          <Node i={0} register={register} className="top-6 left-[22px] md:top-1/2 md:left-[40%]" />
+        {/* 01 — rozmowa: dymki czatu */}
+        <div className="relative grid items-center gap-10 pb-36 pl-14 md:grid-cols-[0.85fr_1.15fr] md:gap-16 md:pl-0 lg:pb-48">
+          <Node i={0} register={register} className="top-6 left-[22px] md:top-1/2 md:left-[42%]" />
           <div className="relative z-20 md:pr-20">
             <Copy i={0} />
           </div>
-          <Bubble>
+          <Open enter="right" className="aspect-[5/4] max-w-[600px] md:pl-8">
             <TalkArt />
-          </Bubble>
+          </Open>
         </div>
 
-        {/* 02 — koło z polem kierunków */}
-        <div className="relative grid items-center gap-16 pb-36 pl-14 md:grid-cols-2 md:gap-24 md:pl-0 lg:pb-52">
+        {/* 02 — kierunek: kursor wybiera kolory i font */}
+        <div className="relative grid items-center gap-12 pb-36 pl-14 md:grid-cols-2 md:gap-24 md:pl-0 lg:pb-48">
           <Node i={1} register={register} className="top-6 left-[22px] md:top-1/2 md:left-1/2" />
           <div className="relative z-20 md:order-2 md:pl-12">
             <Copy i={1} />
           </div>
-          <div className="px-6 md:order-1 md:px-10">
-            <Circle>
+          <div className="md:order-1">
+            <Open enter="zoom" className="aspect-[5/4] max-w-[560px]">
               <DirectionArt />
-            </Circle>
+            </Open>
           </div>
         </div>
 
-        {/* 03 — łuk z konstrukcją znaku */}
-        <div className="relative grid items-center gap-12 pb-36 pl-14 md:grid-cols-[1.1fr_0.9fr] md:gap-20 md:pl-0 lg:pb-52">
+        {/* 03 — projekt: konstrukcja znaku */}
+        <div className="relative grid items-center gap-12 pb-36 pl-14 md:grid-cols-[1.1fr_0.9fr] md:gap-20 md:pl-0 lg:pb-48">
           <Node i={2} register={register} className="top-6 left-[22px] md:top-[22%] md:left-[56%]" />
           <div className="relative z-20 md:pr-28">
             <Copy i={2} align="right" />
@@ -415,19 +360,16 @@ export default function Process() {
           </Open>
         </div>
 
-        {/* 04 — kadr kinowy ze startem strony */}
-        <div className="relative pl-14 md:pl-0">
-          <Node i={3} register={register} className="top-6 left-[22px] md:-top-12 md:left-1/2" />
-          <Cinema>
-            <LaunchArt />
-            <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[linear-gradient(to_right,rgb(7_7_10/0.85),transparent_55%)]" />
-
-            <div className="absolute inset-x-10 bottom-10 hidden sm:block lg:max-w-[560px]">
-              <Copy i={3} />
-            </div>
-          </Cinema>
-          <div className="mt-10 sm:hidden">
+        {/* 04 — wdrożenie: kursor klika „Opublikuj” */}
+        <div className="relative grid items-center gap-12 pl-14 md:grid-cols-2 md:gap-24 md:pl-0">
+          <Node i={3} register={register} className="top-6 left-[22px] md:top-1/2 md:left-1/2" />
+          <div className="relative z-20 md:order-2 md:pl-12">
             <Copy i={3} />
+          </div>
+          <div className="md:order-1">
+            <Open enter="left" className="aspect-[5/4] max-w-[560px]">
+              <LaunchArt />
+            </Open>
           </div>
         </div>
       </div>

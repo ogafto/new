@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, animate, motion, useInView, useMotionValue, useTransform } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import { MARK, STROKE } from "@/lib/logo";
 
 /*
- * Sceny etapów procesu — lekkie (DOM/SVG, tylko transform i opacity),
+ * Sceny etapów procesu — bez ramek, lekkie (DOM/SVG, transform i opacity),
  * grają wyłącznie, gdy są na ekranie.
  */
 
@@ -24,35 +24,92 @@ function useLoop(ms: number) {
   return { ref, k, inView };
 }
 
-/* ---------- 1. Rozmowa: czat z klientem ---------- */
+// harmonogram kroków sceny: [czas w s, krok]; restart przy każdej pętli
+function useTimeline(steps: [number, number][], k: number, active: boolean) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const ts = steps.map(([t, s]) => setTimeout(() => setStep(s), t * 1000));
+    return () => ts.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [k, active]);
+  return step;
+}
+
+// Pozycje elementów (środki) względem kontenera — do prowadzenia kursora
+function useTargets<K extends string>() {
+  const box = useRef<HTMLDivElement>(null);
+  const els = useRef<Partial<Record<K, HTMLElement | null>>>({});
+  const [pos, setPos] = useState<Partial<Record<K, { x: number; y: number }>>>({});
+  const measure = useCallback(() => {
+    const b = box.current?.getBoundingClientRect();
+    if (!b) return;
+    const out: Partial<Record<K, { x: number; y: number }>> = {};
+    for (const [key, el] of Object.entries(els.current) as [K, HTMLElement | null][]) {
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      out[key] = { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2 };
+    }
+    setPos(out);
+  }, []);
+  useEffect(() => {
+    const t = setTimeout(measure, 50);
+    const ro = new ResizeObserver(measure);
+    if (box.current) ro.observe(box.current);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+    };
+  }, [measure]);
+  const reg = (key: K) => (el: HTMLElement | null) => {
+    els.current[key] = el;
+  };
+  return { box, pos, reg };
+}
+
+// Kursor z „kliknięciem” (fala) — jedzie do punktu sprężyną
+function Cursor({ at, clicks, label = "Ty" }: { at?: { x: number; y: number }; clicks: number; label?: string }) {
+  return (
+    <motion.div className="pointer-events-none absolute top-0 left-0 z-30" initial={false} animate={at ? { x: at.x - 4, y: at.y - 2, opacity: 1 } : { opacity: 0 }} transition={{ type: "spring", stiffness: 90, damping: 18, mass: 0.9 }}>
+      <AnimatePresence>
+        {clicks > 0 && (
+          <motion.span key={clicks} className="absolute -top-4 -left-4 size-9 rounded-full border-2 border-accent-2" initial={{ scale: 0.3, opacity: 1 }} animate={{ scale: 1.6, opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} />
+        )}
+      </AnimatePresence>
+      <motion.svg key={`c${clicks}`} width="22" height="22" viewBox="0 0 18 18" animate={{ scale: [1, 0.78, 1] }} transition={{ duration: 0.25 }} className="drop-shadow-[0_4px_10px_rgb(0_0_0/0.6)]">
+        <path d="M2 1.5l13 6.2-5.6 1.6L7 15z" fill="#efedf5" stroke="#07070a" strokeWidth="1.2" strokeLinejoin="round" />
+      </motion.svg>
+      <span className="ml-4 inline-block rounded-md bg-accent px-1.5 py-0.5 text-[10.5px] font-medium text-white">{label}</span>
+    </motion.div>
+  );
+}
+
+/* ---------- 1. Rozmowa: same dymki — klient pisze do mnie ---------- */
 
 const chat = [
-  { me: false, t: "Dzień dobry! Potrzebuję strony internetowej dla mojej kawiarni ☕" },
-  { me: true, t: "Dzień dobry! Chętnie pomogę. Co strona ma robić — menu, rezerwacje?" },
-  { me: false, t: "Menu i rezerwacja stolika. I żeby świetnie wyglądała na telefonie." },
-  { me: true, t: "Jasne. Jutro wyślę wycenę i propozycję terminu 👌" },
+  { me: false, t: "Dzień dobry! Potrzebuję strony internetowej 👋" },
+  { me: true, t: "Dzień dobry! Chętnie pomogę. Czym zajmuje się Twoja firma?" },
+  { me: false, t: "Mam salon fryzjerski. Chcę, żeby klienci mogli umawiać się online." },
+  { me: true, t: "Świetnie — zrobię stronę z rezerwacjami, idealną na telefon. Wycenę wyślę jutro ✨" },
 ];
 const STEP = 1.9;
 
-function Typing({ me }: { me: boolean }) {
-  return (
-    <span className={`flex w-fit gap-1 rounded-2xl px-3.5 py-3 ${me ? "ml-auto rounded-br-md bg-accent/30" : "rounded-bl-md bg-white/[0.07]"}`}>
-      {[0, 1, 2].map((i) => (
-        <motion.span key={i} className="size-1.5 rounded-full bg-white/70" animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 0.9, delay: i * 0.15 }} />
-      ))}
-    </span>
+function Avatar({ me }: { me: boolean }) {
+  return me ? (
+    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-[#5b3fd6] text-[11px] font-medium text-white shadow-[0_0_20px_rgb(139_108_255/0.5)]">af.</span>
+  ) : (
+    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] text-ink ring-1 ring-white/15">Ty</span>
   );
 }
 
 export function TalkArt() {
-  const { ref, k, inView } = useLoop(chat.length * STEP * 1000 + 3200);
+  const { ref, k, inView } = useLoop(chat.length * STEP * 1000 + 3400);
   const [n, setN] = useState(0);
   const [typing, setTyping] = useState(false);
 
   useEffect(() => {
     if (!inView) return;
-    const ts: ReturnType<typeof setTimeout>[] = [];
-    ts.push(setTimeout(() => setN(0), 0));
+    const ts: ReturnType<typeof setTimeout>[] = [setTimeout(() => setN(0), 0)];
     chat.forEach((_, i) => {
       ts.push(setTimeout(() => setTyping(true), (i * STEP + 0.3) * 1000));
       ts.push(
@@ -67,129 +124,158 @@ export function TalkArt() {
 
   const next = chat[n];
   return (
-    <div ref={ref} className="absolute inset-0 flex flex-col p-5 sm:p-7">
-      <div className="flex items-center gap-3 border-b border-white/[0.06] pb-4">
-        <span className="relative grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#d98b5f] to-[#8a4b2c] text-[13px] font-medium text-white">
-          K
-          <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-surface bg-emerald-400" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14px] text-ink">Kawiarnia Ziarno</span>
-          <span className="block text-[12px] text-emerald-300/80">{typing && next && !next.me ? "pisze…" : "online"}</span>
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden pt-4">
-        <AnimatePresence initial={false}>
-          {chat.slice(0, n).map((m, i) => (
-            <motion.div
-              key={`${k}-${i}`}
-              layout="position"
-              className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-snug sm:text-[14px] ${m.me ? "ml-auto rounded-br-md bg-gradient-to-br from-accent to-[#6d4fe6] text-white" : "rounded-bl-md bg-white/[0.07] text-ink"}`}
-              style={{ originX: m.me ? 1 : 0, originY: 1 }}
-              initial={{ opacity: 0, y: 16, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
+    <div ref={ref} className="absolute inset-0 flex flex-col justify-center gap-3 [mask-image:linear-gradient(to_bottom,transparent,#000_14%)]">
+      <AnimatePresence initial={false}>
+        {chat.slice(0, n).map((m, i) => (
+          <motion.div
+            key={`${k}-${i}`}
+            layout="position"
+            className={`flex items-end gap-2.5 ${m.me ? "flex-row-reverse" : ""}`}
+            initial={{ opacity: 0, y: 24, scale: 0.85 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ originX: m.me ? 1 : 0, originY: 1 }}
+            transition={{ type: "spring", stiffness: 340, damping: 26 }}
+          >
+            <Avatar me={m.me} />
+            <span
+              className={`max-w-[78%] rounded-[22px] px-4 py-3 text-[14.5px] leading-snug shadow-[0_18px_40px_-18px_rgb(0_0_0/0.8)] sm:text-[15.5px] ${
+                m.me ? "rounded-br-md bg-gradient-to-br from-accent to-[#6d4fe6] text-white" : "rounded-bl-md border border-white/10 bg-white/[0.06] text-ink"
+              }`}
             >
               {m.t}
-            </motion.div>
-          ))}
-          {typing && next && (
-            <motion.div key={`t-${k}-${n}`} layout="position" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.1 } }}>
-              <Typing me={next.me} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <AnimatePresence>
-          {n === chat.length && (
-            <motion.p
-              key={`d-${k}`}
-              className="mx-auto mt-2 flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[12px] text-emerald-200"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
-            >
-              ✓ Brief gotowy — wycena w drodze
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </div>
+            </span>
+          </motion.div>
+        ))}
+        {typing && next && (
+          <motion.div key={`t-${k}-${n}`} layout="position" className={`flex items-end gap-2.5 ${next.me ? "flex-row-reverse" : ""}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.1 } }}>
+            <Avatar me={next.me} />
+            <span className={`flex gap-1 rounded-[18px] px-4 py-3.5 ${next.me ? "rounded-br-md bg-accent/35" : "rounded-bl-md bg-white/[0.07]"}`}>
+              {[0, 1, 2].map((d) => (
+                <motion.span key={d} className="size-1.5 rounded-full bg-white/80" animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 0.9, delay: d * 0.15 }} />
+              ))}
+            </span>
+          </motion.div>
+        )}
+        {n === chat.length && (
+          <motion.p key={`d-${k}`} layout="position" className="mx-auto mt-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[12px] text-emerald-200" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}>
+            ✓ Brief gotowy
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* ---------- 2. Kierunek: kolory i fonty ---------- */
+/* ---------- 2. Kierunek: kursor wybiera kolory i font ---------- */
 
-const dirs = [
-  { name: "Ciepło", font: "Georgia, 'Times New Roman', serif", style: "italic", weight: 400, fontName: "Serif · Italic", colors: ["#2b1d14", "#8a4b2c", "#c8763a", "#e4d5c3", "#f6efe6"], ink: "#f6efe6" },
-  { name: "Natura", font: "ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif", style: "normal", weight: 600, fontName: "Rounded · 600", colors: ["#14231b", "#2f5d46", "#7a9a84", "#cfe3c9", "#f2f4ea"], ink: "#cfe3c9" },
-  { name: "Premium", font: "var(--font-satoshi), sans-serif", style: "normal", weight: 500, fontName: "Satoshi · 500", colors: ["#0e0b16", "#2a2140", "#8b6cff", "#c9b8ff", "#efe9ff"], ink: "#efe9ff" },
+const swatches = ["#c8763a", "#2f5d46", "#8b6cff", "#e6566e", "#3b82f6"];
+const fonts = [
+  { id: "serif", label: "Serif", css: "Georgia, 'Times New Roman', serif", style: "italic", weight: 400 },
+  { id: "round", label: "Rounded", css: "ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif", style: "normal", weight: 700 },
+  { id: "sato", label: "Satoshi", css: "var(--font-satoshi), sans-serif", style: "normal", weight: 500 },
+];
+type DirKey = "c0" | "c1" | "c2" | "c3" | "c4" | "f0" | "f1" | "f2" | "ok";
+// kolejne kliknięcia kursora: [czas, cel]
+const dirScript: [number, DirKey][] = [
+  [0.6, "c0"],
+  [1.7, "c1"],
+  [2.8, "c2"],
+  [3.9, "f0"],
+  [5.0, "f2"],
+  [6.2, "ok"],
 ];
 
 export function DirectionArt() {
-  const { ref, k } = useLoop(2600);
-  const d = dirs[k % dirs.length];
-  const chosen = d.name === "Premium";
+  const { ref, k, inView } = useLoop(9000);
+  const { box, pos, reg } = useTargets<DirKey>();
+  const step = useTimeline(dirScript.map(([t], i) => [t, i + 1]), k, inView);
+  // stan wynikający z kliknięć do tej pory
+  let color = "#efedf5";
+  let font = fonts[2];
+  let ok = false;
+  for (const [, key] of dirScript.slice(0, step)) {
+    if (key.startsWith("c")) color = swatches[Number(key[1])];
+    if (key.startsWith("f")) font = fonts[Number(key[1])];
+    if (key === "ok") ok = true;
+  }
+  // kursor jedzie do celu tuż przed kliknięciem
+  const [aim, setAim] = useState<DirKey>("c0");
+  useEffect(() => {
+    if (!inView) return;
+    const ts = dirScript.map(([t, key]) => setTimeout(() => setAim(key), (t - 0.75) * 1000));
+    ts.push(setTimeout(() => setAim("c0"), 7600));
+    return () => ts.forEach(clearTimeout);
+  }, [k, inView]);
+
   return (
-    <div ref={ref} className="absolute inset-0 grid place-items-center">
-      <motion.div className="absolute inset-0" animate={{ backgroundColor: d.colors[0] }} transition={{ duration: 0.9 }} />
-      <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_38%,rgb(255_255_255/0.08),transparent)]" />
-
-      {/* próbniki na orbicie */}
-      <div className="absolute inset-[10%] animate-[spin_40s_linear_infinite]">
-        {d.colors.map((c, j) => {
-          const a = (j / d.colors.length) * Math.PI * 2 - Math.PI / 2;
-          return (
-            <motion.span
-              key={j}
-              className="absolute size-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white/15"
-              style={{ left: `${50 + Math.cos(a) * 50}%`, top: `${50 + Math.sin(a) * 50}%` }}
-              animate={{ backgroundColor: c }}
-              transition={{ duration: 0.6, delay: j * 0.06 }}
-            />
-          );
-        })}
-      </div>
-
-      <div className="relative flex flex-col items-center text-center">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
-            key={d.name}
-            className="text-[clamp(3.4rem,8vw,6rem)] leading-none"
-            style={{ fontFamily: d.font, fontStyle: d.style, fontWeight: d.weight, color: d.ink }}
-            initial={{ opacity: 0, y: 24, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -24, scale: 0.9 }}
-            transition={{ duration: 0.6, ease }}
+    <div ref={ref} className="absolute inset-0">
+      <div ref={box} className="absolute inset-0 flex flex-col items-center justify-center gap-7">
+        {/* podgląd marki */}
+        <div className="text-center">
+          <motion.p
+            key={font.id}
+            className="text-[clamp(2.8rem,6vw,4.4rem)] leading-none tracking-[-0.03em]"
+            style={{ fontFamily: font.css, fontStyle: font.style, fontWeight: font.weight }}
+            initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)", color }}
+            transition={{ duration: 0.5, ease, color: { duration: 0.5 } }}
           >
-            Aa
-          </motion.span>
-        </AnimatePresence>
-        <p className="mt-3 text-[12px] tracking-[0.04em]" style={{ color: d.ink, opacity: 0.7 }}>
-          {d.fontName}
-        </p>
-        <div className="mt-4 flex gap-1">
-          {d.colors.slice(1).map((c, j) => (
-            <motion.span key={j} className="h-1.5 w-6 rounded-full" animate={{ backgroundColor: c }} transition={{ duration: 0.6, delay: j * 0.05 }} />
-          ))}
+            Twoja marka
+          </motion.p>
+          <motion.span className="mx-auto mt-4 block h-1 w-24 rounded-full" animate={{ backgroundColor: color, width: ok ? 160 : 96 }} transition={{ duration: 0.5, ease }} />
         </div>
-        <div className="mt-4 h-7">
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={d.name}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] ${chosen ? "bg-white text-[#0e0b16]" : "border border-white/20 text-white/70"}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ type: "spring", stiffness: 400, damping: 24 }}
-            >
-              {chosen && "✓ "}
-              {d.name}
-            </motion.span>
-          </AnimatePresence>
+
+        {/* kolory */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {swatches.map((c, i) => {
+            const on = color === c;
+            return (
+              <motion.span
+                key={c}
+                ref={reg(`c${i}` as DirKey)}
+                className="relative size-8 rounded-full sm:size-11"
+                style={{ background: c }}
+                animate={{ scale: on ? 1.15 : 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 18 }}
+              >
+                {on && <motion.span layoutId="dir-ring" className="absolute -inset-1.5 rounded-full border-2 border-white" transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
+              </motion.span>
+            );
+          })}
         </div>
+
+        {/* fonty */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {fonts.map((f, i) => {
+            const on = font.id === f.id;
+            return (
+              <span
+                key={f.id}
+                ref={reg(`f${i}` as DirKey)}
+                className={`relative flex items-baseline gap-1.5 rounded-full px-4 py-2 text-[13px] transition-colors duration-300 ${on ? "text-bg" : "text-muted"}`}
+              >
+                {on ? <motion.span layoutId="dir-font" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 400, damping: 32 }} /> : <span className="absolute inset-0 rounded-full border border-white/15" />}
+                <span className="relative text-[17px]" style={{ fontFamily: f.css, fontStyle: f.style, fontWeight: f.weight }}>
+                  Aa
+                </span>
+                <span className="relative max-sm:hidden">{f.label}</span>
+              </span>
+            );
+          })}
+        </div>
+
+        {/* zatwierdzenie */}
+        <motion.span
+          ref={reg("ok")}
+          className="flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-medium"
+          animate={ok ? { backgroundColor: "#8b6cff", color: "#ffffff", scale: [1, 0.94, 1.04, 1] } : { backgroundColor: "rgba(255,255,255,0.06)", color: "#9b98a8", scale: 1 }}
+          transition={{ duration: 0.45 }}
+        >
+          {ok ? "✓ Styl zatwierdzony" : "Zatwierdź styl"}
+        </motion.span>
       </div>
+      {inView && <Cursor at={pos[aim]} clicks={step} />}
     </div>
   );
 }
@@ -279,93 +365,103 @@ export function DesignArt() {
   );
 }
 
-/* ---------- 4. Wdrożenie: strona trafia w świat ---------- */
+/* ---------- 4. Wdrożenie: kursor klika „Opublikuj” ---------- */
 
-function Count({ to, delay }: { to: number; delay: number }) {
-  const v = useMotionValue(0);
-  const r = useTransform(v, (x) => Math.round(x));
-  useEffect(() => {
-    const c = animate(v, to, { delay, duration: 1.6, ease });
-    return () => c.stop();
-  }, [v, to, delay]);
-  return <motion.span>{r}</motion.span>;
-}
-
-// łuki z punktu startu (środek globu) do miast
-const arcs = [
-  { d: "M50 52 Q 26 10 14 30", end: [14, 30] },
-  { d: "M50 52 Q 80 6 86 28", end: [86, 28] },
-  { d: "M50 52 Q 92 50 90 66", end: [90, 66] },
-  { d: "M50 52 Q 18 80 12 70", end: [12, 70] },
-  { d: "M50 52 Q 60 92 66 86", end: [66, 86] },
+type LaunchKey = "btn" | "rest";
+const launchScript: [number, number][] = [
+  [0.0, 0], // szkic
+  [1.3, 1], // kursor nad przyciskiem
+  [1.9, 2], // klik → publikowanie
+  [3.6, 3], // opublikowano
+  [4.6, 4], // pierwsze zapytanie od klienta
 ];
 
 export function LaunchArt() {
-  const { ref, k, inView } = useLoop(6500);
+  const { ref, k, inView } = useLoop(8500);
+  const { box, pos, reg } = useTargets<LaunchKey>();
+  const phase = useTimeline(launchScript, k, inView);
+  const live = phase >= 3;
+
   return (
     <div ref={ref} className="absolute inset-0">
-      <div className="absolute top-1/2 right-[7%] aspect-square w-[min(44%,400px)] -translate-y-1/2 max-sm:top-[54%] max-sm:right-1/2 max-sm:w-[58%] max-sm:translate-x-1/2">
-        <div className="absolute -inset-[20%] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.32),transparent)]" />
-        {/* glob: przesuwana mapa kropek w kole + cieniowanie kuli (tylko transform) */}
-        <div className="absolute inset-0 overflow-hidden rounded-full bg-[#0d0b16]">
-          <div className="absolute inset-y-0 left-0 w-[200%] animate-[globe_20s_linear_infinite] [background-image:radial-gradient(rgb(200_188_255/0.9)_1.1px,transparent_1.8px)] [background-size:10px_10px] will-change-transform" />
-          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_35%_28%,rgb(255_255_255/0.14),transparent_42%),radial-gradient(circle_at_50%_50%,transparent_42%,#07070a_80%)]" />
-          <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden>
-            {[18, 34, 50, 66, 82].map((y) => (
-              <ellipse key={y} cx="50" cy={y} rx={Math.sqrt(Math.max(0, 50 ** 2 - (y - 50) ** 2))} ry="3" fill="none" stroke="rgba(180,162,255,0.14)" strokeWidth="0.3" />
-            ))}
-            <ellipse cx="50" cy="50" rx="18" ry="50" fill="none" stroke="rgba(180,162,255,0.1)" strokeWidth="0.3" />
-          </svg>
-        </div>
-        <div className="absolute inset-0 rounded-full ring-1 ring-accent-2/30" />
-        {inView && (
-          <svg key={k} viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible" fill="none" aria-hidden>
-            <defs>
-              <linearGradient id="arc-g" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#8b6cff" />
-                <stop offset="1" stopColor="#efe9ff" />
-              </linearGradient>
-            </defs>
-            {arcs.map((a, i) => (
-              <g key={i}>
-                <motion.path d={a.d} stroke="url(#arc-g)" strokeWidth="0.7" strokeLinecap="round" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: [0, 1, 1], opacity: [0, 1, 0] }} transition={{ delay: 0.8 + i * 0.35, duration: 2.6, times: [0, 0.45, 1] }} />
-                <motion.circle cx={a.end[0]} cy={a.end[1]} r="1.3" fill="#efe9ff" initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 1] }} transition={{ delay: 1.9 + i * 0.35, duration: 0.5 }} style={{ transformBox: "fill-box", transformOrigin: "center" }} />
-                <motion.circle cx={a.end[0]} cy={a.end[1]} r="1.3" stroke="#b4a2ff" strokeWidth="0.4" initial={{ scale: 1, opacity: 0 }} animate={{ scale: [1, 4.5], opacity: [0.9, 0] }} transition={{ delay: 1.9 + i * 0.35, duration: 1.2 }} style={{ transformBox: "fill-box", transformOrigin: "center" }} />
-              </g>
-            ))}
-            <circle cx="50" cy="52" r="2" fill="#8b6cff" />
-            <motion.circle cx="50" cy="52" r="2" stroke="#8b6cff" strokeWidth="0.5" animate={{ scale: [1, 5], opacity: [0.9, 0] }} transition={{ repeat: Infinity, duration: 1.8 }} style={{ transformBox: "fill-box", transformOrigin: "center" }} />
-          </svg>
-        )}
-        {[
-          { l: "Wydajność", v: 100, c: "top-[4%] -left-[16%] max-sm:-top-[10%] max-sm:-left-[20%]" },
-          { l: "SEO", v: 100, c: "bottom-[8%] -left-[20%] max-sm:-bottom-[8%] max-sm:left-auto max-sm:-right-[18%]" },
-          { l: "Dostępność", v: 98, c: "top-[22%] -right-[14%] max-sm:hidden" },
-        ].map((s, i) => (
-          <motion.div
-            key={s.l}
-            className={`absolute flex items-center gap-2 rounded-2xl border border-white/10 bg-bg/85 py-1.5 pr-3 pl-1.5 text-[12px] text-muted ${s.c}`}
-            animate={{ y: [0, -6, 0] }}
-            transition={{ repeat: Infinity, duration: 3 + i * 0.6, ease: "easeInOut" }}
+      <div ref={box} className="absolute inset-0 flex flex-col items-center justify-center gap-8">
+        {/* adres strony */}
+        <motion.div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] py-2 pr-5 pl-3 text-[14px]" animate={{ borderColor: live ? "rgba(52,211,153,0.35)" : "rgba(255,255,255,0.1)" }}>
+          <span className="relative flex size-2.5">
+            {live && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />}
+            <motion.span className="relative size-2.5 rounded-full" animate={{ backgroundColor: live ? "#34d399" : "#615e6e" }} />
+          </span>
+          <span className="text-muted">https://</span>
+          <span className="-ml-2.5 text-ink">twojafirma.pl</span>
+          <AnimatePresence mode="wait">
+            <motion.span key={String(live)} className={`ml-1 text-[12px] ${live ? "text-emerald-300" : "text-dim"}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
+              {live ? "online" : "wersja robocza"}
+            </motion.span>
+          </AnimatePresence>
+        </motion.div>
+
+        {/* przycisk publikacji */}
+        <div className="relative">
+          <motion.span
+            ref={reg("btn")}
+            className="relative flex h-16 items-center justify-center overflow-hidden rounded-full text-[16px] font-medium"
+            animate={{
+              width: phase === 2 ? 240 : live ? 220 : 230,
+              backgroundColor: live ? "#10b981" : phase >= 1 ? "#8b6cff" : "#efedf5",
+              color: phase >= 1 ? "#ffffff" : "#07070a",
+              scale: phase === 2 ? [1, 0.93, 1] : 1,
+              boxShadow: phase >= 1 ? "0 0 50px rgba(139,108,255,0.55)" : "0 0 0 rgba(0,0,0,0)",
+            }}
+            transition={{ duration: 0.4 }}
           >
-            <span className="grid size-8 place-items-center rounded-xl bg-emerald-400/15 text-[12px] font-medium text-emerald-200 tabular-nums">{inView ? <Count key={k} to={s.v} delay={0.6 + i * 0.2} /> : 0}</span>
-            {s.l}
-          </motion.div>
-        ))}
+            {phase === 2 && <motion.span className="absolute inset-y-0 left-0 bg-white/25" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.6, ease: "easeInOut" }} />}
+            <AnimatePresence mode="wait">
+              <motion.span key={phase === 2 ? "p" : live ? "l" : "d"} className="relative flex items-center gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
+                {phase === 2 ? "Publikowanie…" : live ? "✓ Opublikowano" : "Opublikuj stronę ↗"}
+              </motion.span>
+            </AnimatePresence>
+          </motion.span>
+          {/* iskry przy starcie */}
+          {live &&
+            Array.from({ length: 14 }).map((_, i) => {
+              const a = (i / 14) * Math.PI * 2;
+              return (
+                <motion.span
+                  key={`${k}-${i}`}
+                  className="absolute top-1/2 left-1/2 size-1.5 rounded-full"
+                  style={{ background: ["#34d399", "#b4a2ff", "#efe9ff"][i % 3] }}
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                  animate={{ x: Math.cos(a) * (130 + (i % 3) * 25), y: Math.sin(a) * (60 + (i % 4) * 12), opacity: 0, scale: 1.3 }}
+                  transition={{ duration: 1.1, ease: "easeOut" }}
+                />
+              );
+            })}
+        </div>
+
+        {/* pierwsze zapytanie od klienta */}
+        <div className="h-[72px]">
+          <AnimatePresence>
+            {phase >= 4 && (
+              <motion.div
+                key={`n-${k}`}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] py-3 pr-5 pl-3 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)]"
+                initial={{ opacity: 0, y: 24, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              >
+                <span className="grid size-10 place-items-center rounded-xl bg-accent/20 text-[18px]">📩</span>
+                <span>
+                  <span className="block text-[13.5px] text-ink">Nowe zapytanie ze strony</span>
+                  <span className="block text-[12.5px] text-muted">„Dzień dobry, chciałbym umówić wizytę…”</span>
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <span ref={reg("rest")} className="absolute right-[18%] bottom-[16%] size-1" />
       </div>
-      <motion.div
-        key={`live-${k}`}
-        className="absolute top-6 right-6 flex items-center gap-2.5 rounded-full border border-emerald-400/30 bg-bg/80 py-2 pr-4 pl-3 text-[13px] text-emerald-100 sm:top-8 sm:right-8"
-        initial={{ opacity: 0, y: -8 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 2.2, type: "spring", stiffness: 260, damping: 20 }}
-      >
-        <span className="relative flex size-2">
-          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400" />
-          <span className="relative size-2 rounded-full bg-emerald-400" />
-        </span>
-        twojafirma.pl jest online
-      </motion.div>
+      {inView && <Cursor at={phase >= 1 && phase < 3 ? pos.btn : pos.rest} clicks={phase >= 2 ? 1 : 0} />}
     </div>
   );
 }

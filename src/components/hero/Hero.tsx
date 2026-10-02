@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useLoaded } from "../Providers";
 import { useCovering } from "../Transition";
@@ -95,8 +96,7 @@ export default function Hero({ recent }: { recent: Project[] }) {
                   className="relative -ml-8 block h-[78px] w-[104px] overflow-hidden rounded-[12px] ring-1 ring-white/15 transition-all duration-700 ease-out-expo first:ml-0 group-hover:-ml-1"
                   style={{ zIndex: 4 - i, transform: `rotate(${(i - 1.5) * 3}deg)` }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.image} alt="" className="size-full object-cover object-top" />
+                  <Image src={p.image} alt="" fill sizes="104px" className="object-cover object-top" />
                 </span>
               ))}
             </span>

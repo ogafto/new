@@ -1,6 +1,8 @@
 import { serviceName, services, site, type Project } from "./site";
 
 const id = (frag: string) => `${site.url}/#${frag}`;
+// do „sameAs” tylko konkretne profile (nie same strony główne serwisów)
+const profiles = () => site.socials.map((s) => s.href).filter((h) => new URL(h).pathname.replace(/\/$/, "").length > 1);
 
 // Firma / usługodawca + strona — na stronie głównej
 export function homeSchema() {
@@ -20,9 +22,14 @@ export function homeSchema() {
         telephone: site.phone.replace(/\s/g, ""),
         priceRange: "od 200 zł",
         currenciesAccepted: "PLN",
-        areaServed: { "@type": "Country", name: "Polska" },
+        areaServed: [
+          { "@type": "City", name: "Wrocław" },
+          { "@type": "Country", name: "Polska" },
+        ],
         availableLanguage: "pl",
-        sameAs: site.socials.map((s) => s.href),
+        sameAs: profiles(),
+        founder: { "@id": id("person") },
+        address: { "@type": "PostalAddress", addressLocality: "Wrocław", addressRegion: "dolnośląskie", addressCountry: "PL" },
         knowsAbout: ["projektowanie stron internetowych", "sklepy internetowe", "identyfikacja wizualna", "UI/UX", "Next.js", "SEO"],
         hasOfferCatalog: {
           "@type": "OfferCatalog",
@@ -33,6 +40,17 @@ export function homeSchema() {
             priceSpecification: { "@type": "PriceSpecification", minPrice: s.price, priceCurrency: "PLN" },
           })),
         },
+      },
+      {
+        "@type": "Person",
+        "@id": id("person"),
+        name: site.legal.owner,
+        jobTitle: "Web designer & developer",
+        url: site.url,
+        email: site.email,
+        worksFor: { "@id": id("business") },
+        address: { "@type": "PostalAddress", addressLocality: "Wrocław", addressCountry: "PL" },
+        knowsAbout: ["Web design", "UI/UX", "Identyfikacja wizualna", "Next.js", "React"],
       },
       {
         "@type": "WebSite",
@@ -50,6 +68,13 @@ export function portfolioSchema(projects: Project[]) {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Strona główna", item: site.url },
+        { "@type": "ListItem", position: 2, name: "Portfolio", item: `${site.url}/portfolio` },
+      ],
+    },
     name: "Portfolio",
     url: `${site.url}/portfolio`,
     inLanguage: "pl-PL",

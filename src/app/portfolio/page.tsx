@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Portfolio — strony internetowe, sklepy i identyfikacje wizualne",
   description,
   alternates: { canonical: "/portfolio" },
-  openGraph: { title: "Portfolio", description, url: "/portfolio" },
+  openGraph: { title: "Portfolio — afto.works", description, url: "/portfolio", images: ["/opengraph-image"] },
 };
 
 export default async function PortfolioPage() {

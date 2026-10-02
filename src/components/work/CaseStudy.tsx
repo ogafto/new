@@ -36,7 +36,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
   return (
     <main className="pt-32">
       <div className="mx-auto max-w-[1400px] px-5 sm:px-10">
-        <motion.div className="flex items-center justify-between gap-6" initial={{ opacity: 0, y: -8 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease }}>
+        <motion.div className="flex items-center justify-between gap-6" initial={{ opacity: 0.001, y: -8 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease }}>
           <TLink href="/#portfolio" label="Strona główna" className="group inline-flex items-center gap-3 rounded-full border border-line-2 py-2 pr-5 pl-2 text-[14px] text-muted transition-colors duration-500 hover:border-white/30 hover:text-ink">
             <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-white/[0.06] transition-colors duration-500 group-hover:bg-accent group-hover:text-white">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-500 ease-out-expo group-hover:-translate-x-0.5" aria-hidden>
@@ -76,9 +76,9 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
       <motion.div
         ref={hero}
         className="relative mx-auto mt-16 aspect-[4/3] max-w-[1400px] overflow-hidden px-0 sm:px-10 md:aspect-[16/9]"
-        initial={{ opacity: 0, y: 40 }}
-        animate={show ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.45, duration: 1.3, ease }}
+        initial={{ clipPath: "inset(14% 8% 0% 8% round 28px)", y: 40 }}
+        animate={show ? { clipPath: "inset(0% 0% 0% 0% round 0px)", y: 0 } : {}}
+        transition={{ delay: 0.3, duration: 1.3, ease }}
       >
         <div className="relative size-full overflow-hidden sm:rounded-[28px]">
           <motion.div className="absolute inset-x-0 -top-[9%] h-[118%] w-full" style={{ y }}>
@@ -112,8 +112,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
         <div className="mx-auto grid max-w-[1400px] gap-5 px-5 pb-24 sm:px-10 md:grid-cols-2">
           {p.gallery.map((src, i) => (
             <FadeUp key={src} delay={(i % 2) * 0.08} className={i % 3 === 0 ? "md:col-span-2" : ""}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`${p.name} — zdjęcie ${i + 2}`} loading="lazy" className="w-full rounded-[24px] object-cover" />
+              <Image src={src} alt={`${p.name} — ${p.client}, zdjęcie ${i + 2}`} width={1600} height={1200} sizes="(min-width: 768px) 50vw, 100vw" className="h-auto w-full rounded-[24px] object-cover" />
             </FadeUp>
           ))}
         </div>

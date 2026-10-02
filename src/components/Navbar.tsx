@@ -22,10 +22,12 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
 
+  // na telefonach pasek zostaje zawsze na górze; na komputerze chowa się przy przewijaniu w dół
   useMotionValueEvent(scrollY, "change", (v) => {
     const prev = scrollY.getPrevious() ?? 0;
     setScrolled(v > 30);
-    setHidden(v > 500 && v > prev && !open);
+    const desktop = window.matchMedia("(min-width: 768px)").matches;
+    setHidden(desktop && v > 500 && v > prev && !open);
   });
 
   useEffect(() => {
@@ -38,12 +40,17 @@ export default function Navbar() {
   return (
     <>
       <motion.header
-        className="fixed inset-x-0 top-0 z-50"
+        className="fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]"
         initial={{ y: -100, opacity: 0 }}
         animate={loaded ? { y: hidden ? -100 : 0, opacity: 1 } : {}}
         transition={{ duration: 0.8, ease }}
       >
-        <div className={`transition-colors duration-500 ${scrolled || open ? "bg-bg/70 backdrop-blur-xl" : ""}`}>
+        {/* tło wychodzi ponad pasek — na iOS strona rysuje się też pod paskiem statusu */}
+        <div
+          className={`pointer-events-none absolute inset-x-0 -top-[120px] bottom-0 transition-opacity duration-500 ${scrolled || open ? "opacity-100" : "opacity-0"} bg-bg/[0.97] md:bg-bg/75 md:backdrop-blur-xl`}
+          aria-hidden
+        />
+        <div className="relative">
           <nav aria-label="Główna nawigacja" className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-5 sm:px-10">
             <TLink href="/" label="Strona główna" className="group flex items-center gap-3" aria-label={`${site.domain} — strona główna`} onClick={() => setOpen(false)}>
               <Mark className="size-8 transition-transform duration-700 ease-out-expo group-hover:-rotate-12" />

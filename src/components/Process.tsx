@@ -14,11 +14,22 @@ import Button, { Magnetic } from "./ui/Button";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 function FillText({ text, progress, className = "" }: { text: string; progress: MotionValue<number>; className?: string }) {
-  const chars = text.split("");
+  // litery zapalają się po kolei, ale słowa nie łamią się w środku
+  const n = text.length;
+  let i = 0;
   return (
     <span className={className} aria-label={text}>
-      {chars.map((c, i) => (
-        <Char key={i} c={c} i={i} n={chars.length} progress={progress} />
+      {text.split(" ").map((word, w, arr) => (
+        <span key={w} className="inline-block whitespace-nowrap">
+          {word.split("").map((c) => {
+            const k = i++;
+            return <Char key={k} c={c} i={k} n={n} progress={progress} />;
+          })}
+          {w < arr.length - 1 && (() => {
+            i++;
+            return <span className="inline-block w-[0.26em]" />;
+          })()}
+        </span>
       ))}
     </span>
   );
@@ -35,20 +46,20 @@ function Char({ c, i, n, progress }: { c: string; i: number; n: number; progress
 
 // Tytuł etapu: litery wskakują po kolei
 function Title({ text }: { text: string }) {
+  // litery wskakują po kolei, ale słowa nigdy nie łamią się w środku
+  let i = 0;
   return (
-    <motion.h3 className="h-display text-[clamp(2.8rem,5.4vw,5rem)]" initial="h" whileInView="s" viewport={{ once: true, margin: "-15%" }} transition={{ staggerChildren: 0.035 }} aria-label={text}>
-      {text.split("").map((c, i) => (
-        <span key={i} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
-          <motion.span
-            className="inline-block"
-            variants={{
-              h: { y: "110%", rotate: 8 },
-              s: { y: "0%", rotate: 0, transition: { duration: 0.9, ease } },
-            }}
-            aria-hidden
-          >
-            {c}
-          </motion.span>
+    <motion.h3 className="h-display text-[clamp(2.6rem,5.4vw,5rem)]" initial="h" whileInView="s" viewport={{ once: true, margin: "-15%" }} transition={{ staggerChildren: 0.035 }} aria-label={text}>
+      {text.split(" ").map((word, w) => (
+        <span key={w} className="inline-block whitespace-nowrap">
+          {word.split("").map((c) => (
+            <span key={i++} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
+              <motion.span className="inline-block" variants={{ h: { y: "110%", rotate: 8 }, s: { y: "0%", rotate: 0, transition: { duration: 0.9, ease } } }} aria-hidden>
+                {c}
+              </motion.span>
+            </span>
+          ))}
+          {w < text.split(" ").length - 1 && <span className="inline-block w-[0.25em]" />}
         </span>
       ))}
     </motion.h3>
@@ -58,9 +69,9 @@ function Title({ text }: { text: string }) {
 function Copy({ i, align = "left" }: { i: number; align?: "left" | "right" }) {
   const s = steps[i];
   return (
-    <div className={`flex flex-col ${align === "right" ? "md:items-end md:text-right" : ""}`}>
+    <div className={`flex flex-col ${align === "right" ? "lg:items-end lg:text-right" : ""}`}>
       <motion.p className="flex items-center gap-3 text-[14px] text-accent-2" initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, ease }}>
-        <span className="h-px w-8 bg-gradient-to-r from-accent to-transparent" />
+        <span className="size-1.5 rounded-full bg-accent-2 shadow-[0_0_10px_#8b6cff]" />
         Etap 0{i + 1}
       </motion.p>
       <div className="mt-3">
@@ -78,7 +89,7 @@ function Copy({ i, align = "left" }: { i: number; align?: "left" | "right" }) {
       >
         {s.text}
       </motion.p>
-      <ul className={`mt-6 flex flex-wrap gap-2 ${align === "right" ? "md:justify-end" : ""}`}>
+      <ul className={`mt-6 flex flex-wrap gap-2 ${align === "right" ? "lg:justify-end" : ""}`}>
         {s.points.map((pt, k) => (
           <motion.li
             key={pt}
@@ -332,23 +343,23 @@ export default function Process() {
         <Beam track={track} nodes={nodes} />
 
         {/* 01 — rozmowa: dymki czatu */}
-        <div className="relative grid items-center gap-10 pb-36 pl-14 md:grid-cols-[0.85fr_1.15fr] md:gap-16 md:pl-0 lg:pb-48">
-          <Node i={0} register={register} className="top-6 left-[22px] md:top-1/2 md:left-[42%]" />
-          <div className="relative z-20 md:pr-20">
+        <div className="relative grid items-center gap-10 pb-36 pl-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16 lg:pl-0 lg:pb-48">
+          <Node i={0} register={register} className="top-6 left-[22px] lg:top-1/2 lg:left-[42%]" />
+          <div className="relative z-20 lg:pr-20">
             <Copy i={0} />
           </div>
-          <Open enter="right" className="aspect-[5/4] max-w-[600px] md:pl-8">
+          <Open enter="right" className="aspect-[5/4] max-w-[600px] lg:pl-8">
             <TalkArt />
           </Open>
         </div>
 
         {/* 02 — kierunek: kursor wybiera kolory i font */}
-        <div className="relative grid items-center gap-12 pb-36 pl-14 md:grid-cols-2 md:gap-24 md:pl-0 lg:pb-48">
-          <Node i={1} register={register} className="top-6 left-[22px] md:top-1/2 md:left-1/2" />
-          <div className="relative z-20 md:order-2 md:pl-12">
+        <div className="relative grid items-center gap-12 pb-36 pl-14 lg:grid-cols-2 lg:gap-24 lg:pl-0 lg:pb-48">
+          <Node i={1} register={register} className="top-6 left-[22px] lg:top-1/2 lg:left-1/2" />
+          <div className="relative z-20 lg:order-2 lg:pl-12">
             <Copy i={1} />
           </div>
-          <div className="md:order-1">
+          <div className="lg:order-1">
             <Open enter="zoom" className="aspect-[5/4] max-w-[560px]">
               <DirectionArt />
             </Open>
@@ -356,9 +367,9 @@ export default function Process() {
         </div>
 
         {/* 03 — projekt: konstrukcja znaku */}
-        <div className="relative grid items-center gap-12 pb-36 pl-14 md:grid-cols-[1.1fr_0.9fr] md:gap-20 md:pl-0 lg:pb-48">
-          <Node i={2} register={register} className="top-6 left-[22px] md:top-[22%] md:left-[56%]" />
-          <div className="relative z-20 md:pr-28">
+        <div className="relative grid items-center gap-12 pb-36 pl-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20 lg:pl-0 lg:pb-48">
+          <Node i={2} register={register} className="top-6 left-[22px] lg:top-[22%] lg:left-[56%]" />
+          <div className="relative z-20 lg:pr-28">
             <Copy i={2} align="right" />
           </div>
           <Open>
@@ -367,12 +378,12 @@ export default function Process() {
         </div>
 
         {/* 04 — wdrożenie: kursor klika „Opublikuj” */}
-        <div className="relative grid items-center gap-12 pl-14 md:grid-cols-2 md:gap-24 md:pl-0">
-          <Node i={3} register={register} className="top-6 left-[22px] md:top-1/2 md:left-1/2" />
-          <div className="relative z-20 md:order-2 md:pl-12">
+        <div className="relative grid items-center gap-12 pl-14 lg:grid-cols-2 lg:gap-24 lg:pl-0">
+          <Node i={3} register={register} className="top-6 left-[22px] lg:top-1/2 lg:left-1/2" />
+          <div className="relative z-20 lg:order-2 lg:pl-12">
             <Copy i={3} />
           </div>
-          <div className="md:order-1">
+          <div className="lg:order-1">
             <Open enter="left" className="aspect-[4/5] max-w-[560px] sm:aspect-[5/4]">
               <LaunchArt />
             </Open>

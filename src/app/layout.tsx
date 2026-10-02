@@ -9,7 +9,7 @@ const satoshi = localFont({ src: "../fonts/Satoshi-Variable.woff2", variable: "-
 
 const title = `${site.domain} — projektowanie stron internetowych, sklepów i identyfikacji wizualnych`;
 const description =
-  "Projektuję i koduję strony internetowe, sklepy internetowe, identyfikacje wizualne i projekty UI/UX, które wyglądają premium i sprzedają. Szybkie, dopracowane na telefonie i gotowe pod Google.";
+  "Web designer z Wrocławia. Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne, które wyglądają premium i sprzedają. Strona od 200 zł.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -27,8 +27,12 @@ export const metadata: Metadata = {
     "web designer",
     "strona dla firmy",
     "landing page",
+    "web designer Wrocław",
+    "strony internetowe Wrocław",
+    "projektowanie stron Wrocław",
   ],
-  creator: site.domain,
+  creator: site.legal.owner,
+  authors: [{ name: site.legal.owner, url: site.url }],
   publisher: site.domain,
   category: "design",
   alternates: { canonical: "/" },
@@ -49,6 +53,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#07070a",
+  colorScheme: "dark",
+  viewportFit: "cover", // treść pod notchem/paskiem statusu (iOS) — pasek nawigacji dopełnia to tłem
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

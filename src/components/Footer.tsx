@@ -75,6 +75,9 @@ export default function Footer() {
           <div>
             <Mark className="size-10" />
             <p className="mt-6 max-w-[300px] text-[15px] leading-relaxed text-muted">Projektuję i koduję strony, które wyglądają drogo i sprzedają.</p>
+            <p className="mt-3 text-[13px] text-dim">
+              {site.legal.owner} · web designer, Wrocław
+            </p>
             <address className="not-italic">
             <a href={`mailto:${site.email}`} className="link-u mt-6 inline-block text-[17px]">
               {site.email}

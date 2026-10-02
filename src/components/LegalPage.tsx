@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import JsonLd from "./JsonLd";
 import { site } from "@/lib/site";
-import { CookieButton, LegalToc } from "./LegalToc";
+import { CookieButton, LegalToc, LegalTocMobile, ReadingProgress } from "./LegalToc";
+import { FadeUp } from "./ui/Reveal";
 
 export type LegalSection = {
   title: string;
@@ -17,105 +19,136 @@ const docs = [
 
 export default function LegalPage({ title, intro, summary, sections, current }: { title: string; intro: string; summary: string[]; sections: LegalSection[]; current: string }) {
   const { owner, street, city, updated } = site.legal;
+  const toc = sections.map((s, i) => ({ id: `s${i + 1}`, label: s.title, n: i + 1 }));
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Strona główna", item: site.url },
+            { "@type": "ListItem", position: 2, name: title, item: `${site.url}${current}` },
+          ],
+        }}
+      />
+      <ReadingProgress />
       <Navbar />
       <main className="relative overflow-x-clip">
         <div className="pointer-events-none absolute -top-40 right-0 h-[600px] w-[min(900px,100vw)] bg-[radial-gradient(closest-side,rgb(139_108_255/0.1),transparent)]" aria-hidden />
-        <div className="relative mx-auto max-w-[1320px] px-5 pt-40 pb-28 sm:px-8">
-          <nav aria-label="Dokumenty" className="flex flex-wrap items-center gap-2">
-            {docs.map((d) => (
-              <Link
-                key={d.href}
-                href={d.href}
-                aria-current={current === d.href ? "page" : undefined}
-                className={`rounded-full px-4 py-2 text-[13.5px] transition-colors ${current === d.href ? "bg-white/[0.08] text-ink" : "border border-line text-muted hover:text-ink"}`}
-              >
-                {d.label}
-              </Link>
-            ))}
-            <CookieButton />
-          </nav>
+        <div className="relative mx-auto max-w-[1240px] px-5 pt-36 pb-28 sm:px-8 sm:pt-40">
+          {/* nagłówek */}
+          <FadeUp>
+            <nav aria-label="Dokumenty" className="flex flex-wrap items-center gap-2">
+              {docs.map((d) => (
+                <Link
+                  key={d.href}
+                  href={d.href}
+                  aria-current={current === d.href ? "page" : undefined}
+                  className={`rounded-full px-4 py-2 text-[13.5px] transition-colors ${current === d.href ? "bg-white/[0.08] text-ink" : "border border-line text-muted hover:text-ink"}`}
+                >
+                  {d.label}
+                </Link>
+              ))}
+              <CookieButton />
+            </nav>
+          </FadeUp>
+          <h1 className="h-display mt-10 text-[clamp(2.8rem,7vw,5.6rem)]">{title}</h1>
+          <div>
+            <p className="mt-5 max-w-[620px] text-[17px] leading-relaxed text-muted">{intro}</p>
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-[12.5px] text-dim">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              Obowiązuje od {updated}
+            </p>
+          </div>
 
-          <h1 className="h-display mt-10 text-[clamp(2.8rem,6vw,5.4rem)]">{title}</h1>
-          <p className="mt-5 max-w-[640px] text-[17px] leading-relaxed text-muted">{intro}</p>
-          <p className="mt-4 text-[13.5px] text-dim">Obowiązuje od: {updated}</p>
-
-          <div className="edge mt-12 grid gap-6 rounded-[28px] bg-surface p-6 sm:p-8 lg:grid-cols-[220px_1fr]">
-            <p className="text-[15px] text-ink">W skrócie</p>
-            <ul className="grid gap-3 sm:grid-cols-2">
+          {/* w skrócie */}
+          <FadeUp delay={0.15} className="mt-14">
+            <p className="text-[13px] text-dim">W skrócie</p>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {summary.map((s) => (
-                <li key={s} className="flex gap-3 text-[15px] leading-relaxed text-muted">
-                  <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-accent" />
+                <li key={s} className="edge flex gap-3 rounded-2xl bg-surface p-5 text-[15px] leading-relaxed text-muted">
+                  <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent/20 text-accent-2">
+                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+                      <path d="M2 5.2l2 2 4-4.4" stroke="currentColor" strokeWidth="1.7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                   {s}
                 </li>
               ))}
             </ul>
-          </div>
+          </FadeUp>
 
-          <div className="mt-16 grid gap-12 lg:grid-cols-[260px_1fr] lg:gap-20">
-            <LegalToc items={sections.map((s, i) => ({ id: `s${i + 1}`, label: s.title, n: i + 1 }))} />
-
-            <div className="min-w-0">
+          {/* treść */}
+          <div className="mt-20 grid gap-12 lg:grid-cols-[240px_1fr] lg:gap-20">
+            <LegalToc items={toc} />
+            <div className="min-w-0 max-w-[720px]">
+              <LegalTocMobile items={toc} />
               {sections.map((s, i) => (
-                <section key={s.title} id={`s${i + 1}`} className="scroll-mt-28 border-t border-line py-10 first:border-t-0 first:pt-0">
-                  <h2 className="flex items-baseline gap-4 text-[clamp(1.5rem,2.4vw,2rem)] font-medium tracking-[-0.025em]">
-                    <span className="text-[15px] font-normal text-accent-2 tabular-nums">§ {i + 1}</span>
-                    {s.title}
-                  </h2>
-                  <ol className="mt-6 space-y-4">
-                    {s.items.map((it, j) => (
-                      <li key={j} className="grid grid-cols-[28px_1fr] text-[16px] leading-[1.75] text-muted">
-                        <span className="text-dim tabular-nums">{j + 1}.</span>
-                        <span>{it}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  {s.table && (
-                    <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
-                      <table className="w-full min-w-[560px] text-left text-[14px]">
-                        <thead className="bg-white/[0.03] text-[12.5px] text-dim">
-                          <tr>
-                            {s.table.head.map((h) => (
-                              <th key={h} className="px-4 py-3 font-normal">
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-line">
-                          {s.table.rows.map((r) => (
-                            <tr key={r[0]}>
-                              {r.map((c, k) => (
-                                <td key={k} className={`px-4 py-3 align-top ${k === 0 ? "font-mono text-[13px] text-ink" : "text-muted"}`}>
-                                  {c}
-                                </td>
+                <FadeUp key={s.title} y={16}>
+                  <section id={`s${i + 1}`} className="scroll-mt-28 border-t border-line py-10 first:border-t-0 first:pt-0 sm:py-12">
+                    <div className="flex items-center gap-4">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full border border-accent/30 bg-accent/10 text-[13px] text-accent-2 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                      <h2 className="text-[clamp(1.4rem,2.6vw,1.9rem)] font-medium tracking-[-0.025em]">{s.title}</h2>
+                    </div>
+                    <ol className="mt-6 space-y-4 sm:pl-14">
+                      {s.items.map((it, j) => (
+                        <li key={j} className="grid grid-cols-[2.25rem_1fr] text-[15.5px] leading-[1.75] text-muted sm:text-[16px]">
+                          <span className="text-[13px] leading-[1.9] text-dim tabular-nums">
+                            {i + 1}.{j + 1}
+                          </span>
+                          <span>{it}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    {s.table && (
+                      <div className="mt-6 overflow-x-auto rounded-2xl border border-line sm:ml-14" data-lenis-prevent>
+                        <table className="w-full min-w-[520px] text-left text-[14px]">
+                          <thead className="bg-white/[0.03] text-[12.5px] text-dim">
+                            <tr>
+                              {s.table.head.map((h) => (
+                                <th key={h} className="px-4 py-3 font-normal">
+                                  {h}
+                                </th>
                               ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
+                          </thead>
+                          <tbody className="divide-y divide-line">
+                            {s.table.rows.map((r) => (
+                              <tr key={r[0]}>
+                                {r.map((c, k) => (
+                                  <td key={k} className={`px-4 py-3 align-top ${k === 0 ? "font-mono text-[13px] text-ink" : "text-muted"}`}>
+                                    {c}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+                </FadeUp>
               ))}
 
-              <div className="edge mt-6 flex flex-col justify-between gap-6 rounded-[28px] bg-surface p-6 sm:flex-row sm:items-center sm:p-8">
-                <div>
-                  <p className="text-[17px]">Masz pytania?</p>
-                  <p className="mt-1 text-[14px] text-muted">
-                    {owner} · {street}, {city}
-                  </p>
+              <FadeUp>
+                <div className="edge mt-6 flex flex-col justify-between gap-6 rounded-[28px] bg-surface p-6 sm:flex-row sm:items-center sm:p-8">
+                  <div>
+                    <p className="text-[17px]">Masz pytania?</p>
+                    <p className="mt-1 text-[14px] text-muted">
+                      {owner} · {street}, {city}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <a href={`mailto:${site.email}`} className="max-w-full truncate rounded-full bg-ink px-4 py-2.5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
+                      Napisz e-mail
+                    </a>
+                    <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="rounded-full border border-line-2 px-4 py-2.5 text-[14px] transition-colors hover:border-white/40">
+                      {site.phone}
+                    </a>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <a href={`mailto:${site.email}`} className="rounded-full bg-ink px-4 py-2.5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
-                    {site.email}
-                  </a>
-                  <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="rounded-full border border-line-2 px-4 py-2.5 text-[14px] transition-colors hover:border-white/40">
-                    {site.phone}
-                  </a>
-                </div>
-              </div>
+              </FadeUp>
             </div>
           </div>
         </div>

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = await getProjectBySlug(slug);
   if (!p) return {};
-  const title = `${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`;
+  const title = `${p.name} — ${serviceName(p.category).toLowerCase()} · ${p.client}`;
   return {
     title,
     description: `${p.description} ${serviceName(p.category)} — projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,

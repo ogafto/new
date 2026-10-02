@@ -164,7 +164,7 @@ export default function Calendar({ orders, clients, today, mail, prefill }: { or
               return (
                 <motion.div
                   key={c.date}
-                  className={`group relative min-h-[92px] border-line p-1.5 sm:min-h-[112px] sm:p-2 ${i % 7 ? "border-l" : ""} ${i >= 7 ? "border-t" : ""} ${c.inMonth ? "" : "bg-white/[0.012]"}`}
+                  className={`group relative min-h-[58px] border-line p-1.5 sm:min-h-[112px] sm:p-2 ${i % 7 ? "border-l" : ""} ${i >= 7 ? "border-t" : ""} ${c.inMonth ? "" : "bg-white/[0.012]"}`}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.006, duration: 0.4, ease }}
@@ -189,10 +189,10 @@ export default function Calendar({ orders, clients, today, mail, prefill }: { or
                         key={o.id}
                         type="button"
                         onClick={() => setEdit(o)}
-                        className={`flex w-full items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-left text-[11.5px] transition-colors ${o.status === "done" ? "bg-emerald-400/10 text-emerald-200 line-through decoration-emerald-200/40" : o.due_date < today && o.status !== "cancelled" ? "bg-red-400/15 text-red-200" : "bg-accent/15 text-accent-2 hover:bg-accent/25"}`}
+                        className={`flex w-full items-center justify-center gap-1.5 truncate rounded-md px-1.5 py-1.5 text-left text-[11.5px] sm:justify-start sm:py-1 transition-colors ${o.status === "done" ? "bg-emerald-400/10 text-emerald-200 line-through decoration-emerald-200/40" : o.due_date < today && o.status !== "cancelled" ? "bg-red-400/15 text-red-200" : "bg-accent/15 text-accent-2 hover:bg-accent/25"}`}
                       >
                         <span className={`size-1.5 shrink-0 rounded-full ${COLOR[o.status]}`} />
-                        <span className="truncate">{o.title}</span>
+                        <span className="hidden truncate sm:inline">{o.title}</span>
                       </button>
                     ))}
                     {due.length > 2 && <p className="px-1.5 text-[11px] text-dim">+{due.length - 2}</p>}
@@ -233,7 +233,7 @@ export default function Calendar({ orders, clients, today, mail, prefill }: { or
           )}
         </Card>
         <Card delay={0.15}>
-          <CardHead title="Przypomnienia" sub={mail ? "Mail codziennie rano na Twój adres" : "Skonfiguruj RESEND_API_KEY, żeby dostawać maile"} />
+          <CardHead title="Przypomnienia" sub={mail ? "Mail codziennie rano na Twój adres" : "Podłącz e-mail w Ustawieniach, żeby dostawać maile"} />
           <Btn
             size="sm"
             variant="outline"

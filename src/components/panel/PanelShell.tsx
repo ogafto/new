@@ -32,10 +32,22 @@ function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) 
         ],
       },
       {
+        group: "Biznes",
+        links: [{ href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet }],
+      },
+      {
         group: "Treści",
         links: [
+          { href: "/panel/admin/tresci", label: "Treści strony", icon: ICONS.doc },
           { href: "/panel/admin/portfolio", label: "Portfolio", icon: ICONS.grid },
           { href: "/panel/admin/marka", label: "Marka i logo", icon: ICONS.brand },
+        ],
+      },
+      {
+        group: "System",
+        links: [
+          { href: "/panel/admin/ustawienia", label: "Ustawienia", icon: ICONS.gear },
+          { href: "/panel/admin/logi", label: "Logi", icon: ICONS.logs },
         ],
       },
     ];
@@ -176,10 +188,6 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
         ))}
       </nav>
       <div className="mt-6 space-y-2">
-        <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:text-ink">
-          <Icon d={ICONS.site} className="size-4" />
-          Zobacz stronę
-        </Link>
         <div className="edge flex items-center gap-3 rounded-2xl bg-white/[0.02] p-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
           <span className="min-w-0 flex-1">

@@ -10,6 +10,7 @@ import { Faq, OrderButton } from "@/components/offer/OfferParts";
 import { cities, offerBySlug, offers } from "@/lib/offer";
 import { getProjects } from "@/lib/projects";
 import { site, steps } from "@/lib/site";
+import { loadContent } from "@/lib/content-server";
 
 export function generateStaticParams() {
   return offers.map((o) => ({ slug: o.slug }));
@@ -30,6 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function OfferPage({ params }: { params: Promise<{ slug: string }> }) {
+  await loadContent();
   const o = offerBySlug((await params).slug);
   if (!o) notFound();
   const projects = o.service ? (await getProjects()).filter((p) => p.category === o.service).slice(0, 4) : [];

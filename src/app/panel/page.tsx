@@ -7,11 +7,16 @@ import { site, steps } from "@/lib/site";
 import { Badge, Card, CardHead, Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import ProjectProgress from "@/components/panel/ProjectProgress";
+import { loadContent } from "@/lib/content-server";
+import { paymentsForUser, zl } from "@/lib/finance";
 
 export default async function ClientPanel({ searchParams }: { searchParams: Promise<{ witaj?: string }> }) {
+  await loadContent();
   const user = await requireUser();
   if (isAdmin(user)) redirect("/panel/admin");
-  const [{ witaj }, sites] = await Promise.all([searchParams, sitesForUser(user.id)]);
+  const [{ witaj }, sites, payments] = await Promise.all([searchParams, sitesForUser(user.id), paymentsForUser(user.id, user.email)]);
+  const due = payments.filter((p) => p.status === "pending");
+  const paid = payments.filter((p) => p.status === "paid");
   const first = user.name.split(" ")[0];
   const stage = Number(user.stage);
 
@@ -38,6 +43,40 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
         </Card>
 
         <div className="grid gap-4">
+          {payments.length > 0 && (
+            <Card delay={0.03} glow={due.length > 0}>
+              <CardHead title="Płatności" sub={due.length ? `${due.length} do opłacenia` : "Wszystko opłacone ✓"} />
+              <ul className="space-y-2">
+                {due.map((p) => (
+                  <li key={p.id} className="rounded-2xl border border-accent/25 bg-accent/[0.05] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[14.5px] leading-snug">{p.title}</p>
+                        {p.due_date && <p className="mt-0.5 text-[12.5px] text-dim">Termin: {new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long" }).format(new Date(`${p.due_date}T12:00:00`))}</p>}
+                      </div>
+                      <p className="shrink-0 text-[17px] tabular-nums">{zl(Number(p.amount))}</p>
+                    </div>
+                    {p.stripe_url ? (
+                      <a href={p.stripe_url} target="_blank" rel="noopener noreferrer" className="mt-3.5 flex h-11 items-center justify-center gap-2 rounded-full bg-ink text-[14px] font-medium text-bg transition-colors hover:bg-white">
+                        <Icon d={ICONS.card} className="size-4" /> Zapłać online
+                      </a>
+                    ) : (
+                      <p className="mt-3 text-[12.5px] text-muted">Płatność przelewem — szczegóły dostaniesz mailem.</p>
+                    )}
+                  </li>
+                ))}
+                {paid.slice(0, 4).map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-emerald-400/10 text-emerald-300">
+                      <Icon d={ICONS.check} className="size-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-muted">{p.title}</span>
+                    <span className="text-[13.5px] tabular-nums">{zl(Number(p.amount))}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           {sites.length > 0 && (
             <Card delay={0.05}>
               <CardHead title="Twoja strona" sub="Edytuj treści samodzielnie" />

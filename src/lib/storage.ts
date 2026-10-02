@@ -2,12 +2,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { id } from "./auth/crypto";
-import { env } from "./env";
+import { setting } from "./settings";
 
 /*
  * Zapis wgranych plików.
  * - domyślnie na dysk serwera: data/uploads/RRRR/MM/… (serwowane pod /media/…)
- * - jeśli ustawisz BLOB_READ_WRITE_TOKEN (Vercel Blob) — do chmury (na Vercelu dysk nie jest trwały)
+ * - jeśli podasz token Vercel Blob (Panel → Ustawienia → Pliki albo BLOB_READ_WRITE_TOKEN) — do chmury (na Vercelu dysk nie jest trwały)
  * Zdjęcia są zmniejszane do max 2400 px i zapisywane jako WebP.
  */
 
@@ -28,13 +28,14 @@ export async function saveImage(file: File, folder = "") {
   const d = new Date();
   const rel = [folder, String(d.getFullYear()), String(d.getMonth() + 1).padStart(2, "0"), `${id()}.webp`].filter(Boolean).join("/");
 
-  if (env.blobToken()) {
+  const token = await setting("blob_token");
+  if (token) {
     const { put } = await import("@vercel/blob");
-    const blob = await put(`uploads/${rel}`, out, { access: "public", contentType: "image/webp" });
+    const blob = await put(`uploads/${rel}`, out, { access: "public", contentType: "image/webp", token });
     return { url: blob.url, width: meta.width, height: meta.height };
   }
 
-  if (process.env.VERCEL) throw new Error("Na Vercelu zdjęcia wymagają Vercel Blob — podłącz Blob do projektu (BLOB_READ_WRITE_TOKEN).");
+  if (process.env.VERCEL) throw new Error("Na Vercelu zdjęcia wymagają Vercel Blob — wklej token w Panel → Ustawienia → Pliki.");
   const target = path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, rel);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, out);

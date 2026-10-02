@@ -6,6 +6,7 @@ import { id } from "@/lib/auth/crypto";
 import { requireAdmin } from "@/lib/auth/session";
 import { removeLocal, saveImage } from "@/lib/storage";
 import { services, type ServiceId } from "@/lib/site";
+import { log } from "@/lib/logs";
 
 export type ProjectState = { error?: string; ok?: boolean; id?: string; gallery?: string[]; image?: string } | undefined;
 
@@ -93,6 +94,7 @@ export async function saveProject(_: ProjectState, form: FormData): Promise<Proj
       [nid, slug, name, category, year, client, description, JSON.stringify(scope), JSON.stringify(palette), image, JSON.stringify(gallery), url, featured, published, Number(min?.m ?? 0) - 1, now, now],
     );
     refresh(slug);
+    await log("content", `${form.get("id") ? "Zapisano" : "Dodano"} projekt w portfolio: ${slug}`);
     return { ok: true, id: nid, gallery, image };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nie udało się zapisać." };
@@ -104,6 +106,7 @@ export async function deleteProject(pid: string) {
   const p = await one<{ slug: string; image: string; gallery: string }>("SELECT slug, image, gallery FROM projects WHERE id = ?", [pid]);
   if (!p) return;
   await run("DELETE FROM projects WHERE id = ?", [pid]);
+  await log("content", `Usunięto projekt z portfolio: ${p.slug}`, { level: "warn" });
   await removeLocal(p.image);
   for (const g of JSON.parse(p.gallery) as string[]) await removeLocal(g);
   refresh(p.slug);

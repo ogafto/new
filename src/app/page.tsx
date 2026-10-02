@@ -7,8 +7,10 @@ import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
 import { homeSchema } from "@/lib/seo";
 import { getProjects } from "@/lib/projects";
+import { loadContent } from "@/lib/content-server";
 
 export default async function Home() {
+  await loadContent();
   const projects = await getProjects();
   return (
     <>

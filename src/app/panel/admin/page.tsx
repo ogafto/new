@@ -8,6 +8,7 @@ import { fmtDateTime } from "@/lib/format";
 import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, PageHead, Stat } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import QuickActions from "@/components/panel/QuickActions";
+import { financeSummary, zl } from "@/lib/finance";
 
 export const metadata: Metadata = { title: "Kokpit" };
 
@@ -18,7 +19,7 @@ const greet = () => {
 
 export default async function Cockpit() {
   const admin = await requireAdmin();
-  const [k, s, home, clients, orders, money, newInq, inquiries, next, pages, src, funnel] = await Promise.all([
+  const [k, s, home, clients, orders, money, newInq, inquiries, next, pages, src, funnel, fin] = await Promise.all([
     kpis(30),
     series(30),
     homeVisits(),
@@ -31,6 +32,7 @@ export default async function Cockpit() {
     topPages(30),
     sources(30),
     formFunnel(30),
+    financeSummary(),
   ]);
   const t = today();
   const conv = k.cur.visitors ? Math.round((funnel[2].n / k.cur.visitors) * 1000) / 10 : 0;
@@ -41,13 +43,13 @@ export default async function Cockpit() {
         <QuickActions />
       </PageHead>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <Card className="lg:col-span-2 lg:row-span-2" glow>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Card className="col-span-2 lg:row-span-2" glow>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-[13px] text-muted">Odwiedzający · 30 dni</p>
               <div className="mt-3 flex items-end gap-3">
-                <Count value={k.cur.visitors} className="h-display text-[56px] leading-none" />
+                <Count value={k.cur.visitors} className="h-display text-[44px] leading-none sm:text-[56px]" />
                 <Delta cur={k.cur.visitors} prev={k.prev.visitors} />
               </div>
               <p className="mt-2 text-[13px] text-dim">
@@ -55,7 +57,7 @@ export default async function Cockpit() {
               </p>
             </div>
             <Link href="/panel/admin/analityka" className="flex items-center gap-1.5 rounded-full border border-line-2 px-3.5 py-1.5 text-[13px] text-muted transition-colors hover:text-ink">
-              Pełna analityka <Icon d={ICONS.site} className="size-3.5" />
+              Pełna analityka <Icon d={ICONS.chart} className="size-3.5" />
             </Link>
           </div>
           <div className="mt-6">
@@ -67,6 +69,35 @@ export default async function Cockpit() {
         <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.15} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w trakcie`} />
         <Stat label="Nowe zapytania" value={Number(newInq?.n ?? 0)} icon={ICONS.inbox} delay={0.2} hint={`Konwersja formularza ${conv.toLocaleString("pl-PL")}%`} />
       </div>
+
+      <Card delay={0.22} className="mt-4">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center">
+          <div className="flex items-center gap-3.5 md:w-[220px]">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent-2">
+              <Icon d={ICONS.wallet} />
+            </span>
+            <div>
+              <p className="text-[15px]">Finanse</p>
+              <p className="text-[12.5px] text-dim capitalize">{new Intl.DateTimeFormat("pl-PL", { month: "long", year: "numeric" }).format(new Date())}</p>
+            </div>
+          </div>
+          <dl className="grid flex-1 grid-cols-3 gap-3">
+            {[
+              ["Przychód", zl(fin.month.revenue), ""],
+              ["Do zapłaty", zl(fin.pending.amount), fin.pending.overdue ? "text-red-300" : ""],
+              ["Zysk", zl(fin.month.profit), ""],
+            ].map(([l, v, c]) => (
+              <div key={l} className="min-w-0">
+                <dt className="truncate text-[12px] text-dim">{l}</dt>
+                <dd className={`mt-1 truncate text-[17px] tabular-nums sm:text-[22px] ${c}`}>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <Link href="/panel/admin/finanse" className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] text-muted transition-colors hover:text-ink">
+            Finanse →
+          </Link>
+        </div>
+      </Card>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <Card delay={0.25}>

@@ -1,0 +1,383 @@
+{
+  "announcements": [
+    {
+      "id": "zapowiedz-01-konstrukcja",
+      "name": "Konstrukcja znaku",
+      "desc": "Siatka i prowadnice, monogram rysowany linia po linii, kropka z falą, potem hasło „Coś nowego nadchodzi.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7,
+      "files": {
+        "mp4": {
+          "path": "/brand/discord/zapowiedz-01-konstrukcja.mp4",
+          "size": 217000
+        },
+        "gif": {
+          "path": "/brand/discord/zapowiedz-01-konstrukcja.gif",
+          "size": 2246390
+        }
+      }
+    },
+    {
+      "id": "zapowiedz-02-publikacja",
+      "name": "Publikacja",
+      "desc": "Kursor układa stronę z klocków i klika „Opublikuj” → „✓ Online”, podpis „afto.works · nowa odsłona już wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.8,
+      "files": {
+        "mp4": {
+          "path": "/brand/discord/zapowiedz-02-publikacja.mp4",
+          "size": 583060
+        },
+        "gif": {
+          "path": "/brand/discord/zapowiedz-02-publikacja.gif",
+          "size": 3468180
+        }
+      }
+    },
+    {
+      "id": "zapowiedz-03-rozmowa",
+      "name": "Rozmowa",
+      "desc": "Dymki czatu: „Kiedy startujecie?” → „Już wkrótce. Zaglądaj na afto.works”, z kropkami pisania i plakietką „Nowa odsłona — wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.3,
+      "files": {
+        "mp4": {
+          "path": "/brand/discord/zapowiedz-03-rozmowa.mp4",
+          "size": 310250
+        },
+        "gif": {
+          "path": "/brand/discord/zapowiedz-03-rozmowa.gif",
+          "size": 2398419
+        }
+      }
+    },
+    {
+      "id": "zapowiedz-04-premiera",
+      "name": "Premiera",
+      "desc": "Wiązka światła przesuwa się po siatce i „zapala” litery hasła „Nowa odsłona.” — typografia kinetyczna.",
+      "w": 1280,
+      "h": 720,
+      "duration": 6.6,
+      "files": {
+        "mp4": {
+          "path": "/brand/discord/zapowiedz-04-premiera.mp4",
+          "size": 236443
+        },
+        "gif": {
+          "path": "/brand/discord/zapowiedz-04-premiera.gif",
+          "size": 2859893
+        }
+      }
+    },
+    {
+      "id": "zapowiedz-05-odliczanie",
+      "name": "Odliczanie",
+      "desc": "„03 · 02 · 01” z paskiem postępu, który kurczy się w kropkę logotypu — afto. rysuje się od kropki, „Startujemy.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7.1,
+      "files": {
+        "mp4": {
+          "path": "/brand/discord/zapowiedz-05-odliczanie.mp4",
+          "size": 137462
+        },
+        "gif": {
+          "path": "/brand/discord/zapowiedz-05-odliczanie.gif",
+          "size": 987849
+        }
+      }
+    }
+  ],
+  "banners": [
+    {
+      "id": "baner-01-haslo",
+      "name": "Znak + hasło",
+      "desc": "Monogram, pionowa linia i hasło „Strony, które wyglądają drogo. I sprzedają.” — klasyczny układ logo z lewej.",
+      "w": 1500,
+      "h": 300,
+      "duration": 7,
+      "animated": true,
+      "files": {
+        "mp4": {
+          "path": "/brand/banners/baner-01-haslo.mp4",
+          "size": 75671
+        },
+        "gif": {
+          "path": "/brand/banners/baner-01-haslo.gif",
+          "size": 684814
+        },
+        "png": {
+          "path": "/brand/banners/baner-01-haslo.png",
+          "size": 94605
+        }
+      }
+    },
+    {
+      "id": "baner-02-siatka",
+      "name": "Logotyp na siatce",
+      "desc": "Logotyp „afto.” na siatce konstrukcyjnej z opisami linii; co pętlę przechodzi po nim wiązka światła.",
+      "w": 1500,
+      "h": 300,
+      "duration": 5,
+      "animated": true,
+      "files": {
+        "mp4": {
+          "path": "/brand/banners/baner-02-siatka.mp4",
+          "size": 99272
+        },
+        "gif": {
+          "path": "/brand/banners/baner-02-siatka.gif",
+          "size": 1366200
+        },
+        "png": {
+          "path": "/brand/banners/baner-02-siatka.png",
+          "size": 20307
+        }
+      }
+    },
+    {
+      "id": "baner-03-uslugi",
+      "name": "Usługi — pasek",
+      "desc": "Pasek usług przesuwa się w pętli (Strony internetowe · Sklepy · Identyfikacja wizualna · UI/UX…), znak przypięty z lewej.",
+      "w": 1500,
+      "h": 300,
+      "duration": 12,
+      "animated": true,
+      "files": {
+        "mp4": {
+          "path": "/brand/banners/baner-03-uslugi.mp4",
+          "size": 641182
+        },
+        "gif": {
+          "path": "/brand/banners/baner-03-uslugi.gif",
+          "size": 4810642
+        },
+        "png": {
+          "path": "/brand/banners/baner-03-uslugi.png",
+          "size": 43482
+        }
+      }
+    },
+    {
+      "id": "baner-04-linia",
+      "name": "Fioletowa linia",
+      "desc": "Minimalny: duży monogram narysowany samym fioletowym konturem, z prawej przycięty; nazwa i opis z lewej.",
+      "w": 1500,
+      "h": 300,
+      "duration": 1,
+      "animated": false,
+      "files": {
+        "png": {
+          "path": "/brand/banners/baner-04-linia.png",
+          "size": 79464
+        }
+      }
+    },
+    {
+      "id": "baner-05-status",
+      "name": "Status + przycisk",
+      "desc": "„Przyjmuję nowe projekty.” z zielonym statusem i listą usług; kursor najeżdża i klika „Napisz do mnie”.",
+      "w": 1500,
+      "h": 300,
+      "duration": 4.8,
+      "animated": true,
+      "files": {
+        "mp4": {
+          "path": "/brand/banners/baner-05-status.mp4",
+          "size": 89736
+        },
+        "gif": {
+          "path": "/brand/banners/baner-05-status.gif",
+          "size": 558442
+        },
+        "png": {
+          "path": "/brand/banners/baner-05-status.png",
+          "size": 77813
+        }
+      }
+    }
+  ],
+  "logos": [
+    {
+      "id": "logo-01-ikona-ciemna",
+      "name": "Ikona aplikacji — ciemna",
+      "desc": "Superelipsa o ciągłych narożnikach (jak iOS), delikatne światło od góry, monogram w optycznym środku.",
+      "bg": "#15151c",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-01-ikona-ciemna.svg",
+          "size": 7090
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-01-ikona-ciemna.png",
+          "size": 42621
+        },
+        "avatar": {
+          "path": "/brand/logo-proposals/logo-01-ikona-ciemna-512.png",
+          "size": 18663
+        }
+      }
+    },
+    {
+      "id": "logo-01-ikona-fiolet",
+      "name": "Ikona aplikacji — fiolet",
+      "desc": "Wersja w kolorze marki: biała linia, kropka w kolorze tła — odwrócony akcent.",
+      "bg": "#15151c",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-01-ikona-fiolet.svg",
+          "size": 3791
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-01-ikona-fiolet.png",
+          "size": 29789
+        },
+        "avatar": {
+          "path": "/brand/logo-proposals/logo-01-ikona-fiolet-512.png",
+          "size": 13432
+        }
+      }
+    },
+    {
+      "id": "logo-02-awatar-orbita",
+      "name": "Awatar — orbita",
+      "desc": "Okrągły awatar 512×512 (Discord): monogram w środku, fioletowa orbita z kwadratową kropką w przerwie.",
+      "bg": "#15151c",
+      "round": true,
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-02-awatar-orbita.svg",
+          "size": 846
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-02-awatar-orbita.png",
+          "size": 83803
+        },
+        "avatar": {
+          "path": "/brand/logo-proposals/logo-02-awatar-orbita-512.png",
+          "size": 37598
+        }
+      }
+    },
+    {
+      "id": "logo-03-pionowy",
+      "name": "Układ pionowy",
+      "desc": "Monogram nad nazwą „afto.works” i linią usług — do stopek, okładek i profili.",
+      "bg": "#07070a",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-03-pionowy.svg",
+          "size": 11049
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-03-pionowy.png",
+          "size": 56974
+        }
+      }
+    },
+    {
+      "id": "logo-03-pionowy-jasne-tlo",
+      "name": "Układ pionowy — jasne tło",
+      "desc": "Ta sama kompozycja w czerni do druku i jasnych tła.",
+      "bg": "#F2F1EC",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-03-pionowy-jasne-tlo.svg",
+          "size": 11049
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-03-pionowy-jasne-tlo.png",
+          "size": 55215
+        }
+      }
+    },
+    {
+      "id": "logo-04-kontur-logotyp",
+      "name": "Kontur — logotyp",
+      "desc": "Logotyp „afto.” w tym samym stylu obrysu — na duże formaty, nadruki, tła wideo.",
+      "bg": "#07070a",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-04-kontur-logotyp.svg",
+          "size": 1506
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-04-kontur-logotyp.png",
+          "size": 72758
+        }
+      }
+    },
+    {
+      "id": "logo-04-kontur-znak",
+      "name": "Kontur — monogram",
+      "desc": "Linia znaku jako cienki podwójny obrys, pełna tylko kropka — wariant techniczny/blueprint.",
+      "bg": "#07070a",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-04-kontur-znak.svg",
+          "size": 900
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-04-kontur-znak.png",
+          "size": 31120
+        }
+      }
+    },
+    {
+      "id": "logo-05-poziomy",
+      "name": "Układ poziomy z hasłem",
+      "desc": "Monogram | nazwa i hasło „Projektowanie stron i identyfikacji” — do stopek maili, faktur, nagłówków.",
+      "bg": "#07070a",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-05-poziomy.svg",
+          "size": 14921
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-05-poziomy.png",
+          "size": 64558
+        }
+      }
+    },
+    {
+      "id": "logo-05-poziomy-jasne-tlo",
+      "name": "Układ poziomy — jasne tło",
+      "desc": "Wersja na jasne tło (dokumenty, oferty PDF).",
+      "bg": "#F2F1EC",
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-05-poziomy-jasne-tlo.svg",
+          "size": 14918
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-05-poziomy-jasne-tlo.png",
+          "size": 62836
+        }
+      }
+    },
+    {
+      "id": "logo-06-pieczec",
+      "name": "Pieczęć",
+      "desc": "Okrągła pieczęć: napis „AFTO.WORKS · STRONY · SKLEPY · IDENTYFIKACJA” po okręgu, monogram w środku — awatar, naklejki, znak wodny.",
+      "bg": "#15151c",
+      "round": true,
+      "files": {
+        "svg": {
+          "path": "/brand/logo-proposals/logo-06-pieczec.svg",
+          "size": 11551
+        },
+        "png": {
+          "path": "/brand/logo-proposals/logo-06-pieczec.png",
+          "size": 126727
+        },
+        "avatar": {
+          "path": "/brand/logo-proposals/logo-06-pieczec-512.png",
+          "size": 56277
+        }
+      }
+    }
+  ]
+}

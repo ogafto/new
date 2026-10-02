@@ -42,7 +42,7 @@ export default function ProjectList({ projects }: { projects: AdminProject[] }) 
           <Reorder.Item
             key={p.id}
             value={p}
-            className="relative flex items-center gap-4 bg-surface px-4 py-3 sm:px-5"
+            className="relative flex items-center gap-3 bg-surface px-3 py-3 sm:gap-4 sm:px-5"
             whileDrag={{ scale: 1.01, boxShadow: "0 20px 50px -20px rgba(0,0,0,0.8)", zIndex: 10 }}
             onDragEnd={() =>
               start(async () => {
@@ -55,8 +55,8 @@ export default function ProjectList({ projects }: { projects: AdminProject[] }) 
             <span className="cursor-grab text-dim active:cursor-grabbing" aria-label="Przeciągnij">
               <Icon d={ICONS.drag} />
             </span>
-            <span className="w-5 text-[12px] text-dim tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-            <span className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:h-16 sm:w-24">
+            <span className="hidden w-5 text-[12px] text-dim tabular-nums sm:block">{String(i + 1).padStart(2, "0")}</span>
+            <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:h-16 sm:w-24">
               <Image src={p.image} alt="" fill sizes="96px" className="pointer-events-none object-cover object-top" />
             </span>
             <span className="min-w-0 flex-1">

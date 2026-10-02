@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactLenis, useLenis } from "lenis/react";
 import { MotionConfig } from "motion/react";
@@ -8,6 +8,7 @@ import Loader from "./Loader";
 import CookieConsent from "./CookieConsent";
 import { TransitionProvider } from "./Transition";
 import Analytics from "./Analytics";
+import { applyContent, type Content } from "@/lib/content";
 
 const LoadedContext = createContext(false);
 export const useLoaded = () => useContext(LoadedContext);
@@ -29,7 +30,9 @@ function RouteScroll() {
   return null;
 }
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({ children, content, gaId }: { children: React.ReactNode; content: Content; gaId: string }) {
+  // treści z panelu (kontakt, ceny, hero…) — podmieniane zanim wyrenderują się komponenty strony
+  useMemo(() => applyContent(content), [content]);
   // konto i panel — bez ekranu ładowania
   const app = /^\/(konto|panel)/.test(usePathname());
   const [loaded, setLoaded] = useState(app);
@@ -38,7 +41,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ReactLenis root options={{ lerp: 0.1, anchors: { offset: -80, duration: 1.4 } }}>
       <MotionConfig reducedMotion="user">
         <LoadedContext.Provider value={loaded}>
-          <CookieConsent ready={loaded}>
+          <CookieConsent ready={loaded} gaId={gaId}>
             {!loaded && !app && <Loader onDone={() => setLoaded(true)} />}
             <RouteScroll />
             <Analytics />

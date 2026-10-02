@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { live } from "@/lib/analytics";
 import { baseUrl, sendMail } from "@/lib/mail";
+import { log } from "@/lib/logs";
 
 const INVITE_DAYS = 7;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -19,7 +20,7 @@ async function mailInvite(email: string, name: string | null, code: string) {
   return sendMail({
     to: email,
     subject: name ? `${name}, Twój panel w afto.works jest gotowy` : "Zaproszenie do panelu afto.works",
-    react: createElement(InviteEmail, { email, name, code, baseUrl: baseUrl(), days: INVITE_DAYS }),
+    react: createElement(InviteEmail, { email, name, code, baseUrl: await baseUrl(), days: INVITE_DAYS }),
   });
 }
 
@@ -44,6 +45,7 @@ export async function createInvite(_: InviteState, form: FormData): Promise<Invi
     now + INVITE_DAYS * 86_400_000,
   ]);
   const sent = await mailInvite(email, name, code);
+  await log("client", `Zaproszenie dla ${email}${sent.ok ? "" : " (mail nie wyszedł)"}`, { level: sent.ok ? "info" : "warn" });
   revalidatePath("/panel/admin/klienci");
   return { ok: true, code, email, mailed: sent.ok, dev: sent.dev };
 }
@@ -60,6 +62,7 @@ export async function resendInvite(inviteId: string): Promise<InviteState> {
     inviteId,
   ]);
   const sent = await mailInvite(inv.email, inv.name, code);
+  await log("client", `Ponownie wysłano zaproszenie do ${inv.email}`);
   revalidatePath("/panel/admin/klienci");
   return { ok: true, code, email: inv.email, mailed: sent.ok, dev: sent.dev };
 }
@@ -81,7 +84,9 @@ export async function updateClient(userId: string, form: FormData) {
 
 export async function deleteClient(userId: string) {
   await requireAdmin();
+  const u = await one<{ email: string }>("SELECT email FROM users WHERE id = ? AND role = 'client'", [userId]);
   await run("DELETE FROM users WHERE id = ? AND role = 'client'", [userId]);
+  if (u) await log("client", `Usunięto konto klienta ${u.email}`, { level: "warn" });
   await run("UPDATE cms_sites SET owner_id = NULL WHERE owner_id = ?", [userId]);
   revalidatePath("/panel/admin", "layout");
 }

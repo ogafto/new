@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { getProjects } from "@/lib/projects";
 import { offers } from "@/lib/offer";
+import { loadContent } from "@/lib/content-server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await loadContent();
   const now = new Date();
   const projects = await getProjects();
   return [

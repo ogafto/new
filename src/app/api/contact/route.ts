@@ -1,8 +1,10 @@
 import { Resend } from "resend";
 import { site } from "@/lib/site";
-import { env } from "@/lib/env";
+import { setting } from "@/lib/settings";
+import { log } from "@/lib/logs";
 import { run } from "@/lib/db";
 import { id } from "@/lib/auth/crypto";
+import { loadContent } from "@/lib/content-server";
 
 type Payload = {
   name: string;
@@ -78,12 +80,12 @@ function emailHtml(d: Payload) {
 }
 
 async function sendResend(d: Payload) {
-  const key = process.env.RESEND_API_KEY;
+  const [key, from, to] = await Promise.all([setting("resend_api_key"), setting("contact_from"), setting("contact_to")]);
   if (!key) return null;
   const resend = new Resend(key);
   const { error } = await resend.emails.send({
-    from: env.contactFrom() || `${site.domain} <formularz@${site.domain}>`,
-    to: process.env.CONTACT_TO || site.email,
+    from: from || `${site.domain} <formularz@${site.domain}>`,
+    to: to || site.email,
     replyTo: d.email,
     subject: `Nowe zapytanie — ${d.name}`,
     html: emailHtml(d),
@@ -94,7 +96,7 @@ async function sendResend(d: Payload) {
 }
 
 async function sendDiscord(d: Payload) {
-  const url = process.env.DISCORD_WEBHOOK_URL;
+  const url = await setting("discord_webhook");
   if (!url) return null;
   const res = await fetch(url, {
     method: "POST",
@@ -128,6 +130,7 @@ async function sendDiscord(d: Payload) {
 }
 
 export async function POST(req: Request) {
+  await loadContent();
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -169,6 +172,8 @@ export async function POST(req: Request) {
   const results = await Promise.allSettled([sendResend(data), sendDiscord(data)]);
   const delivered = saved || results.some((r) => r.status === "fulfilled" && r.value === true);
   results.forEach((r) => r.status === "rejected" && console.error("[contact]", r.reason));
+  const failed = results.filter((r) => r.status === "rejected").map((r) => String((r as PromiseRejectedResult).reason?.message ?? r));
+  await log("inquiry", `Nowe zapytanie: ${data.name}${data.topic ? ` · ${data.topic}` : ""}`, { level: failed.length ? "warn" : "success", actor: data.email, ip, meta: failed.length ? { failed } : undefined });
 
   if (!delivered) {
     return Response.json({ error: "Nie udało się wysłać wiadomości." }, { status: 502 });

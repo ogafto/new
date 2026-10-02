@@ -51,7 +51,8 @@ export async function publicContent(publicKey: string, only?: string) {
   if (!site) return null;
   const cols = (await getCollections(site.id)).filter((c) => !only || c.key === only);
   if (only && !cols.length) return null;
-  const abs = (v: unknown) => (typeof v === "string" && v.startsWith("/media/") ? `${baseUrl()}${v}` : v);
+  const base = await baseUrl();
+  const abs = (v: unknown) => (typeof v === "string" && v.startsWith("/media/") ? `${base}${v}` : v);
   const content: Record<string, unknown> = {};
   for (const c of cols) {
     const entries = await getEntries(c.id);

@@ -114,15 +114,15 @@ export function Stat({ label, value, suffix, prev, spark, icon, delay = 0, inver
   return (
     <Card delay={delay} className="group">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[13px] text-muted">{label}</p>
+        <p className="min-w-0 text-[13px] leading-snug text-muted">{label}</p>
         {icon && (
-          <span className="grid size-8 place-items-center rounded-xl bg-white/[0.04] text-dim transition-colors duration-500 group-hover:text-accent-2">
+          <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-dim transition-colors duration-500 group-hover:text-accent-2">
             <Icon d={icon} className="size-4" />
           </span>
         )}
       </div>
-      <div className="mt-3 flex items-end gap-3">
-        <Count value={value} suffix={suffix} className="h-display text-[38px] leading-none" />
+      <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1.5">
+        <Count value={value} suffix={suffix} className="h-display text-[30px] leading-none sm:text-[38px]" />
         {prev !== undefined && <Delta cur={value} prev={prev} invert={invert} />}
       </div>
       {hint && <p className="mt-2 text-[12px] text-dim">{hint}</p>}
@@ -402,9 +402,9 @@ export function Toggle({ name, defaultChecked, checked, onChange, label }: { nam
 
 export function Tabs<T extends string>({ value, onChange, items, id }: { value: T; onChange: (v: T) => void; items: { value: T; label: string; count?: number }[]; id: string }) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-full border border-line p-1">
+    <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full border border-line p-1 [scrollbar-width:none]" data-lenis-prevent>
       {items.map((it) => (
-        <button key={it.value} type="button" onClick={() => onChange(it.value)} className={`relative rounded-full px-3.5 py-1.5 text-[13px] transition-colors ${value === it.value ? "text-ink" : "text-muted hover:text-ink"}`}>
+        <button key={it.value} type="button" onClick={() => onChange(it.value)} className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-[13px] whitespace-nowrap transition-colors ${value === it.value ? "text-ink" : "text-muted hover:text-ink"}`}>
           {value === it.value && <motion.span layoutId={`tabs-${id}`} className="absolute inset-0 rounded-full bg-white/[0.08]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
           <span className="relative">
             {it.label}

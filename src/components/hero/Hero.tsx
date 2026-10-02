@@ -8,6 +8,7 @@ import { useLoaded } from "../Providers";
 import { useCovering } from "../Transition";
 import type { Project } from "@/lib/site";
 import Button, { Magnetic } from "../ui/Button";
+import { content } from "@/lib/content";
 
 const LogoScene = dynamic(() => import("./LogoScene"), { ssr: false });
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -38,6 +39,8 @@ export default function Hero({ recent }: { recent: Project[] }) {
   const y = useTransform(scrollYProgress, [0, 1], [0, 140]);
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
+  const hero = content().hero;
+
   return (
     <section ref={ref} id="start" className="relative h-[100svh] min-h-[680px] overflow-hidden">
       <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={show && scene ? { opacity: 1 } : {}} transition={{ duration: 1.6 }} aria-hidden>
@@ -49,20 +52,20 @@ export default function Hero({ recent }: { recent: Project[] }) {
       <motion.div style={{ y, opacity: fade }} className="relative z-10 mx-auto flex h-full max-w-[1400px] flex-col justify-end px-5 pb-12 sm:px-10 sm:pb-16">
         <h1 className="h-display text-[clamp(3.1rem,8.2vw,8.6rem)]">
           <Line i={0} show={show}>
-            Strony, które
+            {hero.line1}
           </Line>
           <Line i={1} show={show}>
-            wyglądają drogo.
+            {hero.line2}
           </Line>
           <Line i={2} show={show}>
-            <span className="text-accent-2">I sprzedają.</span>
+            <span className="text-accent-2">{hero.accent}</span>
           </Line>
         </h1>
 
         <div className="mt-10 flex flex-col justify-between gap-10 border-t border-line pt-8 lg:flex-row lg:items-end">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8, duration: 1, ease }}>
             <p className="max-w-[440px] text-[17px] leading-relaxed text-muted">
-              Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla marek, które chcą być zapamiętane.
+              {hero.text}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Magnetic>

@@ -4,6 +4,7 @@ import { id, sha256 } from "@/lib/auth/crypto";
 import { SESSION_COOKIE } from "@/lib/auth/session";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { isBot, parseUA } from "@/lib/ua";
+import { setting } from "@/lib/settings";
 
 /*
  * Analityka bez ciasteczek. Odwiedzający = skrót (dobowa sól + IP + przeglądarka) — nie da się go
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
     if (await isAdminVisit()) return new Response(null, { status: 204 });
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "0";
     const day = new Date().toISOString().slice(0, 10);
-    const visitor = sha256(`${process.env.ANALYTICS_SALT || process.env.DATABASE_URL || "afto"}:${day}:${ip}:${ua}`).slice(0, 24);
+    const visitor = sha256(`${(await setting("analytics_salt")) || process.env.DATABASE_URL || "afto"}:${day}:${ip}:${ua}`).slice(0, 24);
     const last = await one<{ session: string }>("SELECT session FROM pageviews WHERE visitor = ? AND COALESCE(seen, ts) > ? ORDER BY ts DESC LIMIT 1", [visitor, now - SESSION_GAP]);
     const ref = s(b.ref, 500);
     let host: string | null = null;

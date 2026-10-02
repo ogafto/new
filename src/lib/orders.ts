@@ -2,7 +2,9 @@ import { createElement } from "react";
 import { all, run } from "./db";
 import { baseUrl, sendMail } from "./mail";
 import { adminEmail } from "./auth/admin";
+import { setting } from "./settings";
 import ReminderEmail from "@/emails/ReminderEmail";
+import { log } from "./logs";
 
 export type Order = {
   id: string;
@@ -46,7 +48,7 @@ export async function upcoming(limit = 6) {
  * których termin jest dziś albo minął. Każde zlecenie trafia do maila „przed” i „w dniu” tylko raz.
  */
 export async function sendReminders() {
-  const to = process.env.NOTIFY_EMAIL || adminEmail();
+  const to = (await setting("notify_email")) || adminEmail();
   if (!to) return { sent: 0, reason: "Brak ADMIN_EMAIL / NOTIFY_EMAIL" };
   const t = today();
   const open = await all<Order>("SELECT * FROM orders WHERE status IN ('planned', 'active')");
@@ -64,13 +66,14 @@ export async function sendReminders() {
   const res = await sendMail({
     to,
     subject: due.length ? `Termin dziś: ${due.map((o) => o.title).join(", ")}` : `Zbliża się termin: ${soon.map((o) => o.title).join(", ")}`,
-    react: createElement(ReminderEmail, { items, baseUrl: baseUrl() }),
+    react: createElement(ReminderEmail, { items, baseUrl: await baseUrl() }),
   });
   if (res.ok) {
     const now = Date.now();
     for (const o of soon) await run("UPDATE orders SET reminded_before = ? WHERE id = ?", [now, o.id]);
     for (const o of due) await run("UPDATE orders SET reminded_due = ? WHERE id = ?", [now, o.id]);
   }
+  await log("system", res.ok ? `Przypomnienie o terminach (${items.length}) wysłane do ${to}` : "Nie wysłano przypomnienia o terminach", { level: res.ok ? "info" : "error" });
   return { sent: res.ok ? items.length : 0 };
 }
 

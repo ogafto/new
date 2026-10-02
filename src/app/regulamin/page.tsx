@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LegalPage, { type LegalSection } from "@/components/LegalPage";
 import { site } from "@/lib/site";
+import { loadContent } from "@/lib/content-server";
 
 export const metadata: Metadata = {
   title: "Regulamin",
@@ -139,7 +140,8 @@ const sections: LegalSection[] = [
   },
 ];
 
-export default function Regulamin() {
+export default async function Regulamin() {
+  await loadContent();
   return (
     <LegalPage
       current="/regulamin"

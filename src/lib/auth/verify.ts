@@ -18,6 +18,6 @@ export async function sendVerification(user: Pick<User, "id" | "email" | "name">
   return sendMail({
     to: user.email,
     subject: `${code} — kod weryfikacyjny afto.works`,
-    react: createElement(VerifyEmail, { name: user.name, code, baseUrl: baseUrl(), minutes: VERIFY_MINUTES }),
+    react: createElement(VerifyEmail, { name: user.name, code, baseUrl: await baseUrl(), minutes: VERIFY_MINUTES }),
   });
 }

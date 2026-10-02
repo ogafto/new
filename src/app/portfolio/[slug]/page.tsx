@@ -7,6 +7,7 @@ import { serviceName } from "@/lib/site";
 import { getProjectBySlug, getProjects } from "@/lib/projects";
 import JsonLd from "@/components/JsonLd";
 import { projectSchema } from "@/lib/seo";
+import { loadContent } from "@/lib/content-server";
 
 export async function generateStaticParams() {
   return (await getProjects()).map((p) => ({ slug: p.slug }));
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+  await loadContent();
   const { slug } = await params;
   const projects = await getProjects();
   const i = projects.findIndex((x) => x.slug === slug);

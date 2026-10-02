@@ -1,5 +1,6 @@
 import { one, run, type User } from "../db";
 import { hashPassword, id, safeEqual, sha256, token } from "./crypto";
+import { setting } from "../settings";
 
 /*
  * Jedno konto administratora — dane w .env.local:
@@ -29,7 +30,7 @@ export async function ensureAdminUser() {
   await run("INSERT INTO users (id, email, name, password, role, verified_at, created_at, last_login_at) VALUES (?, ?, ?, ?, 'admin', ?, ?, ?)", [
     uid,
     email,
-    process.env.ADMIN_NAME || "Administrator",
+    (await setting("admin_name")) || "Administrator",
     await hashPassword(token()),
     now,
     now,

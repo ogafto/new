@@ -9,12 +9,11 @@ import { AnimatePresence, motion } from "motion/react";
 /*
  * Zgoda na pliki cookies (RODO + Google Consent Mode v2).
  * Wybór zapisywany w ciasteczku `afto_consent` na 180 dni.
- * Google Analytics ładuje się dopiero po zgodzie na "Analityczne" i tylko gdy ustawisz NEXT_PUBLIC_GA_ID.
+ * Google Analytics ładuje się dopiero po zgodzie na "Analityczne" i tylko gdy w panelu (Ustawienia → Analityka) jest ID Google Analytics.
  */
 
 export type Consent = { necessary: true; analytics: boolean; marketing: boolean; date: string; v: 1 };
 const COOKIE = "afto_consent";
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const ConsentContext = createContext<Consent | null>(null);
@@ -67,7 +66,8 @@ function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange?: (v:
   );
 }
 
-export default function CookieConsent({ children, ready }: { children: React.ReactNode; ready: boolean }) {
+export default function CookieConsent({ children, ready, gaId }: { children: React.ReactNode; ready: boolean; gaId: string }) {
+  const GA_ID = gaId;
   const [consent, setConsent] = useState<Consent | null>(null);
   const [banner, setBanner] = useState(false);
   const [settings, setSettings] = useState(false);
@@ -98,7 +98,7 @@ export default function CookieConsent({ children, ready }: { children: React.Rea
     // baner potrzebny tylko, gdy są opcjonalne cookies (Google Analytics)
     const t = setTimeout(() => setBanner(!!GA_ID && !read()), 1200);
     return () => clearTimeout(t);
-  }, [ready]);
+  }, [ready, GA_ID]);
 
   const save = useCallback((analytics: boolean, marketing: boolean) => {
     const c: Consent = { necessary: true, analytics, marketing, date: new Date().toISOString(), v: 1 };

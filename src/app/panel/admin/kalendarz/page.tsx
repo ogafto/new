@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { listOrders, today } from "@/lib/orders";
 import { PageHead } from "@/components/panel/kit";
 import Calendar from "@/components/panel/Calendar";
+import { setting } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Kalendarz" };
 
@@ -18,7 +19,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         orders={orders.map((o) => ({ ...o, amount: o.amount === null ? null : Number(o.amount), remind_days: Number(o.remind_days) }))}
         clients={clients}
         today={today()}
-        mail={!!process.env.RESEND_API_KEY}
+        mail={!!(await setting("resend_api_key"))}
         prefill={sp.nowe ? { client_name: sp.klient ?? "", client_email: sp.email ?? "", title: sp.tytul ?? "" } : null}
       />
     </>

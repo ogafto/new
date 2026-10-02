@@ -7,6 +7,7 @@ import { FadeUp, Heading } from "@/components/ui/Reveal";
 import { Arrow } from "@/components/ui/Button";
 import { offers } from "@/lib/offer";
 import { site } from "@/lib/site";
+import { loadContent } from "@/lib/content-server";
 
 const description = "Usługi web designera i web developera: projektowanie stron internetowych, sklepy internetowe, identyfikacja wizualna, projekt UI/UX i animacje. Cała Polska.";
 
@@ -17,7 +18,8 @@ export const metadata: Metadata = {
   openGraph: { title: "Usługi — afto.works", description, url: "/uslugi", images: ["/opengraph-image"] },
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  await loadContent();
   return (
     <>
       <JsonLd

@@ -7,6 +7,7 @@ import { createSession, currentUser, destroySession, isAdmin } from "@/lib/auth/
 import { checkAdminPassword, ensureAdminUser, isAdminEmail } from "@/lib/auth/admin";
 import { sendVerification } from "@/lib/auth/verify";
 import { redirect } from "next/navigation";
+import { log } from "@/lib/logs";
 
 export type FormState = { error?: string; ok?: string; done?: string; fields?: Record<string, string> } | undefined;
 export type InviteCheck = { error?: string; ok?: boolean; code?: string; email?: string; name?: string | null } | undefined;
@@ -42,17 +43,22 @@ export async function login(_: FormState, form: FormData): Promise<FormState> {
   const password = String(form.get("password") ?? "");
   const fields = { email };
   if (!EMAIL.test(email) || !password) return { error: "Podaj e-mail i hasło.", fields };
-  if (limited(email, 5) || limited(await ip(), 20)) return { error: "Zbyt wiele prób. Spróbuj ponownie za kilka minut.", fields };
+  if (limited(email, 5) || limited(await ip(), 20)) {
+    await log("auth", `Zablokowano logowanie (za dużo prób): ${email}`, { level: "warn", ip: await ip() });
+    return { error: "Zbyt wiele prób. Spróbuj ponownie za kilka minut.", fields };
+  }
 
-  // administrator — dane z .env.local
+  // administrator — dane z env (ADMIN_EMAIL / ADMIN_PASSWORD)
   if (isAdminEmail(email)) {
     if (!checkAdminPassword(password)) {
       fail(email);
       fail(await ip());
+      await log("auth", "Nieudane logowanie na konto administratora", { level: "warn", actor: email, ip: await ip() });
       return { error: "Nieprawidłowy e-mail lub hasło.", fields };
     }
     fails.delete(email);
     await createSession(await ensureAdminUser());
+    await log("auth", "Zalogowano: administrator", { level: "success", actor: email, ip: await ip() });
     return { done: safeNext(str(form, "next")) || "/panel/admin" };
   }
 
@@ -61,11 +67,13 @@ export async function login(_: FormState, form: FormData): Promise<FormState> {
   if (!user || !ok) {
     fail(email);
     fail(await ip());
+    await log("auth", `Nieudane logowanie: ${email}`, { level: "warn", actor: email, ip: await ip() });
     return { error: "Nieprawidłowy e-mail lub hasło.", fields };
   }
   fails.delete(email);
   await run("UPDATE users SET last_login_at = ? WHERE id = ?", [Date.now(), user.id]);
   await createSession(user.id);
+  await log("auth", `Zalogowano: ${user.name}`, { level: "success", actor: email, ip: await ip() });
   return { done: user.verified_at ? safeNext(str(form, "next")) || home(user) : "/konto/weryfikacja" };
 }
 
@@ -141,6 +149,7 @@ export async function verify(_: FormState, form: FormData): Promise<FormState> {
   await run("UPDATE users SET verified_at = ?, last_login_at = ? WHERE id = ?", [now, now, user.id]);
   await run("DELETE FROM verification_codes WHERE user_id = ?", [user.id]);
   if (user.invite_id) await run("UPDATE invites SET used_at = ? WHERE id = ?", [now, user.invite_id]);
+  await log("client", `Nowe konto klienta: ${user.name} (${user.email})`, { level: "success", actor: user.email });
   return { done: `${home(user)}?witaj=1` };
 }
 

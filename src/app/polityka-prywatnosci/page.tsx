@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LegalPage, { type LegalSection } from "@/components/LegalPage";
 import { site } from "@/lib/site";
+import { loadContent } from "@/lib/content-server";
 
 export const metadata: Metadata = {
   title: "Polityka prywatności",
@@ -88,7 +89,8 @@ const sections: LegalSection[] = [
   },
 ];
 
-export default function PolitykaPrywatnosci() {
+export default async function PolitykaPrywatnosci() {
+  await loadContent();
   return (
     <LegalPage
       current="/polityka-prywatnosci"

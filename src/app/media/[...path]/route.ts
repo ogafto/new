@@ -7,7 +7,7 @@ const TYPES: Record<string, string> = { ".webp": "image/webp", ".png": "image/pn
 // Pliki wgrane w panelu (data/uploads) — tylko odczyt, bez wychodzenia poza katalog
 export async function GET(_: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const parts = (await params).path;
-  const file = path.resolve(UPLOAD_DIR, ...parts);
+  const file = path.resolve(/*turbopackIgnore: true*/ UPLOAD_DIR, ...parts);
   if (!file.startsWith(UPLOAD_DIR + path.sep)) return new Response("Nie znaleziono", { status: 404 });
   try {
     const s = await stat(file);

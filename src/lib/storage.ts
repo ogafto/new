@@ -11,7 +11,7 @@ import { env } from "./env";
  * Zdjęcia są zmniejszane do max 2400 px i zapisywane jako WebP.
  */
 
-export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || "data/uploads");
+export const UPLOAD_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.UPLOAD_DIR || "data/uploads");
 const MAX = 15 * 1024 * 1024;
 const IMAGE = /^image\/(jpeg|png|webp|avif|gif)$/;
 
@@ -35,7 +35,7 @@ export async function saveImage(file: File, folder = "") {
   }
 
   if (process.env.VERCEL) throw new Error("Na Vercelu zdjęcia wymagają Vercel Blob — podłącz Blob do projektu (BLOB_READ_WRITE_TOKEN).");
-  const target = path.join(UPLOAD_DIR, rel);
+  const target = path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, rel);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, out);
   return { url: `/media/${rel}`, width: meta.width, height: meta.height };
@@ -45,6 +45,6 @@ export async function saveImage(file: File, folder = "") {
 export async function removeLocal(url: string | null | undefined) {
   if (!url?.startsWith("/media/")) return;
   const { unlink } = await import("node:fs/promises");
-  const file = path.resolve(UPLOAD_DIR, url.slice("/media/".length));
+  const file = path.resolve(/*turbopackIgnore: true*/ UPLOAD_DIR, url.slice("/media/".length));
   if (file.startsWith(UPLOAD_DIR + path.sep)) await unlink(file).catch(() => {});
 }

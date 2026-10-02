@@ -17,6 +17,7 @@ type Tab = "animacje" | "grafiki" | "kolory";
 // Podkategorie (kolejność i opisy); nieznane sekcje trafiają na koniec
 const SECTIONS: Record<"animacje" | "grafiki", { name: string; text: string }[]> = {
   animacje: [
+    { name: "Premiera (launch)", text: "Czyste, premium filmy w stylu premiery produktu — interfejs, który składa się na oczach widza." },
     { name: "Zapowiedzi", text: "„Coś nadchodzi” — hype na Discorda i social media, każda w innym stylu." },
     { name: "Zapowiedź nowej strony", text: "Teasery premiery nowej odsłony afto.works." },
     { name: "Banery z hasłem", text: "Animowane banery z hasłem marki — embedy i nagłówki." },

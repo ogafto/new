@@ -16,16 +16,19 @@ import { slogans } from "./haslo.mjs";
 import { teasers } from "./nowa-strona.mjs";
 import { verification } from "./weryfikacja.mjs";
 import { comingSoon } from "./cos-nadchodzi.mjs";
+import { premiere } from "./premiera.mjs";
 
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}`))?.split("=")[1] ?? (process.argv.includes(`--${k}`) ? true : undefined);
 const only = arg("only");
 const sheets = arg("sheets");
 const manifestOnly = arg("manifest") === true;
-const pick = (list) => list.filter((s) => !only || s.id.includes(only));
+// „--only=id$” = dokładnie to id; „--only=a,b” = kilka wzorców
+const pick = (list) => list.filter((s) => !only || String(only).split(",").some((o) => (o.endsWith("$") ? s.id === o.slice(0, -1) : s.id.includes(o))));
 
 const MANIFEST = join(ROOT, "src", "app", "panel", "admin", "marka", "assets.json");
 const ANIM_DIR = join(PUBLIC, "brand", "animacje");
 const ZAP_DIR = join(PUBLIC, "brand", "zapowiedzi");
+const PREM_DIR = join(PUBLIC, "brand", "premiera");
 
 // ---------- sceny ----------
 const NEW = () => [...slogans(), ...teasers(), ...verification()];
@@ -34,7 +37,7 @@ const OLD_BAN = () => banners();
 
 if (sheets) {
   mkdirSync(sheets, { recursive: true });
-  for (const s of pick([...comingSoon(), ...NEW(), ...OLD_ANIM(), ...OLD_BAN()])) {
+  for (const s of pick([...premiere(), ...comingSoon(), ...NEW(), ...OLD_ANIM(), ...OLD_BAN()])) {
     await stills(s, s.keys ?? Array.from({ length: 6 }, (_, i) => (s.duration * (i + 0.5)) / 6), join(sheets, `${s.id}.png`));
     console.log(`  ✓ ${s.id}`);
   }
@@ -44,6 +47,7 @@ if (sheets) {
 
 if (!manifestOnly) {
   const groups = [
+    ["Premiera (public/brand/premiera)", pick(premiere()), (s) => ({ outDir: PREM_DIR, base: s.id })],
     ["Zapowiedzi „Coś nadchodzi” (public/brand/zapowiedzi)", pick(comingSoon()), (s) => ({ outDir: ZAP_DIR, base: s.id })],
     ["Animacje premium (public/brand/animacje)", pick(NEW()), (s) => ({ outDir: ANIM_DIR, base: s.id })],
     ["Zapowiedzi starsze (public/brand/discord)", pick(OLD_ANIM()), (s) => ({ outDir: join(PUBLIC, "brand", "discord"), base: s.id })],
@@ -78,6 +82,7 @@ const anim = (s, dir, group, extra = {}) => {
 // sekcje (podkategorie strony „Marka”): animacje → Zapowiedzi, Zapowiedź nowej strony, Banery z hasłem, Weryfikacja, Logo animowane, Archiwum;
 // grafiki → Banery, Logo, Propozycje logo
 const SECTION_OF = (s) => (s.id.startsWith("haslo") ? "Banery z hasłem" : s.id.startsWith("weryfikacja") ? "Weryfikacja" : "Zapowiedź nowej strony");
+for (const s of premiere()) anim(s, PREM_DIR, s.group, { section: "Premiera (launch)" });
 for (const s of comingSoon()) anim(s, ZAP_DIR, s.group, { section: "Zapowiedzi" });
 for (const s of NEW()) anim(s, ANIM_DIR, s.group, { section: SECTION_OF(s) });
 for (const s of OLD_ANIM()) anim(s, join(PUBLIC, "brand", "discord"), "Zapowiedzi (starsze)", { section: "Archiwum" });
@@ -141,7 +146,7 @@ for (const p of propMeta) {
 }
 
 // porządek: kategoria → sekcja (stała kolejność) → grupa (kolejność pojawienia się) → id
-const SECTIONS = ["Zapowiedzi", "Zapowiedź nowej strony", "Banery z hasłem", "Weryfikacja", "Logo animowane", "Archiwum", "Banery", "Logo", "Propozycje logo"];
+const SECTIONS = ["Premiera (launch)", "Zapowiedzi", "Zapowiedź nowej strony", "Banery z hasłem", "Weryfikacja", "Logo animowane", "Archiwum", "Banery", "Logo", "Propozycje logo"];
 const order = [...new Set(items.map((i) => i.group))];
 items.sort((a, b) => (a.category === b.category ? SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || order.indexOf(a.group) - order.indexOf(b.group) || a.id.localeCompare(b.id) : a.category === "animacje" ? -1 : 1));
 // każda pozycja ma sekcję i kolejność pól jak w opisie (id, category, section, group, …)

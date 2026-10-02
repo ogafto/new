@@ -1,7 +1,319 @@
 {
   "version": 2,
-  "generated": "2026-10-02T17:48:15.574Z",
+  "generated": "2026-10-02T18:34:24.625Z",
   "items": [
+    {
+      "id": "premiera-01-przedstawiamy",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Przedstawiamy afto.",
+      "description": "Okno polecenia wpisuje „Zaprojektuj stronę dla kawiarni w Krakowie…”, kursor klika „Generuj”, karty scenorysu wskakują po kolei i składają się w gotową stronę („Gotowe w 12 s”) → „Przedstawiamy: afto. Nowa odsłona.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-01-przedstawiamy-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-01-przedstawiamy.mp4",
+          "bytes": 969883,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-01-przedstawiamy.gif",
+          "bytes": 5287724,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-01-przedstawiamy-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Przedstawiamy afto. — baner 1500 × 500",
+      "description": "Okno polecenia wpisuje „Zaprojektuj stronę dla kawiarni w Krakowie…”, kursor klika „Generuj”, karty scenorysu wskakują po kolei i składają się w gotową stronę („Gotowe w 12 s”) → „Przedstawiamy: afto. Nowa odsłona.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-01-przedstawiamy-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-01-przedstawiamy-1500x500.mp4",
+          "bytes": 667069,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-01-przedstawiamy-1500x500.gif",
+          "bytes": 4813114,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-02-panel",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Twój panel",
+      "description": "Panel administracyjny składa się sam: menu, karty KPI sprężyście wskakują, liczby doliczają się, wykres rysuje się z punktem najechania, harmonogram rośnie, a z prawej wjeżdża powiadomienie „Wpłata 1 299 zł” → „Twój panel. Wszystko w jednym miejscu.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-02-panel-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-02-panel.mp4",
+          "bytes": 1766067,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-02-panel.gif",
+          "bytes": 8942581,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-02-panel-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Twój panel — baner 1500 × 500",
+      "description": "Panel administracyjny składa się sam: menu, karty KPI sprężyście wskakują, liczby doliczają się, wykres rysuje się z punktem najechania, harmonogram rośnie, a z prawej wjeżdża powiadomienie „Wpłata 1 299 zł” → „Twój panel. Wszystko w jednym miejscu.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-02-panel-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-02-panel-1500x500.mp4",
+          "bytes": 1090959,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-02-panel-1500x500.gif",
+          "bytes": 7510006,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-03-os-czasu",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Oś czasu",
+      "description": "Edytor z osią czasu: klipy „Strony · Sklepy · Identyfikacja · UI/UX” wskakują na ścieżkę, kursor klika odtwarzanie, głowica przesuwa się, a okno podglądu zmienia się z każdym klipem (strona, sklep, identyfikacja, ekrany aplikacji) → „Od pomysłu do premiery.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-03-os-czasu-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-03-os-czasu.mp4",
+          "bytes": 1338350,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-03-os-czasu.gif",
+          "bytes": 6858587,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-03-os-czasu-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Oś czasu — baner 1500 × 500",
+      "description": "Edytor z osią czasu: klipy „Strony · Sklepy · Identyfikacja · UI/UX” wskakują na ścieżkę, kursor klika odtwarzanie, głowica przesuwa się, a okno podglądu zmienia się z każdym klipem (strona, sklep, identyfikacja, ekrany aplikacji) → „Od pomysłu do premiery.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-03-os-czasu-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-03-os-czasu-1500x500.mp4",
+          "bytes": 901793,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-03-os-czasu-1500x500.gif",
+          "bytes": 6123908,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-04-portfolio",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Nowe portfolio",
+      "description": "Kamera sunie nad pochyloną w 3D siatką kart realizacji (kawiarnia, studio, sklepy, hotel…), które unoszą się delikatnie; płaszczyzna prostuje się, a jedna karta rozwija na cały kadr w stronę realizacji → „Nowe portfolio. Już wkrótce.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-04-portfolio-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-04-portfolio.mp4",
+          "bytes": 1998046,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-04-portfolio.gif",
+          "bytes": 10660502,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-04-portfolio-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Nowe portfolio — baner 1500 × 500",
+      "description": "Kamera sunie nad pochyloną w 3D siatką kart realizacji (kawiarnia, studio, sklepy, hotel…), które unoszą się delikatnie; płaszczyzna prostuje się, a jedna karta rozwija na cały kadr w stronę realizacji → „Nowe portfolio. Już wkrótce.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-04-portfolio-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-04-portfolio-1500x500.mp4",
+          "bytes": 1753230,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-04-portfolio-1500x500.gif",
+          "bytes": 11244942,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-05-projekt",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Coś się projektuje",
+      "description": "Jak w narzędziu do projektowania: kursor rysuje elipsę, piórem trzon z punktami, prostokątem belkę z liniami przyciągania, dodaje kropkę i pipetą pobiera fiolet z próbnika; zaznaczenie i „Zgrupowano · af.” → „Coś nowego się projektuje.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-05-projekt-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-05-projekt.mp4",
+          "bytes": 1095592,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-05-projekt.gif",
+          "bytes": 5607566,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-05-projekt-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Coś się projektuje — baner 1500 × 500",
+      "description": "Jak w narzędziu do projektowania: kursor rysuje elipsę, piórem trzon z punktami, prostokątem belkę z liniami przyciągania, dodaje kropkę i pipetą pobiera fiolet z próbnika; zaznaczenie i „Zgrupowano · af.” → „Coś nowego się projektuje.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-05-projekt-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-05-projekt-1500x500.mp4",
+          "bytes": 768804,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-05-projekt-1500x500.gif",
+          "bytes": 5225027,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-06-start",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Startujemy",
+      "description": "Karta publikacji: punkty „Projekt · Kod · SEO · Domena” odhaczają się po kolei, pierścień gotowości dochodzi do 100%, kursor klika „Publikuj” → „Publikuję…” → „✓ Online”, wybucha konfetti z małych fioletowych kwadratów, status „Online” → „Startujemy wkrótce.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-06-start-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-06-start.mp4",
+          "bytes": 1275141,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-06-start.gif",
+          "bytes": 6568898,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "premiera-06-start-1500x500",
+      "category": "animacje",
+      "section": "Premiera (launch)",
+      "group": "Premiera",
+      "title": "Startujemy — baner 1500 × 500",
+      "description": "Karta publikacji: punkty „Projekt · Kod · SEO · Domena” odhaczają się po kolei, pierścień gotowości dochodzi do 100%, kursor klika „Publikuj” → „Publikuję…” → „✓ Online”, wybucha konfetti z małych fioletowych kwadratów, status „Online” → „Startujemy wkrótce.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 9,
+      "poster": "/brand/premiera/premiera-06-start-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/premiera/premiera-06-start-1500x500.mp4",
+          "bytes": 820535,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/premiera/premiera-06-start-1500x500.gif",
+          "bytes": 5317171,
+          "label": "GIF"
+        }
+      ]
+    },
     {
       "id": "zapowiedz-01-chrom",
       "category": "animacje",

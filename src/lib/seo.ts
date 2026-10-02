@@ -1,4 +1,5 @@
-import { serviceName, services, site, type Project } from "./site";
+import { serviceName, site, type Project } from "./site";
+import { cities, offers } from "./offer";
 
 const id = (frag: string) => `${site.url}/#${frag}`;
 // do „sameAs” tylko konkretne profile (nie same strony główne serwisów)
@@ -14,7 +15,7 @@ export function homeSchema() {
         "@id": id("business"),
         name: site.domain,
         alternateName: site.brand,
-        description: "Projektowanie stron internetowych, sklepów internetowych, identyfikacji wizualnych i projektów UI/UX.",
+        description: "Web designer & web developer — projektowanie stron internetowych, sklepów internetowych, identyfikacji wizualnych, projektów UI/UX i animacji dla firm z całej Polski.",
         url: site.url,
         logo: `${site.url}/brand/afto-icon-dark.png`,
         image: `${site.url}/opengraph-image`,
@@ -22,10 +23,7 @@ export function homeSchema() {
         telephone: site.phone.replace(/\s/g, ""),
         priceRange: "od 200 zł",
         currenciesAccepted: "PLN",
-        areaServed: [
-          { "@type": "City", name: "Wrocław" },
-          { "@type": "Country", name: "Polska" },
-        ],
+        areaServed: [{ "@type": "Country", name: "Polska" }, ...cities.map((c) => ({ "@type": "City", name: c }))],
         availableLanguage: "pl",
         sameAs: profiles(),
         founder: { "@id": id("person") },
@@ -34,10 +32,11 @@ export function homeSchema() {
         hasOfferCatalog: {
           "@type": "OfferCatalog",
           name: "Usługi",
-          itemListElement: services.map((s) => ({
+          itemListElement: offers.map((o) => ({
             "@type": "Offer",
-            itemOffered: { "@type": "Service", name: s.name, description: s.description },
-            priceSpecification: { "@type": "PriceSpecification", minPrice: s.price, priceCurrency: "PLN" },
+            url: `${site.url}/uslugi/${o.slug}`,
+            itemOffered: { "@type": "Service", name: o.h1, description: o.description, url: `${site.url}/uslugi/${o.slug}` },
+            ...(o.price ? { priceSpecification: { "@type": "PriceSpecification", minPrice: o.price, priceCurrency: "PLN" } } : {}),
           })),
         },
       },
@@ -45,7 +44,7 @@ export function homeSchema() {
         "@type": "Person",
         "@id": id("person"),
         name: site.legal.owner,
-        jobTitle: "Web designer & developer",
+        jobTitle: "Web designer & web developer",
         url: site.url,
         email: site.email,
         worksFor: { "@id": id("business") },

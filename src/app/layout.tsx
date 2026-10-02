@@ -7,9 +7,9 @@ import "./globals.css";
 // Satoshi (Fontshare, ITF Free Font License — patrz src/fonts/Satoshi-LICENSE.txt)
 const satoshi = localFont({ src: "../fonts/Satoshi-Variable.woff2", variable: "--font-satoshi", weight: "300 900", display: "swap" });
 
-const title = `${site.domain} — projektowanie stron internetowych, sklepów i identyfikacji wizualnych`;
+const title = `Web designer & web developer — strony internetowe i sklepy | ${site.domain}`;
 const description =
-  "Web designer z Wrocławia. Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne, które wyglądają premium i sprzedają. Strona od 200 zł.";
+  "Web designer & web developer. Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla firm z całej Polski. Strona od 200 zł.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -17,19 +17,26 @@ export const metadata: Metadata = {
   description,
   applicationName: site.domain,
   keywords: [
+    "web designer",
+    "web developer",
+    "projektant stron internetowych",
     "projektowanie stron internetowych",
-    "strona internetowa",
     "tworzenie stron www",
+    "strona internetowa dla firmy",
     "sklep internetowy",
     "identyfikacja wizualna",
     "projekt logo",
     "projekt UI/UX",
-    "web designer",
-    "strona dla firmy",
+    "grafik",
+    "designer",
     "landing page",
-    "web designer Wrocław",
+    "strona w Next.js",
+    "animacja logo",
+    "strony internetowe Warszawa",
+    "strony internetowe Kraków",
     "strony internetowe Wrocław",
-    "projektowanie stron Wrocław",
+    "strony internetowe Poznań",
+    "strony internetowe Gdańsk",
   ],
   creator: site.legal.owner,
   authors: [{ name: site.legal.owner, url: site.url }],

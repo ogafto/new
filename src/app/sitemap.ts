@@ -1,12 +1,15 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { getProjects } from "@/lib/projects";
+import { offers } from "@/lib/offer";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const projects = await getProjects();
   return [
     { url: site.url, lastModified: now, changeFrequency: "monthly", priority: 1, images: [`${site.url}/opengraph-image`] },
+    { url: `${site.url}/uslugi`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    ...offers.map((o) => ({ url: `${site.url}/uslugi/${o.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.9 })),
     { url: `${site.url}/portfolio`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     ...projects.map((p) => ({
       url: `${site.url}/portfolio/${p.slug}`,

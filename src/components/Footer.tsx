@@ -8,6 +8,7 @@ import { nav, site } from "@/lib/site";
 import { Mark } from "./brand/Logo";
 import { openCookieSettings } from "./CookieConsent";
 import { TLink } from "./Transition";
+import { offers } from "@/lib/offer";
 
 // Pasek przewijany w JS: prędkość zmienia się płynnie (bez skoków przy najechaniu)
 function Marquee({ href }: { href: string }) {
@@ -61,6 +62,7 @@ export default function Footer() {
 
   const cols = [
     { title: "Nawigacja", links: nav.map((n) => ({ label: n.label, href: href(n.href) })) },
+    { title: "Usługi", links: offers.map((o) => ({ label: o.name, href: `/uslugi/${o.slug}` })) },
     { title: "Social", links: site.socials.map((s) => ({ label: s.label, href: s.href, ext: true })) },
   ];
 
@@ -71,13 +73,10 @@ export default function Footer() {
       <div className="pointer-events-none absolute bottom-[-40%] left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.12),transparent)]" aria-hidden />
 
       <div className="relative mx-auto max-w-[1400px] px-5 pt-16 pb-10 sm:px-10">
-        <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
             <Mark className="size-10" />
             <p className="mt-6 max-w-[300px] text-[15px] leading-relaxed text-muted">Projektuję i koduję strony, które wyglądają drogo i sprzedają.</p>
-            <p className="mt-3 text-[13px] text-dim">
-              {site.legal.owner} · web designer, Wrocław
-            </p>
             <address className="not-italic">
             <a href={`mailto:${site.email}`} className="link-u mt-6 inline-block text-[17px]">
               {site.email}

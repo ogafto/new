@@ -184,14 +184,57 @@ const direct = [
   { label: "Discord", value: "Napisz na Discordzie", href: discord, kind: "discord" as const },
 ];
 
-// Bezpośredni kontakt — prosto, jak kolumny w stopce
+// Animowane ikony kanałów — grają po najechaniu na wiersz (group/dc)
+function DirectIcon({ kind }: { kind: "mail" | "phone" | "discord" }) {
+  const common = "size-[18px]";
+  if (kind === "mail")
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M3 7.5A1.5 1.5 0 014.5 6h15A1.5 1.5 0 0121 7.5v10a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5z" />
+        {/* klapka koperty otwiera się */}
+        <path d="M3.5 7l8.5 6.5L20.5 7" className="origin-[50%_28%] transition-transform duration-500 ease-out-expo group-hover/dc:[transform:scaleY(-1)_translateY(-4px)]" />
+        {/* list wysuwa się z koperty */}
+        <path d="M8 13V9.5h8V13" className="translate-y-2 opacity-0 transition-all duration-500 ease-out-expo group-hover/dc:-translate-y-1 group-hover/dc:opacity-100" />
+      </svg>
+    );
+  if (kind === "phone")
+    return (
+      <svg viewBox="0 0 24 24" className={`${common} overflow-visible`} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <g className="origin-center group-hover/dc:animate-[ring_0.7s_ease-in-out_2]">
+          <path d="M5 4h3.5l1.8 4.5-2.3 1.4a11 11 0 005.6 5.6l1.4-2.3L19.5 15v3.5a1.5 1.5 0 01-1.6 1.5C10.6 19.5 4.5 13.4 4 6.1A1.5 1.5 0 015 4z" />
+        </g>
+        {/* fale dźwięku */}
+        <path d="M15 5a4.5 4.5 0 014 4" className="opacity-0 transition-opacity delay-100 duration-300 group-hover/dc:opacity-100" />
+        <path d="M15 1.8a7.7 7.7 0 017.2 7.2" className="opacity-0 transition-opacity delay-200 duration-300 group-hover/dc:opacity-100" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 24 24" className={`${common} transition-transform duration-500 ease-out-expo group-hover/dc:-translate-y-0.5 group-hover/dc:-rotate-6`} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M8.5 7.5c2.3-.7 4.7-.7 7 0M7 17c3.3 1.3 6.7 1.3 10 0M8.5 7.5L7.5 6C5.8 6.4 4.6 7 3.5 8 2.4 10.6 2 13.3 2.4 16c1.2 1 2.6 1.6 4 2l1-1.8M15.5 7.5l1-1.5c1.7.4 2.9 1 4 2 1.1 2.6 1.5 5.3 1.1 8-1.2 1-2.6 1.6-4 2l-1-1.8" />
+      {/* oczka mrugają */}
+      <g className="origin-[50%_55%] group-hover/dc:animate-[blink_0.9s_ease-in-out_2]">
+        <path d="M9.3 13.2a.9.9 0 100-1.8.9.9 0 000 1.8zM14.7 13.2a.9.9 0 100-1.8.9.9 0 000 1.8z" fill="currentColor" />
+      </g>
+    </svg>
+  );
+}
+
+// Bezpośredni kontakt: ikona w kółku (wypełnia się fioletem) + wartość + „Kopiuj”
 function DirectItem({ c }: { c: (typeof direct)[number] }) {
   const [copied, setCopied] = useState(false);
   return (
-    <li className="group flex items-center gap-4">
-      <a href={c.href} {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="flex min-w-0 items-baseline gap-4">
-        <span className="w-16 shrink-0 text-[13px] text-dim">{c.label}</span>
-        <span className="link-u truncate text-[17px] text-muted transition-colors group-hover:text-ink">{c.value}</span>
+    <li className="group/dc flex items-center gap-3">
+      <a href={c.href} {...(c.kind === "discord" ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="flex min-w-0 items-center gap-4 rounded-2xl py-1.5 pr-2">
+        <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-full border border-line-2 text-muted transition-[border-color,color] duration-500 group-hover/dc:border-accent/60 group-hover/dc:text-white">
+          <span className="absolute inset-0 scale-0 rounded-full bg-gradient-to-br from-accent to-[#6d4fe6] transition-transform duration-500 ease-out-expo group-hover/dc:scale-100" />
+          <span className="relative">
+            <DirectIcon kind={c.kind} />
+          </span>
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[12px] text-dim">{c.label}</span>
+          <span className="link-u block truncate text-[16.5px] text-muted transition-colors group-hover/dc:text-ink">{c.value}</span>
+        </span>
       </a>
       {c.copy && (
         <button
@@ -202,7 +245,7 @@ function DirectItem({ c }: { c: (typeof direct)[number] }) {
               setTimeout(() => setCopied(false), 1600);
             })
           }
-          className="shrink-0 text-[12.5px] text-dim opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:text-ink focus-visible:opacity-100"
+          className="mt-4 shrink-0 text-[12.5px] text-dim opacity-0 transition-opacity duration-300 group-hover/dc:opacity-100 hover:text-ink focus-visible:opacity-100"
         >
           {copied ? "Skopiowano ✓" : "Kopiuj"}
         </button>
@@ -337,7 +380,8 @@ export default function Contact() {
     <section id="kontakt" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-40">
       <div className="grid grid-cols-1 gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
         {/* lewa kolumna: nagłówek + bezpośredni kontakt (jak w stopce) */}
-        <div className="flex flex-col">
+        {/* lewa kolumna jedzie razem z przewijaniem do końca karty formularza */}
+        <div className="flex min-w-0 flex-col lg:sticky lg:top-28 lg:self-start">
           <FadeUp>
             <p className="kicker">Kontakt</p>
           </FadeUp>
@@ -354,9 +398,9 @@ export default function Contact() {
             <p className="mt-6 max-w-[380px] text-[17px] leading-relaxed text-muted">Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.</p>
           </FadeUp>
 
-          <FadeUp delay={0.15} className="mt-14 lg:mt-auto lg:pt-14">
+          <FadeUp delay={0.15} className="mt-12">
             <p className="text-[13px] text-dim">Wolisz bezpośrednio?</p>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-2">
               {direct.map((c) => (
                 <DirectItem key={c.label} c={c} />
               ))}

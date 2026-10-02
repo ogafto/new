@@ -8,8 +8,8 @@ export function FadeUp({ children, delay = 0, className = "", y = 24 }: { childr
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y, filter: "blur(8px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ delay, duration: 1.1, ease }}
     >
@@ -25,7 +25,10 @@ export function Heading({ lines, className = "", as = "h2" }: { lines: React.Rea
     <Tag className={`h-display ${className}`} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }}>
       {lines.map((l, i) => (
         <span key={i} className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-          <motion.span className="block" variants={{ hidden: { y: "108%" }, show: { y: "0%", transition: { delay: i * 0.09, duration: 1.2, ease } } }}>
+          <motion.span
+            className="block origin-[0%_100%]"
+            variants={{ hidden: { y: "108%", rotate: 4, opacity: 0.4 }, show: { y: "0%", rotate: 0, opacity: 1, transition: { delay: i * 0.09, duration: 1.2, ease } } }}
+          >
             {l}
           </motion.span>
         </span>

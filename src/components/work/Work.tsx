@@ -123,9 +123,7 @@ export default function Work({ projects }: { projects: Project[] }) {
 
             <motion.div className="pointer-events-none absolute inset-0 z-30" style={{ opacity: ui }}>
               <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-bg/75 to-transparent" />
-              {/* stopniowe rozmycie pod nazwą projektu — czytelnie na każdym zdjęciu */}
-              <div className="absolute inset-x-0 bottom-0 h-[50%] backdrop-blur-2xl [mask-image:linear-gradient(to_top,#000_35%,transparent)]" />
-              <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-bg/90 via-bg/45 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-[65%] bg-[linear-gradient(to_top,rgb(7_7_10/0.96),rgb(7_7_10/0.75)_30%,rgb(7_7_10/0.3)_65%,transparent)]" />
 
               {/* góra */}
               <div className="absolute inset-x-5 top-24 flex items-start justify-between sm:inset-x-10 sm:top-28">

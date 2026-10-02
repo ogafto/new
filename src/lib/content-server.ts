@@ -26,7 +26,23 @@ export async function loadContent() {
   return c;
 }
 
-export async function saveContent(c: Content) {
+export type ContentVersion = { ts: number; actor: string | null; section: string; value: Content };
+
+export async function contentHistory(): Promise<ContentVersion[]> {
+  try {
+    const r = await one<{ value: string }>("SELECT value FROM meta WHERE key = 'content_history'");
+    return r ? (JSON.parse(r.value) as ContentVersion[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Zapis z historią: poprzednia wersja trafia do listy (ostatnie 20) */
+export async function saveContent(c: Content, meta: { actor?: string | null; section?: string } = {}) {
+  const before = await getContent();
+  const hist = await contentHistory();
+  hist.unshift({ ts: Date.now(), actor: meta.actor ?? null, section: meta.section ?? "zmiana", value: before });
+  await run("INSERT INTO meta (key, value) VALUES ('content_history', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [JSON.stringify(hist.slice(0, 20))]);
   const value = mergeContent(c);
   await run("INSERT INTO meta (key, value) VALUES ('content', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [JSON.stringify(value)]);
   g.__afto_content = { at: Date.now(), value };

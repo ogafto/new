@@ -1,31 +1,40 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { resetSiteContent, saveSiteContent } from "@/app/panel/admin/tresci/actions";
+import { resetSiteContent, restoreSiteContent, saveSiteContent } from "@/app/panel/admin/tresci/actions";
 import type { Content } from "@/lib/content";
 import type { ServiceId } from "@/lib/site";
-import { Btn, Card, ConfirmBtn, ease, field, Icon, ICONS, Label, Tabs } from "./kit";
+import { Badge, Btn, Card, ConfirmBtn, ease, field, Icon, ICONS, Label, Tabs, Toggle } from "./kit";
 
-type Section = "hero" | "contact" | "services" | "seo" | "legal";
+type Section = "hero" | "notice" | "contact" | "services" | "process" | "seo" | "legal" | "history";
 const SECTIONS: { value: Section; label: string }[] = [
   { value: "hero", label: "Strona główna" },
+  { value: "notice", label: "Ogłoszenie i status" },
   { value: "contact", label: "Kontakt" },
   { value: "services", label: "Usługi i ceny" },
+  { value: "process", label: "Proces" },
   { value: "seo", label: "SEO" },
   { value: "legal", label: "Dane firmy" },
+  { value: "history", label: "Historia" },
 ];
+type Version = { ts: number; actor: string | null; section: string };
+const when = (ts: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Warsaw" }).format(ts);
 
 function Counter({ value, max }: { value: string; max: number }) {
   const n = value.length;
   return <span className={`text-[11.5px] tabular-nums ${n > max ? "text-amber-300" : "text-dim"}`}>{n}/{max}</span>;
 }
 
-export default function ContentForm({ initial, defaults, services }: { initial: Content; defaults: Content; services: { id: ServiceId; name: string }[] }) {
+export default function ContentForm({ initial, defaults, services, history }: { initial: Content; defaults: Content; services: { id: ServiceId; name: string }[]; history: Version[] }) {
   const router = useRouter();
   const [c, setC] = useState<Content>(initial);
   const [tab, setTab] = useState<Section>("hero");
+  useEffect(() => {
+    const h = location.hash.slice(1) as Section;
+    if (SECTIONS.some((x) => x.value === h)) setTimeout(() => setTab(h), 0);
+  }, []);
   const [msg, setMsg] = useState<{ ok?: string; error?: string }>();
   const [pending, start] = useTransition();
   const dirty = JSON.stringify(c) !== JSON.stringify(initial);
@@ -84,6 +93,139 @@ export default function ContentForm({ initial, defaults, services }: { initial: 
                 </div>
               </Card>
             </div>
+          )}
+
+          {tab === "notice" && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-[16px] font-medium">Pasek ogłoszeń</h2>
+                    <p className="mt-0.5 text-[13px] text-dim">Elegancka wiadomość na dole strony — promocja, nowość, wolne terminy.</p>
+                  </div>
+                  <Toggle label="" checked={c.announcement.enabled} onChange={(v) => set("announcement", { ...c.announcement, enabled: v })} />
+                </div>
+                <div className={`space-y-4 transition-opacity ${c.announcement.enabled ? "" : "opacity-50"}`}>
+                  <Label label="Treść">
+                    <input className={`${field} h-11`} maxLength={120} value={c.announcement.text} onChange={(e) => set("announcement", { ...c.announcement, text: e.target.value })} />
+                  </Label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Label label="Tekst przycisku">
+                      <input className={`${field} h-11`} maxLength={30} value={c.announcement.label} onChange={(e) => set("announcement", { ...c.announcement, label: e.target.value })} />
+                    </Label>
+                    <Label label="Link" hint="np. /portfolio albo /#kontakt">
+                      <input className={`${field} h-11`} value={c.announcement.link} onChange={(e) => set("announcement", { ...c.announcement, link: e.target.value })} />
+                    </Label>
+                  </div>
+                </div>
+                <div className="mt-5 flex justify-center rounded-2xl bg-[radial-gradient(60%_80%_at_50%_100%,rgb(139_108_255/0.18),transparent)] p-5">
+                  <span className="edge inline-flex max-w-full items-center gap-3 rounded-full bg-surface/90 py-1.5 pr-1.5 pl-4 text-[13px] shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)]">
+                    <span className="relative flex size-2 shrink-0">
+                      <span className="absolute inset-0 animate-ping rounded-full bg-accent-2/70" />
+                      <span className="relative size-2 rounded-full bg-accent-2" />
+                    </span>
+                    <span className="truncate">{c.announcement.text || "Treść ogłoszenia"}</span>
+                    {c.announcement.label && <span className="shrink-0 rounded-full bg-ink px-3 py-1 text-[12px] font-medium text-bg">{c.announcement.label}</span>}
+                  </span>
+                </div>
+              </Card>
+              <Card>
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-[16px] font-medium">Status dostępności</h2>
+                    <p className="mt-0.5 text-[13px] text-dim">Widoczny przy formularzu kontaktowym — buduje zaufanie i pilność.</p>
+                  </div>
+                  <Toggle label="" checked={c.availability.open} onChange={(v) => set("availability", { ...c.availability, open: v, text: v ? "Przyjmuję nowe projekty" : "Wolne terminy od przyszłego miesiąca" })} />
+                </div>
+                <Label label="Tekst statusu">
+                  <input className={`${field} h-11`} maxLength={60} value={c.availability.text} onChange={(e) => set("availability", { ...c.availability, text: e.target.value })} />
+                </Label>
+                <div className="mt-5 flex items-center gap-3 rounded-2xl border border-line p-4">
+                  <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] ${c.availability.open ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200" : "border-amber-300/25 bg-amber-300/10 text-amber-100"}`}>
+                    <span className="relative flex size-2">
+                      <span className={`absolute inset-0 animate-ping rounded-full ${c.availability.open ? "bg-emerald-400/70" : "bg-amber-300/70"}`} />
+                      <span className={`relative size-2 rounded-full ${c.availability.open ? "bg-emerald-400" : "bg-amber-300"}`} />
+                    </span>
+                    {c.availability.text}
+                  </span>
+                  <span className="text-[12px] text-dim">podgląd</span>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {tab === "process" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {c.steps.map((st, i) => {
+                const upd = (p: Partial<typeof st>) => set("steps", c.steps.map((x, j) => (j === i ? { ...x, ...p } : x)));
+                return (
+                  <Card key={i} delay={i * 0.04}>
+                    <div className="mb-5 flex items-center gap-3">
+                      <span className="grid size-8 place-items-center rounded-full bg-accent/15 text-[12.5px] text-accent-2 tabular-nums">0{i + 1}</span>
+                      <h2 className="text-[16px] font-medium">Etap {i + 1}</h2>
+                    </div>
+                    <div className="grid gap-4">
+                      <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+                        <Label label="Nazwa">
+                          <input className={`${field} h-11`} value={st.title} onChange={(e) => upd({ title: e.target.value })} />
+                        </Label>
+                        <Label label="Podtytuł">
+                          <input className={`${field} h-11`} value={st.lead} onChange={(e) => upd({ lead: e.target.value })} />
+                        </Label>
+                      </div>
+                      <Label label="Opis">
+                        <textarea rows={3} className={`${field} resize-none py-3`} value={st.text} onChange={(e) => upd({ text: e.target.value })} />
+                      </Label>
+                      <Label label="Punkty (po przecinku)">
+                        <input className={`${field} h-11`} value={st.points.join(", ")} onChange={(e) => upd({ points: e.target.value.split(",").map((x) => x.trimStart()).filter((x, k, a) => x || k === a.length - 1) })} />
+                      </Label>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {tab === "history" && (
+            <Card>
+              <h2 className="text-[16px] font-medium">Historia zmian</h2>
+              <p className="mt-0.5 mb-5 text-[13px] text-dim">Ostatnie 20 zapisów. Każdy zapis zachowuje poprzednią wersję — możesz do niej wrócić jednym kliknięciem.</p>
+              {history.length === 0 ? (
+                <p className="py-8 text-center text-[13.5px] text-dim">Jeszcze nic nie zapisano.</p>
+              ) : (
+                <ul className="relative space-y-1 before:absolute before:top-3 before:bottom-3 before:left-[11px] before:w-px before:bg-line">
+                  {history.map((h, i) => (
+                    <li key={h.ts} className="relative flex items-center gap-4 rounded-xl py-2.5 pr-2 pl-9 transition-colors hover:bg-white/[0.02]">
+                      <span className={`absolute top-1/2 left-[6px] size-[11px] -translate-y-1/2 rounded-full ring-4 ring-surface ${i === 0 ? "bg-accent" : "bg-white/25"}`} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px]">Przed: {h.section}</span>
+                        <span className="block text-[12px] text-dim">
+                          {when(h.ts)}
+                          {h.actor ? ` · ${h.actor}` : ""}
+                        </span>
+                      </span>
+                      {i === 0 && <Badge tone="accent">ostatnia</Badge>}
+                      <Btn
+                        size="sm"
+                        icon={ICONS.refresh}
+                        disabled={pending}
+                        onClick={() =>
+                          start(async () => {
+                            const r = await restoreSiteContent(h.ts);
+                            if (r.content) setC(r.content);
+                            setMsg(r);
+                            router.refresh();
+                            setTimeout(() => setMsg(undefined), 3500);
+                          })
+                        }
+                      >
+                        Przywróć
+                      </Btn>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
           )}
 
           {tab === "contact" && (

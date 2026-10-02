@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { all, one, run, type Invite, type User } from "@/lib/db";
 import { hashPassword, id, normalizeCode, safeEqual, sha256, verifyPassword } from "@/lib/auth/crypto";
-import { createSession, currentUser, destroySession, isAdmin } from "@/lib/auth/session";
+import { createSession, currentUser, destroySession, isAdmin, setRoleCookie } from "@/lib/auth/session";
 import { checkAdminPassword, ensureAdminUser, isAdminEmail } from "@/lib/auth/admin";
 import { sendVerification } from "@/lib/auth/verify";
 import { redirect } from "next/navigation";
@@ -58,6 +58,7 @@ export async function login(_: FormState, form: FormData): Promise<FormState> {
     }
     fails.delete(email);
     await createSession(await ensureAdminUser());
+    await setRoleCookie("admin");
     await log("auth", "Zalogowano: administrator", { level: "success", actor: email, ip: await ip() });
     return { done: safeNext(str(form, "next")) || "/panel/admin" };
   }
@@ -73,6 +74,7 @@ export async function login(_: FormState, form: FormData): Promise<FormState> {
   fails.delete(email);
   await run("UPDATE users SET last_login_at = ? WHERE id = ?", [Date.now(), user.id]);
   await createSession(user.id);
+  if (user.verified_at) await setRoleCookie("client");
   await log("auth", `Zalogowano: ${user.name}`, { level: "success", actor: email, ip: await ip() });
   return { done: user.verified_at ? safeNext(str(form, "next")) || home(user) : "/konto/weryfikacja" };
 }
@@ -149,6 +151,7 @@ export async function verify(_: FormState, form: FormData): Promise<FormState> {
   await run("UPDATE users SET verified_at = ?, last_login_at = ? WHERE id = ?", [now, now, user.id]);
   await run("DELETE FROM verification_codes WHERE user_id = ?", [user.id]);
   if (user.invite_id) await run("UPDATE invites SET used_at = ? WHERE id = ?", [now, user.invite_id]);
+  await setRoleCookie("client");
   await log("client", `Nowe konto klienta: ${user.name} (${user.email})`, { level: "success", actor: user.email });
   return { done: `${home(user)}?witaj=1` };
 }

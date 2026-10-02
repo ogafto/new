@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { all, one, run } from "./db";
 import { log } from "./logs";
 import { setting } from "./settings";
@@ -95,8 +96,21 @@ export async function financeSummary() {
   };
 }
 
-async function notifyPaid(p: Payment) {
+async function notifyPaid(p: Payment, via: string) {
   const text = `Wpłata ${zl(Number(p.amount))} — ${p.title} (${p.client_name})`;
+  // mail do admina (powiadomienia albo adres admina)
+  try {
+    const [{ sendMail, baseUrl }, { adminEmail }, { default: PaidEmail }] = await Promise.all([import("./mail"), import("./auth/admin"), import("@/emails/PaidEmail")]);
+    const to = (await setting("notify_email")) || adminEmail();
+    if (to)
+      await sendMail({
+        to,
+        subject: `💸 ${p.client_name} zapłacił(a) ${zl(Number(p.amount))}`,
+        react: createElement(PaidEmail, { client: p.client_name, title: p.title, amount: zl(Number(p.amount)), method: via, email: p.client_email, baseUrl: await baseUrl() }),
+      });
+  } catch (e) {
+    await log("mail", "Nie wysłano powiadomienia o wpłacie", { level: "error", meta: { error: String(e) } });
+  }
   const hook = await setting("discord_webhook");
   if (hook)
     await fetch(hook, {
@@ -119,6 +133,7 @@ export async function markPaid(id: string, opts: { via: "webhook" | "check" | "m
   if (p.stripe_session) await deactivateLink(p.stripe_session);
   const label = { webhook: "Stripe", check: "sprawdzenie w Stripe", manual: "ręcznie" }[opts.via];
   await log("payment", `Opłacono: ${p.title} — ${zl(Number(p.amount))} (${p.client_name})`, { level: "success", actor: opts.actor ?? null, meta: { id, via: label } });
-  await notifyPaid(p);
+  // ręczne oznaczenie robi sam admin — powiadomienia tylko dla wpłat ze Stripe
+  if (opts.via !== "manual") await notifyPaid(p, "Stripe");
   return { ...p, status: "paid" as const, paid_at: now };
 }

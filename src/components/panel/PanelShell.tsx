@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { logout } from "@/app/konto/actions";
-import { liveCount } from "@/app/panel/admin/actions";
+import { pulse, type PulseEvent } from "@/app/panel/admin/actions";
+import { syncRole } from "@/app/panel/actions";
 import { Mark, Wordmark } from "../brand/Logo";
 import { ease, Icon, ICONS } from "./kit";
+import CommandPalette, { CommandButton, useCommandPalette } from "./CommandPalette";
 
 export type Note = { id: string; kind: "deadline" | "inquiry"; title: string; text: string; href: string; urgent: boolean };
 type Props = { user: { name: string; email: string }; admin: boolean; notes: Note[]; counts: { inquiries: number }; sites: { id: string; name: string }[]; children: React.ReactNode };
@@ -28,13 +31,9 @@ function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) 
         links: [
           { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
           { href: "/panel/admin/klienci", label: "Klienci i zaproszenia", icon: ICONS.users },
-          { href: "/panel/admin/strony", label: "Strony klientów", icon: ICONS.layers },
         ],
       },
-      {
-        group: "Biznes",
-        links: [{ href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet }],
-      },
+      { group: "Biznes", links: [{ href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet }] },
       {
         group: "Treści",
         links: [
@@ -51,41 +50,111 @@ function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) 
         ],
       },
     ];
-  return [
-    {
-      group: "Twój panel",
-      links: [
-        { href: "/panel", label: "Przegląd", icon: ICONS.home },
-        ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers })),
-      ],
-    },
-  ];
+  return [{ group: "Twój panel", links: [{ href: "/panel", label: "Przegląd", icon: ICONS.home }, ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers }))] }];
 }
 
+// Puls panelu: licznik „na stronie” + powiadomienia o wpłatach i zapytaniach na żywo (bez przeładowania)
 function Live() {
+  const router = useRouter();
   const [n, setN] = useState<number | null>(null);
+  const [toasts, setToasts] = useState<PulseEvent[]>([]);
+  // powiadomienia przez portal — nagłówek ma backdrop-filter, który „łapie” elementy fixed
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => {
     let alive = true;
-    const tick = () =>
-      liveCount()
-        .then((v) => alive && setN(v))
+    let since = Date.now();
+    const seen = new Set<string>();
+    const tick = () => {
+      if (document.hidden) return;
+      pulse(since)
+        .then((r) => {
+          if (!alive) return;
+          setN(r.live);
+          const fresh = r.events.filter((e) => !seen.has(e.id));
+          if (fresh.length) {
+            fresh.forEach((e) => seen.add(e.id));
+            setToasts((t) => [...fresh, ...t].slice(0, 4));
+            router.refresh(); // kokpit, finanse i zapytania od razu pokazują nowe dane
+          }
+          since = Math.max(since, r.now - 60_000);
+        })
         .catch(() => {});
+    };
     tick();
-    const t = setInterval(tick, 20000);
+    const t = setInterval(tick, 8000);
+    const vis = () => !document.hidden && tick();
+    document.addEventListener("visibilitychange", vis);
     return () => {
       alive = false;
       clearInterval(t);
+      document.removeEventListener("visibilitychange", vis);
     };
-  }, []);
+  }, [router]);
+  useEffect(() => {
+    if (!toasts.length) return;
+    const t = setTimeout(() => setToasts((x) => x.slice(0, -1)), 9000);
+    return () => clearTimeout(t);
+  }, [toasts]);
+
   return (
-    <Link href="/panel/admin/analityka" className="flex items-center gap-2 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] text-muted transition-colors hover:text-ink" title="Osoby na stronie w ostatnich 5 minutach">
-      <span className="relative flex size-2">
-        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
-        <span className="relative size-2 rounded-full bg-emerald-400" />
-      </span>
-      <span className="tabular-nums">{n ?? "–"}</span>
-      <span className="hidden sm:inline">na stronie</span>
-    </Link>
+    <>
+      <Link
+        href="/panel/admin/analityka"
+        className="flex items-center gap-2 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] text-muted transition-colors hover:text-ink"
+        title="Osoby na stronie w ostatnich 5 minutach"
+      >
+        <span className="relative flex size-2">
+          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
+          <span className="relative size-2 rounded-full bg-emerald-400" />
+        </span>
+        <span className="tabular-nums">{n ?? "–"}</span>
+        <span className="hidden sm:inline">na stronie</span>
+      </Link>
+      {mounted &&
+        createPortal(
+          <div className="pointer-events-none fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+16px)] z-[90] flex w-[min(380px,calc(100vw-32px))] flex-col gap-2 sm:right-6 sm:bottom-6">
+            <AnimatePresence initial={false}>
+              {toasts.map((e) => (
+                <motion.div
+                  key={e.id}
+                  layout
+                  initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 40 }}
+                  transition={{ duration: 0.5, ease }}
+                  className="pointer-events-auto"
+                >
+                  <Link
+                    href={e.href}
+                    onClick={() => setToasts((t) => t.filter((x) => x.id !== e.id))}
+                    className={`edge relative flex items-center gap-3.5 overflow-hidden rounded-2xl bg-surface/95 p-4 shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl ${e.kind === "payment" ? "ring-1 ring-emerald-400/30" : "ring-1 ring-accent/30"}`}
+                  >
+                    <span className={`absolute inset-y-0 left-0 w-1 ${e.kind === "payment" ? "bg-emerald-400" : "bg-accent"}`} />
+                    <span className={`relative grid size-10 shrink-0 place-items-center rounded-xl ${e.kind === "payment" ? "bg-emerald-400/15 text-emerald-300" : "bg-accent/15 text-accent-2"}`}>
+                      <motion.span
+                        className={`absolute inset-0 rounded-xl ${e.kind === "payment" ? "border border-emerald-400/50" : "border border-accent/50"}`}
+                        initial={{ scale: 1, opacity: 1 }}
+                        animate={{ scale: 1.6, opacity: 0 }}
+                        transition={{ duration: 1.4, repeat: 2 }}
+                      />
+                      <Icon d={e.kind === "payment" ? ICONS.wallet : ICONS.inbox} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14.5px]">{e.title}</span>
+                      <span className="block truncate text-[12.5px] text-dim">{e.text}</span>
+                    </span>
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
@@ -101,11 +170,18 @@ function Bell({ notes }: { notes: Note[] }) {
   const urgent = notes.some((n) => n.urgent);
   return (
     <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="relative grid size-10 place-items-center rounded-full border border-line-2 text-muted transition-colors hover:text-ink" aria-label={`Powiadomienia (${notes.length})`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="relative grid size-10 place-items-center rounded-full border border-line-2 text-muted transition-colors hover:text-ink"
+        aria-label={`Powiadomienia (${notes.length})`}
+      >
         <motion.span animate={notes.length ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.8 }}>
           <Icon d={ICONS.bell} className="size-[18px]" />
         </motion.span>
-        {notes.length > 0 && <span className={`absolute -top-0.5 -right-0.5 grid min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-medium text-white ${urgent ? "bg-red-500" : "bg-accent"}`}>{notes.length}</span>}
+        {notes.length > 0 && (
+          <span className={`absolute -top-0.5 -right-0.5 grid min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-medium text-white ${urgent ? "bg-red-500" : "bg-accent"}`}>{notes.length}</span>
+        )}
       </button>
       <AnimatePresence>
         {open && (
@@ -144,6 +220,7 @@ function Bell({ notes }: { notes: Note[] }) {
 export default function PanelShell({ user, admin, notes, counts, sites, children }: Props) {
   const path = usePathname();
   const [menu, setMenu] = useState(false);
+  const [cmdk, setCmdk] = useCommandPalette();
   const nav = navFor(admin, counts, sites);
   const active = (href: string) => (href === "/panel/admin" || href === "/panel" ? path === href : path.startsWith(href));
 
@@ -151,6 +228,11 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
     const t = setTimeout(() => setMenu(false), 0);
     return () => clearTimeout(t);
   }, [path]);
+
+  // podpowiedź roli dla proxy (sesje sprzed tej zmiany) — raz po wejściu
+  useEffect(() => {
+    syncRole().catch(() => {});
+  }, []);
 
   const side = (
     <div className="flex h-full flex-col">
@@ -241,20 +323,34 @@ export default function PanelShell({ user, admin, notes, counts, sites, children
 
       <div className="relative min-w-0">
         <div className="pointer-events-none fixed top-0 right-0 size-[700px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.08),transparent)]" aria-hidden />
-        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.8, ease }} className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 sm:px-8 lg:bg-bg/70 lg:pt-3 lg:backdrop-blur-xl">
+        <motion.header
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.8, ease }}
+          className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 sm:px-8 lg:bg-bg/70 lg:pt-3 lg:backdrop-blur-xl"
+        >
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => setMenu(true)} className="grid size-10 place-items-center rounded-full border border-line-2 lg:hidden" aria-label="Menu">
               <Icon d={ICONS.menu} className="size-[18px]" />
             </button>
-            <p className="hidden text-[13px] text-dim sm:block" suppressHydrationWarning>{new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p>
+            <p className="hidden text-[13px] text-dim sm:block" suppressHydrationWarning>
+              {new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
+            </p>
           </div>
           <div className="flex items-center gap-2">
+            {admin && <CommandButton />}
+            {admin && (
+              <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full border border-line-2 text-muted sm:hidden" aria-label="Szukaj">
+                <Icon d={ICONS.search} className="size-[18px]" />
+              </button>
+            )}
             {admin && <Live />}
             {admin && <Bell notes={notes} />}
           </div>
         </motion.header>
         <main className="relative mx-auto max-w-[1240px] px-5 py-8 sm:px-8 lg:py-10">{children}</main>
       </div>
+      {admin && <CommandPalette open={cmdk} onClose={() => setCmdk(false)} />}
     </div>
   );
 }

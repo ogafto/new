@@ -1,4 +1,4 @@
-import { services, site, type ServiceId } from "./site";
+import { services, site, steps, type ServiceId } from "./site";
 import { offers } from "./offer";
 
 /*
@@ -9,6 +9,9 @@ import { offers } from "./offer";
  */
 
 export type ServiceContent = { price: number; time: string; description: string };
+export type StepContent = { title: string; lead: string; text: string; points: string[] };
+export type Announcement = { enabled: boolean; text: string; label: string; link: string };
+export type Availability = { open: boolean; text: string };
 
 export type Content = {
   email: string;
@@ -18,6 +21,9 @@ export type Content = {
   hero: { line1: string; line2: string; accent: string; text: string };
   services: Record<ServiceId, ServiceContent>;
   seo: { title: string; description: string };
+  announcement: Announcement;
+  availability: Availability;
+  steps: StepContent[];
 };
 
 export const DEFAULT_HERO = {
@@ -38,6 +44,10 @@ const base = {
   socials: site.socials.map((s) => ({ ...s })),
   legal: { ...site.legal },
 };
+const baseSteps: StepContent[] = steps.map((x) => ({ title: x.title, lead: x.lead, text: x.text, points: [...x.points] }));
+export const DEFAULT_ANNOUNCEMENT: Announcement = { enabled: false, text: "Nowa odsłona afto.works już online.", label: "Zobacz portfolio", link: "/portfolio" };
+export const DEFAULT_AVAILABILITY: Availability = { open: true, text: "Przyjmuję nowe projekty" };
+
 const baseServices = Object.fromEntries(services.map((s) => [s.id, { price: s.price, time: s.time, description: s.description }])) as Record<ServiceId, ServiceContent>;
 
 export const defaultContent = (): Content => ({
@@ -45,6 +55,9 @@ export const defaultContent = (): Content => ({
   hero: { ...DEFAULT_HERO },
   services: structuredClone(baseServices),
   seo: { ...DEFAULT_SEO },
+  announcement: { ...DEFAULT_ANNOUNCEMENT },
+  availability: { ...DEFAULT_AVAILABILITY },
+  steps: structuredClone(baseSteps),
 });
 
 /** Scala zapisane dane z domyślnymi (brakujące pola = domyślne) */
@@ -63,6 +76,12 @@ export function mergeContent(saved: Partial<Content> | null | undefined): Conten
     hero: pick(d.hero, saved.hero),
     services: Object.fromEntries(Object.entries(d.services).map(([id, s]) => [id, pick(s, saved.services?.[id as ServiceId])])) as Content["services"],
     seo: pick(d.seo, saved.seo),
+    announcement: { ...pick(d.announcement, saved.announcement), enabled: typeof saved.announcement?.enabled === "boolean" ? saved.announcement.enabled : d.announcement.enabled },
+    availability: { ...pick(d.availability, saved.availability), open: typeof saved.availability?.open === "boolean" ? saved.availability.open : d.availability.open },
+    steps: d.steps.map((st, i) => {
+      const v = saved.steps?.[i];
+      return { ...pick({ title: st.title, lead: st.lead, text: st.text }, v), points: Array.isArray(v?.points) && v.points.length ? v.points.map(String).slice(0, 5) : st.points };
+    }),
   };
 }
 
@@ -77,6 +96,7 @@ export function applyContent(c: Content) {
   site.socials = c.socials.map((s) => ({ ...s }));
   Object.assign(site.legal, c.legal);
   for (const s of services) Object.assign(s, c.services[s.id]);
+  c.steps.forEach((st, i) => steps[i] && Object.assign(steps[i], { ...st, points: [...st.points] }));
   for (const o of offers) {
     const s = o.service && c.services[o.service];
     if (s) {

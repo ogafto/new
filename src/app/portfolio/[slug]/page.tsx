@@ -17,10 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = await getProjectBySlug(slug);
   if (!p) return {};
-  const title = `${p.name} — ${serviceName(p.category).toLowerCase()} · ${p.client}`;
+  const ap = p as typeof p & { seoTitle?: string | null; seoDescription?: string | null };
+  const title = ap.seoTitle || `${p.name} — ${serviceName(p.category).toLowerCase()} · ${p.client}`;
   return {
     title,
-    description: `${p.description} ${serviceName(p.category)} — projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,
+    description: ap.seoDescription || `${p.description} ${serviceName(p.category)} — projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,
     alternates: { canonical: `/portfolio/${p.slug}` },
     openGraph: { title, description: p.description, url: `/portfolio/${p.slug}`, type: "article", images: [{ url: p.image, width: 1600, height: 1200, alt: p.name }] },
     twitter: { card: "summary_large_image", title, description: p.description, images: [p.image] },

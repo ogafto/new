@@ -17,6 +17,8 @@ type Row = {
   image: string;
   gallery: string;
   url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   featured: number;
   published: number;
   sort: number;
@@ -24,7 +26,7 @@ type Row = {
   updated_at: number;
 };
 
-export type AdminProject = Project & { id: string; featured: boolean; published: boolean; sort: number; updated_at: number };
+export type AdminProject = Project & { id: string; featured: boolean; published: boolean; sort: number; updated_at: number; seoTitle: string | null; seoDescription: string | null };
 
 const parse = (v: string) => {
   try {
@@ -48,6 +50,8 @@ const toProject = (r: Row): AdminProject => ({
   image: r.image,
   gallery: parse(r.gallery),
   url: r.url,
+  seoTitle: r.seo_title ?? null,
+  seoDescription: r.seo_description ?? null,
   featured: !!r.featured,
   published: !!r.published,
   sort: r.sort,

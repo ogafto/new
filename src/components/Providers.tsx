@@ -8,6 +8,7 @@ import Loader from "./Loader";
 import CookieConsent from "./CookieConsent";
 import { TransitionProvider } from "./Transition";
 import Analytics from "./Analytics";
+import Announcement from "./Announcement";
 import { applyContent, type Content } from "@/lib/content";
 
 const LoadedContext = createContext(false);
@@ -45,7 +46,10 @@ export default function Providers({ children, content, gaId }: { children: React
             {!loaded && !app && <Loader onDone={() => setLoaded(true)} />}
             <RouteScroll />
             <Analytics />
-            <TransitionProvider>{children}</TransitionProvider>
+            <TransitionProvider>
+              {children}
+              <Announcement />
+            </TransitionProvider>
           </CookieConsent>
         </LoadedContext.Provider>
       </MotionConfig>

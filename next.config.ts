@@ -6,8 +6,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
   experimental: {
-    serverActions: { bodySizeLimit: "16mb" }, // wgrywanie zdjęć w panelu
-    proxyClientMaxBodySize: "16mb",
+    serverActions: { bodySizeLimit: "100mb" }, // wgrywanie zdjęć i materiałów marki (na Vercelu duże pliki idą prosto do Blob)
+    proxyClientMaxBodySize: "100mb",
+    // panel: powrót na odwiedzoną podstronę bez czekania na serwer (akcje i tak odświeżają dane)
+    staleTimes: { dynamic: 30, static: 300 },
   },
   // stare adresy sekcji „Realizacje” → „Portfolio” (zachowuje pozycje w Google)
   async redirects() {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/session";
 import { getAllProjects } from "@/lib/projects";
+import { projectStats } from "@/lib/analytics";
 import { Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import ProjectList from "@/components/panel/ProjectList";
@@ -10,7 +11,8 @@ export const metadata: Metadata = { title: "Portfolio" };
 
 export default async function PortfolioAdmin() {
   await requireAdmin();
-  const projects = await getAllProjects();
+  const [projects, stats] = await Promise.all([getAllProjects(), projectStats(30)]);
+  const views = Object.fromEntries(stats.map((s) => [s.slug, { views: Number(s.views), visitors: Number(s.visitors) }]));
   return (
     <>
       <PageHead kicker="Portfolio" title="Twoje projekty">
@@ -19,7 +21,7 @@ export default async function PortfolioAdmin() {
           Dodaj projekt
         </Link>
       </PageHead>
-      <ProjectList projects={projects} />
+      <ProjectList projects={projects} views={views} />
     </>
   );
 }

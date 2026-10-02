@@ -182,3 +182,69 @@ export async function homeVisits() {
   ]);
   return { today: Number(today?.n ?? 0), month: Number(month?.n ?? 0) };
 }
+
+/* ---------- rozszerzona analityka ---------- */
+
+// Aktywność: dzień tygodnia × godzina (czas polski)
+export async function heatmap(days: number) {
+  const rows = await all<{ ts: number }>("SELECT ts FROM pageviews WHERE ts >= ?", [since(days)]);
+  const grid = Array.from({ length: 7 }, () => Array(24).fill(0) as number[]);
+  const fmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", hour: "2-digit", hourCycle: "h23", timeZone: "Europe/Warsaw" });
+  const WD: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+  for (const r of rows) {
+    const parts = fmt.formatToParts(Number(r.ts));
+    const d = WD[parts.find((p) => p.type === "weekday")!.value];
+    const h = Number(parts.find((p) => p.type === "hour")!.value) % 24;
+    grid[d][h]++;
+  }
+  return grid;
+}
+
+// Kto jest teraz na stronie (ostatnie 5 minut) — bieżąca podstrona każdej osoby
+export async function liveNow() {
+  return all<{ visitor: string; path: string; device: string | null; country: string | null; source: string; seen: number; started: number; pages: number }>(
+    `SELECT p.visitor, p.path, p.device, p.country, COALESCE(p.utm_source, p.ref_host, 'Bezpośrednio') source, COALESCE(p.seen, p.ts) seen,
+            (SELECT MIN(ts) FROM pageviews x WHERE x.session = p.session) started, (SELECT COUNT(*) FROM pageviews x WHERE x.session = p.session) pages
+     FROM pageviews p
+     WHERE COALESCE(p.seen, p.ts) > ? AND p.ts = (SELECT MAX(ts) FROM pageviews y WHERE y.visitor = p.visitor)
+     ORDER BY seen DESC LIMIT 20`,
+    [Date.now() - 5 * 60_000],
+  );
+}
+
+// Kampanie (UTM)
+export async function campaigns(days: number) {
+  return all<{ campaign: string; source: string; medium: string | null; visitors: number; views: number }>(
+    `SELECT utm_campaign campaign, COALESCE(utm_source, '—') source, utm_medium medium, COUNT(DISTINCT visitor) visitors, COUNT(*) views
+     FROM pageviews WHERE ts >= ? AND utm_campaign IS NOT NULL GROUP BY utm_campaign, utm_source, utm_medium ORDER BY visitors DESC LIMIT 12`,
+    [since(days)],
+  );
+}
+
+// Nowi vs powracający (powracający = byli przed początkiem zakresu)
+export async function returning(days: number) {
+  const r = await one<{ total: number; back: number }>(
+    `SELECT COUNT(DISTINCT visitor) total, COUNT(DISTINCT CASE WHEN visitor IN (SELECT visitor FROM pageviews WHERE ts < ?) THEN visitor END) back FROM pageviews WHERE ts >= ?`,
+    [since(days), since(days)],
+  );
+  const total = Number(r?.total ?? 0);
+  const back = Number(r?.back ?? 0);
+  return { total, back, fresh: total - back };
+}
+
+// Projekty z portfolio: odsłony, osoby, czas, przewinięcie
+export async function projectStats(days: number) {
+  return all<{ slug: string; views: number; visitors: number; time: number; scroll: number }>(
+    `SELECT substr(path, 12) slug, COUNT(*) views, COUNT(DISTINCT visitor) visitors, CAST(AVG(duration) / 1000 AS INTEGER) time, CAST(AVG(scroll) AS INTEGER) scroll
+     FROM pageviews WHERE ts >= ? AND path LIKE '/portfolio/%' GROUP BY slug ORDER BY views DESC`,
+    [since(days)],
+  );
+}
+
+// Eksport surowych odsłon (CSV)
+export async function exportViews(days: number) {
+  return all<{ ts: number; path: string; source: string; device: string | null; browser: string | null; os: string | null; country: string | null; duration: number; scroll: number }>(
+    `SELECT ts, path, COALESCE(utm_source, ref_host, 'Bezpośrednio') source, device, browser, os, country, duration, scroll FROM pageviews WHERE ts >= ? ORDER BY ts DESC LIMIT 20000`,
+    [since(days)],
+  );
+}

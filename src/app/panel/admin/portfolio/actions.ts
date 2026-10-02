@@ -46,6 +46,8 @@ export async function saveProject(_: ProjectState, form: FormData): Promise<Proj
   const url = String(form.get("url") ?? "").trim().slice(0, 300) || null;
   const scope = list(form.get("scope"));
   const palette = list(form.get("palette")).filter((c) => /^#[0-9a-f]{3,8}$/i.test(c));
+  const seoTitle = String(form.get("seo_title") ?? "").trim().slice(0, 120) || null;
+  const seoDescription = String(form.get("seo_description") ?? "").trim().slice(0, 300) || null;
   const featured = form.get("featured") ? 1 : 0;
   const published = form.get("published") ? 1 : 0;
 
@@ -80,8 +82,8 @@ export async function saveProject(_: ProjectState, form: FormData): Promise<Proj
     const now = Date.now();
     if (prev) {
       await run(
-        `UPDATE projects SET slug=?, name=?, category=?, year=?, client=?, description=?, scope=?, palette=?, image=?, gallery=?, url=?, featured=?, published=?, updated_at=? WHERE id=?`,
-        [slug, name, category, year, client, description, JSON.stringify(scope), JSON.stringify(palette), image, JSON.stringify(gallery), url, featured, published, now, pid],
+        `UPDATE projects SET slug=?, name=?, category=?, year=?, client=?, description=?, scope=?, palette=?, image=?, gallery=?, url=?, seo_title=?, seo_description=?, featured=?, published=?, updated_at=? WHERE id=?`,
+        [slug, name, category, year, client, description, JSON.stringify(scope), JSON.stringify(palette), image, JSON.stringify(gallery), url, seoTitle, seoDescription, featured, published, now, pid],
       );
       refresh(prev.slug, slug);
       return { ok: true, id: pid, gallery, image };
@@ -89,9 +91,9 @@ export async function saveProject(_: ProjectState, form: FormData): Promise<Proj
     const nid = id();
     const min = await one<{ m: number }>("SELECT COALESCE(MIN(sort), 0) m FROM projects");
     await run(
-      `INSERT INTO projects (id, slug, name, category, year, client, description, scope, palette, image, gallery, url, featured, published, sort, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nid, slug, name, category, year, client, description, JSON.stringify(scope), JSON.stringify(palette), image, JSON.stringify(gallery), url, featured, published, Number(min?.m ?? 0) - 1, now, now],
+      `INSERT INTO projects (id, slug, name, category, year, client, description, scope, palette, image, gallery, url, seo_title, seo_description, featured, published, sort, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nid, slug, name, category, year, client, description, JSON.stringify(scope), JSON.stringify(palette), image, JSON.stringify(gallery), url, seoTitle, seoDescription, featured, published, Number(min?.m ?? 0) - 1, now, now],
     );
     refresh(slug);
     await log("content", `${form.get("id") ? "Zapisano" : "Dodano"} projekt w portfolio: ${slug}`);
@@ -126,4 +128,23 @@ export async function reorderProjects(ids: string[]) {
   const known = new Set(rows.map((r) => r.id));
   for (const [i, pid] of ids.entries()) if (known.has(pid)) await run("UPDATE projects SET sort = ? WHERE id = ?", [i, pid]);
   refresh();
+}
+
+// Kopia projektu jako ukryty szkic (zdjęcia wspólne — usunięcie kopii ich nie kasuje, bo adresy są te same)
+export async function duplicateProject(pid: string) {
+  const admin = await requireAdmin();
+  const p = await one<Record<string, unknown> & { slug: string; name: string }>("SELECT * FROM projects WHERE id = ?", [pid]);
+  if (!p) return { error: "Nie znaleziono." };
+  let slug = `${p.slug}-kopia`;
+  for (let i = 2; await one("SELECT 1 FROM projects WHERE slug = ?", [slug]); i++) slug = `${p.slug}-kopia-${i}`;
+  const now = Date.now();
+  const nid = id();
+  await run(
+    `INSERT INTO projects (id, slug, name, category, year, client, description, scope, palette, image, gallery, url, seo_title, seo_description, featured, published, sort, created_at, updated_at)
+     SELECT ?, ?, name || ' (kopia)', category, year, client, description, scope, palette, image, '[]', url, seo_title, seo_description, 0, 0, sort, ?, ? FROM projects WHERE id = ?`,
+    [nid, slug, now, now, pid],
+  );
+  await log("content", `Zduplikowano projekt: ${p.name}`, { actor: admin.email });
+  refresh();
+  return { ok: true, id: nid };
 }

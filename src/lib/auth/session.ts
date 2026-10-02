@@ -6,6 +6,8 @@ import { sha256, token } from "./crypto";
 import { isAdminEmail } from "./admin";
 
 export const SESSION_COOKIE = "afto_session";
+// podpowiedź dla proxy, dokąd prowadzić zalogowanego (bez znaczenia dla bezpieczeństwa — sesję i tak sprawdzają layouty)
+export const ROLE_COOKIE = "afto_role";
 const DAY = 24 * 60 * 60 * 1000;
 const TTL = 30 * DAY;
 
@@ -22,11 +24,16 @@ export async function createSession(userId: string) {
   });
 }
 
+export async function setRoleCookie(role: "admin" | "client") {
+  (await cookies()).set(ROLE_COOKIE, role, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", expires: new Date(Date.now() + TTL) });
+}
+
 export async function destroySession() {
   const jar = await cookies();
   const t = jar.get(SESSION_COOKIE)?.value;
   if (t) await run("DELETE FROM sessions WHERE id = ?", [sha256(t)]);
   jar.delete(SESSION_COOKIE);
+  jar.delete(ROLE_COOKIE);
 }
 
 // Zalogowany użytkownik (lub null) — raz na żądanie
@@ -43,7 +50,7 @@ export const currentUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser() {
   const user = await currentUser();
-  if (!user) redirect("/konto/logowanie");
+  if (!user) redirect("/konto/logowanie?sesja=0");
   if (!user.verified_at) redirect("/konto/weryfikacja");
   return user;
 }

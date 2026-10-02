@@ -8,6 +8,7 @@ import { shrinkInput } from "@/lib/shrink";
 import type { AdminProject } from "@/lib/projects";
 import { serviceName, services, type ServiceId } from "@/lib/site";
 import { Alert } from "../account/ui";
+import PaletteEditor from "./PaletteEditor";
 import { Btn, Card, CardHead, ease, field, ICONS, Icon, Label, Toggle } from "./kit";
 
 // Pole na zdjęcie: kliknij albo upuść plik; podgląd od razu
@@ -76,6 +77,7 @@ export default function ProjectForm({ project }: { project?: AdminProject }) {
   const [added, setAdded] = useState<string[]>([]);
   const [v, setV] = useState({ name: project?.name ?? "", category: (project?.category ?? "www") as ServiceId, client: project?.client ?? "", year: project?.year ?? String(new Date().getFullYear()), palette: (project?.palette ?? []).join(", ") });
   const [toast, setToast] = useState(false);
+  const [seo, setSeo] = useState({ title: project?.seoTitle ?? "", description: project?.seoDescription ?? "" });
 
   useEffect(() => {
     if (!state?.ok) return;
@@ -127,15 +129,34 @@ export default function ProjectForm({ project }: { project?: AdminProject }) {
             <Label label="Zakres (po przecinku)" hint="np. Projekt UI, Next.js, Animacje">
               <input name="scope" defaultValue={project?.scope.join(", ")} className={`${field} h-11`} />
             </Label>
-            <Label label="Paleta (kolory HEX po przecinku)" hint="np. #2B1D14, #C8763A">
-              <input name="palette" value={v.palette} onChange={(e) => setV({ ...v, palette: e.target.value })} className={`${field} h-11`} />
-            </Label>
+            <div className="sm:col-span-2">
+              <span className="mb-1.5 block text-[13px] text-muted">Paleta kolorów</span>
+              <PaletteEditor name="palette" value={colors} onChange={(c) => setV({ ...v, palette: c.join(", ") })} image={img || undefined} />
+              <span className="mt-1.5 block text-[12px] text-dim">Kliknij próbkę, żeby zmienić · „+” dodaje kolor · paleta tworzy tło projektu na telefonach.</span>
+            </div>
             <Label label="Adres gotowej strony (opcjonalnie)">
               <input name="url" type="url" defaultValue={project?.url ?? ""} placeholder="https://" className={`${field} h-11`} />
             </Label>
             <Label label="Adres w portfolio (slug)" hint="Puste = z nazwy">
               <input name="slug" defaultValue={project?.slug} placeholder="ziarno" className={`${field} h-11`} />
             </Label>
+          </div>
+        </Card>
+
+        <Card delay={0.03}>
+          <CardHead title="Wygląd w Google" sub="Opcjonalnie — puste pola uzupełnią się z nazwy i opisu" />
+          <div className="grid gap-4">
+            <Label label={`Tytuł (${seo.title.length}/60)`}>
+              <input name="seo_title" value={seo.title} onChange={(e) => setSeo({ ...seo, title: e.target.value })} maxLength={120} placeholder={`${v.name || "Nazwa"} — ${serviceName(v.category).toLowerCase()} · ${v.client || "klient"}`} className={`${field} h-11`} />
+            </Label>
+            <Label label={`Opis (${seo.description.length}/155)`}>
+              <textarea name="seo_description" rows={2} value={seo.description} onChange={(e) => setSeo({ ...seo, description: e.target.value })} maxLength={300} placeholder="Krótkie zdanie, które zachęci do kliknięcia w wynik wyszukiwania." className={`${field} resize-none py-3`} />
+            </Label>
+            <div className="rounded-2xl bg-white p-4">
+              <p className="text-[12px] text-[#4d5156]">afto.works › portfolio › {v.name ? v.name.toLowerCase().replace(/\s+/g, "-") : "projekt"}</p>
+              <p className="mt-1 line-clamp-1 text-[17px] text-[#1a0dab]">{seo.title || `${v.name || "Nazwa projektu"} — ${serviceName(v.category).toLowerCase()} · ${v.client || "klient"}`}</p>
+              <p className="mt-0.5 line-clamp-2 text-[13px] text-[#4d5156]">{seo.description || project?.description || "Opis projektu pojawi się tutaj."}</p>
+            </div>
           </div>
         </Card>
 

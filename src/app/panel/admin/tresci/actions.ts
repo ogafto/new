@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { defaultContent, type Content } from "@/lib/content";
-import { saveContent } from "@/lib/content-server";
+import { contentHistory, saveContent } from "@/lib/content-server";
 import { log } from "@/lib/logs";
 
 export async function saveSiteContent(c: Content, section: string): Promise<{ ok?: string; error?: string }> {
@@ -14,7 +14,9 @@ export async function saveSiteContent(c: Content, section: string): Promise<{ ok
     if (!Number.isFinite(Number(s.price)) || Number(s.price) < 0) return { error: `Nieprawidłowa cena (${id}).` };
     s.price = Math.round(Number(s.price));
   }
-  await saveContent(c);
+  if (c.announcement.link && !/^(https?:\/\/|\/)/.test(c.announcement.link)) return { error: "Link ogłoszenia: adres zaczynający się od / albo https://" };
+  c.steps = c.steps.map((st) => ({ ...st, points: st.points.map((x) => x.trim()).filter(Boolean) }));
+  await saveContent(c, { actor: admin.email, section });
   await log("content", `Zaktualizowano treści strony: ${section}`, { actor: admin.email });
   // cała strona korzysta z tych treści (stopka, kontakt, ceny, SEO)
   revalidatePath("/", "layout");
@@ -23,8 +25,18 @@ export async function saveSiteContent(c: Content, section: string): Promise<{ ok
 
 export async function resetSiteContent(): Promise<{ ok?: string }> {
   const admin = await requireAdmin();
-  await saveContent(defaultContent());
+  await saveContent(defaultContent(), { actor: admin.email, section: "przywrócono domyślne" });
   await log("content", "Przywrócono domyślne treści strony", { level: "warn", actor: admin.email });
   revalidatePath("/", "layout");
   return { ok: "Przywrócono domyślne treści." };
+}
+
+export async function restoreSiteContent(ts: number): Promise<{ ok?: string; error?: string; content?: Content }> {
+  const admin = await requireAdmin();
+  const v = (await contentHistory()).find((h) => h.ts === ts);
+  if (!v) return { error: "Nie znaleziono tej wersji." };
+  const saved = await saveContent(v.value, { actor: admin.email, section: "przywrócenie wersji" });
+  await log("content", `Przywrócono wersję treści z ${new Date(ts).toLocaleString("pl-PL", { timeZone: "Europe/Warsaw" })}`, { level: "warn", actor: admin.email });
+  revalidatePath("/", "layout");
+  return { ok: "Przywrócono wersję.", content: saved };
 }

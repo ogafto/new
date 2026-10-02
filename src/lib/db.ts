@@ -216,6 +216,24 @@ const SCHEMA = [
     notes TEXT,
     created_at INTEGER NOT NULL
   )`,
+  // biblioteka marki: wgrane animacje/grafiki i własne kolory
+  `CREATE TABLE IF NOT EXISTS brand_assets (
+    id TEXT PRIMARY KEY,
+    category TEXT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    bytes INTEGER NOT NULL DEFAULT 0,
+    note TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS brand_colors (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    hex TEXT NOT NULL,
+    note TEXT,
+    created_at INTEGER NOT NULL
+  )`,
   `CREATE INDEX IF NOT EXISTS afto_sessions_user ON sessions(user_id)`,
   `CREATE INDEX IF NOT EXISTS afto_invites_email ON invites(email)`,
   `CREATE INDEX IF NOT EXISTS afto_pv_ts ON pageviews(ts)`,
@@ -226,6 +244,7 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS afto_orders_due ON orders(due_date)`,
   `CREATE INDEX IF NOT EXISTS afto_entries_col ON cms_entries(collection_id, sort)`,
   `CREATE INDEX IF NOT EXISTS afto_logs_ts ON logs(ts)`,
+  `CREATE INDEX IF NOT EXISTS afto_brand_cat ON brand_assets(category, created_at)`,
   `CREATE INDEX IF NOT EXISTS afto_payments_status ON payments(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS afto_payments_session ON payments(stripe_session)`,
   `CREATE INDEX IF NOT EXISTS afto_expenses_date ON expenses(date)`,
@@ -238,7 +257,7 @@ const SCHEMA = [
  * dokleja się automatycznie.
  */
 const PREFIX = "afto_";
-const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses"];
+const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors"];
 // tylko odwołania do tabel (po FROM/JOIN/INTO/UPDATE/…), nie aliasy kolumn typu „COUNT(*) pageviews”
 const TABLE_RE = new RegExp(`\\b(FROM|JOIN|INTO|UPDATE|EXISTS|REFERENCES|ON|TABLE)(\\s+)(${TABLES.join("|")})\\b`, "gi");
 export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${sp}${PREFIX}${t}`);
@@ -246,6 +265,7 @@ export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${
 const COLUMNS: Record<string, Record<string, string>> = {
   users: { phone: "TEXT" },
   pageviews: { seen: "INTEGER" },
+  projects: { seo_title: "TEXT", seo_description: "TEXT" },
 };
 
 async function migrate(client: Client) {
@@ -257,7 +277,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 5;
+const VERSION = 7;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

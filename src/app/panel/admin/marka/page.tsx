@@ -1,47 +1,107 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/session";
-import { PageHead } from "@/components/panel/kit";
+import { listBrandAssets, listBrandColors } from "@/lib/brand";
 import { BRAND } from "@/lib/logo";
-import BrandBoard, { type Anim, type Asset, type Color, type LogoAnim, type LogoProposal } from "./BrandBoard";
+import { setting } from "@/lib/settings";
+import { blobAccess } from "@/lib/storage";
+import { PageHead } from "@/components/panel/kit";
+import BrandBoard, { type GenFile, type Generated, type PaletteColor } from "./BrandBoard";
 import manifest from "./assets.json";
 
 export const metadata: Metadata = { title: "Marka i logo" };
 
-// assets.json generuje `npm run brand` (scripts/brand) — rozmiary i ścieżki plików
-const data = manifest as { announcements: Anim[]; banners: Anim[]; logos: LogoProposal[] };
+/*
+ * Materiały marki:
+ * - wygenerowane skryptem `npm run brand` (assets.json → public/brand/…),
+ * - oficjalne pliki logo i animacje logo (public/brand),
+ * - pliki i kolory dodane w panelu (baza + Vercel Blob / dysk).
+ */
 
-const logoAnims: LogoAnim[] = [
-  { name: "Baner — animacja", file: "afto-banner-anim", variant: "banner", size: "1500 × 500", span: true },
-  { name: "Monogram — ciemny", file: "afto-mark-anim-dark", variant: "mark", size: "1080 × 1080" },
-  { name: "Monogram — jasny", file: "afto-mark-anim-light", variant: "mark", light: true, size: "1080 × 1080" },
-  { name: "Post — kwadrat", file: "afto-post-anim", variant: "square", size: "1080 × 1080" },
-  { name: "Logotyp — ciemny", file: "afto-logo-anim-dark", variant: "logo", size: "1600 × 800" },
-  { name: "Logotyp — jasny", file: "afto-logo-anim-light", variant: "logo", light: true, size: "1600 × 800" },
-];
+type Raw = Record<string, unknown>;
+const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+const num = (v: unknown) => (typeof v === "number" ? v : undefined);
+const ext = (u: string) => u.split("?")[0].split(".").pop()!.toLowerCase();
 
-const assets: Asset[] = [
-  { name: "Monogram", file: "afto-mark", bg: "#07070a" },
-  { name: "Monogram — ciemny", file: "afto-mark-black", bg: BRAND.ink },
-  { name: "Logotyp", file: "afto-logo", bg: "#07070a" },
-  { name: "Logotyp — ciemny", file: "afto-logo-black", bg: BRAND.ink },
-  { name: "Ikona — ciemna", file: "afto-icon-dark", bg: "#15151c" },
-  { name: "Ikona — fiolet", file: "afto-icon-accent", bg: "#15151c" },
-];
+function files(v: unknown): GenFile[] {
+  if (Array.isArray(v)) return v.map((f: Raw) => ({ kind: str(f.kind) ?? ext(str(f.url) ?? str(f.path) ?? ""), url: str(f.url) ?? str(f.path) ?? "", bytes: num(f.bytes) ?? num(f.size) })).filter((f) => f.url);
+  if (v && typeof v === "object")
+    return Object.entries(v as Record<string, Raw | string>)
+      .filter(([k]) => k !== "poster")
+      .flatMap(([k, f]) => (typeof f === "string" ? [{ kind: ext(f), url: f }] : str(f.path) || str(f.url) ? [{ kind: ext(str(f.path) ?? str(f.url)!) || k, url: (str(f.path) ?? str(f.url))!, bytes: num(f.size) ?? num(f.bytes) }] : []));
+  return [];
+}
+const posterOf = (e: Raw) => str(e.poster) ?? str(((e.files as Raw | undefined)?.poster as Raw | undefined)?.path);
 
-const colors: Color[] = [
+function entry(e: Raw, fallback: { group: string; category?: "animacje" | "grafiki" }): Generated {
+  const fs = files(e.files);
+  const animated = fs.some((f) => ["mp4", "webm", "gif"].includes(f.kind));
+  return {
+    id: str(e.id) ?? fs[0]?.url ?? Math.random().toString(36),
+    category: (str(e.category) as Generated["category"]) ?? fallback.category ?? (animated ? "animacje" : "grafiki"),
+    group: str(e.group) ?? fallback.group,
+    title: str(e.title) ?? str(e.name) ?? "Bez nazwy",
+    description: str(e.description) ?? str(e.desc),
+    w: num(e.w),
+    h: num(e.h),
+    duration: num(e.duration),
+    poster: posterOf(e),
+    bg: str(e.bg),
+    files: fs,
+  };
+}
+
+function fromManifest(m: unknown): Generated[] {
+  if (Array.isArray(m)) return m.map((e) => entry(e as Raw, { group: "Materiały" }));
+  const o = (m ?? {}) as Record<string, unknown>;
+  if (Array.isArray(o.items)) return (o.items as Raw[]).map((e) => entry(e, { group: "Materiały" }));
+  // starszy format: { announcements, banners, logos }
+  const out: Generated[] = [];
+  for (const e of (o.announcements as Raw[]) ?? []) out.push(entry(e, { group: "Zapowiedzi na Discorda", category: "animacje" }));
+  for (const e of (o.banners as Raw[]) ?? []) {
+    const g = entry(e, { group: "Banery 1500 × 300" });
+    out.push(g);
+    const png = g.files.find((f) => f.kind === "png");
+    if (g.category === "animacje" && png) out.push({ ...g, id: `${g.id}-png`, category: "grafiki", group: "Banery 1500 × 300", files: [png], poster: undefined });
+  }
+  for (const e of (o.logos as Raw[]) ?? []) out.push(entry(e, { group: "Propozycje logo", category: "grafiki" }));
+  return out;
+}
+
+const official: Generated[] = [
+  { file: "afto-mark", title: "Monogram", bg: "#07070a" },
+  { file: "afto-mark-black", title: "Monogram — na jasne tło", bg: BRAND.ink },
+  { file: "afto-logo", title: "Logotyp", bg: "#07070a" },
+  { file: "afto-logo-black", title: "Logotyp — na jasne tło", bg: BRAND.ink },
+  { file: "afto-icon-dark", title: "Ikona — ciemna", bg: "#15151c" },
+  { file: "afto-icon-accent", title: "Ikona — fiolet", bg: "#15151c" },
+].map((a) => ({ id: a.file, category: "grafiki" as const, group: "Logo — oficjalne pliki", title: a.title, bg: a.bg, w: 4, h: 3, files: [{ kind: "svg", url: `/brand/${a.file}.svg` }, { kind: "png", url: `/brand/${a.file}.png` }] }));
+
+const logoAnims: Generated[] = [
+  { file: "afto-banner-anim", title: "Baner z logo", w: 1500, h: 500 },
+  { file: "afto-mark-anim-dark", title: "Monogram — ciemny", w: 1080, h: 1080 },
+  { file: "afto-mark-anim-light", title: "Monogram — jasny", w: 1080, h: 1080 },
+  { file: "afto-post-anim", title: "Post — kwadrat", w: 1080, h: 1080 },
+  { file: "afto-logo-anim-dark", title: "Logotyp — ciemny", w: 1600, h: 800 },
+  { file: "afto-logo-anim-light", title: "Logotyp — jasny", w: 1600, h: 800 },
+].map((a) => ({ id: a.file, category: "animacje" as const, group: "Animacje logo", title: a.title, w: a.w, h: a.h, files: [{ kind: "gif", url: `/brand/anim/${a.file}.gif` }] }));
+
+const palette: PaletteColor[] = [
   { name: "Ink", hex: BRAND.ink, note: "linia znaku, tekst" },
   { name: "Black", hex: BRAND.black, note: "znak na jasnym tle" },
   { name: "Violet", hex: BRAND.accent, note: "kropka, akcent" },
   { name: "Violet jasny", hex: "#B4A2FF", note: "wyróżnienia w tekście" },
   { name: "Tło", hex: "#07070A", note: "tło strony i materiałów" },
-];
+].map((c) => ({ ...c, hex: c.hex.toUpperCase() }));
 
 export default async function BrandPage() {
   await requireAdmin();
+  const [own, colors, token] = await Promise.all([listBrandAssets(), listBrandColors(), setting("blob_token")]);
+  const blob = token ? await blobAccess(token).catch(() => null) : null;
+  const generated = [...fromManifest(manifest), ...logoAnims, ...official];
   return (
     <>
-      <PageHead kicker="Marka" title="Logo i materiały" />
-      <BrandBoard announcements={data.announcements} banners={data.banners} logoAnims={logoAnims} assets={assets} proposals={data.logos} colors={colors} />
+      <PageHead kicker="Marka" title="Materiały marki" />
+      <BrandBoard generated={generated} own={own} palette={palette} colors={colors} blob={blob} />
     </>
   );
 }

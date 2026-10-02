@@ -8,6 +8,7 @@ import { track } from "./Analytics";
 import { Arrow, Magnetic } from "./ui/Button";
 import { FadeUp, Heading } from "./ui/Reveal";
 import Input from "./ui/Input";
+import { content } from "@/lib/content";
 
 /*
  * Kontakt krok po kroku — jedno pytanie na ekran:
@@ -376,6 +377,8 @@ export default function Contact() {
 
   const summary = [serviceLabel, d.budget, d.message && step > 2 ? "Opis projektu" : ""].map((t, i) => ({ t, i })).filter((x) => x.t && x.i < step);
 
+  const availability = content().availability;
+
   return (
     <section id="kontakt" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-40">
       <div className="grid grid-cols-1 gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
@@ -383,7 +386,16 @@ export default function Contact() {
         {/* lewa kolumna jedzie razem z przewijaniem do końca karty formularza */}
         <div className="flex min-w-0 flex-col lg:sticky lg:top-28 lg:self-start">
           <FadeUp>
-            <p className="kicker">Kontakt</p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <p className="kicker">Kontakt</p>
+              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12.5px] ${availability.open ? "border-emerald-400/25 bg-emerald-400/[0.07] text-emerald-200" : "border-amber-300/25 bg-amber-300/[0.07] text-amber-100"}`}>
+                <span className="relative flex size-1.5">
+                  <span className={`absolute inset-0 animate-ping rounded-full ${availability.open ? "bg-emerald-400/70" : "bg-amber-300/70"}`} />
+                  <span className={`relative size-1.5 rounded-full ${availability.open ? "bg-emerald-400" : "bg-amber-300"}`} />
+                </span>
+                {availability.text}
+              </span>
+            </div>
           </FadeUp>
           <Heading
             className="mt-7 text-[clamp(2.6rem,4.3vw,4.4rem)]"

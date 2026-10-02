@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { all, one } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/session";
-import { formFunnel, homeVisits, kpis, series, sources, topPages } from "@/lib/analytics";
+import { formFunnel, homeVisits, kpis, live, series, sources, topPages } from "@/lib/analytics";
 import { daysBetween, STATUS, today, upcoming } from "@/lib/orders";
 import { fmtDateTime } from "@/lib/format";
-import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, PageHead, Stat } from "@/components/panel/kit";
+import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, Stat } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import QuickActions from "@/components/panel/QuickActions";
 import { financeSummary, zl } from "@/lib/finance";
+import { listLogs } from "@/lib/logs";
+import CockpitHero, { Activity } from "@/components/panel/CockpitHero";
 
 export const metadata: Metadata = { title: "Kokpit" };
 
@@ -19,7 +21,7 @@ const greet = () => {
 
 export default async function Cockpit() {
   const admin = await requireAdmin();
-  const [k, s, home, clients, orders, money, newInq, inquiries, next, pages, src, funnel, fin] = await Promise.all([
+  const [k, s, home, clients, orders, money, newInq, inquiries, next, pages, src, funnel, fin, activity, nowOnline] = await Promise.all([
     kpis(30),
     series(30),
     homeVisits(),
@@ -33,15 +35,26 @@ export default async function Cockpit() {
     sources(30),
     formFunnel(30),
     financeSummary(),
+    listLogs({ limit: 7 }),
+    live(),
   ]);
   const t = today();
   const conv = k.cur.visitors ? Math.round((funnel[2].n / k.cur.visitors) * 1000) / 10 : 0;
 
   return (
     <>
-      <PageHead kicker="Kokpit" title={`${greet()}, ${admin.name.split(" ")[0]}.`}>
+      <CockpitHero
+        greeting={`${greet()}, ${admin.name.split(" ")[0]}.`}
+        date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
+        stats={[
+          { label: "na stronie teraz", value: nowOnline, live: true },
+          { label: "dziś na głównej", value: home.today },
+          { label: "nowe zapytania", value: Number(newInq?.n ?? 0), href: "/panel/admin/zapytania" },
+          { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
+        ]}
+      >
         <QuickActions />
-      </PageHead>
+      </CockpitHero>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="col-span-2 lg:row-span-2" glow>
@@ -99,7 +112,7 @@ export default async function Cockpit() {
         </div>
       </Card>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
         <Card delay={0.25}>
           <CardHead title="Nadchodzące terminy" sub="Zlecenia z kalendarza">
             <Link href="/panel/admin/kalendarz" className="text-[13px] text-muted transition-colors hover:text-ink">
@@ -165,6 +178,8 @@ export default async function Cockpit() {
             </ul>
           )}
         </Card>
+
+        <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">

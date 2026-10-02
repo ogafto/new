@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { cancelPayment, checkStripe, createPayment, deleteExpense, deletePayment, saveExpense, sendPaymentEmail, setPaid, type NewPayment } from "@/app/panel/admin/finanse/actions";
 import type { Expense, Payment, PaymentStatus } from "@/lib/finance";
@@ -352,7 +352,8 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
   const router = useRouter();
   const [tab, setTab] = useState<"payments" | "expenses">("payments");
   const [filter, setFilter] = useState<"all" | "open" | "paid">("all");
-  const [modal, setModal] = useState<"payment" | "expense" | null>(null);
+  const params = useSearchParams();
+  const [modal, setModal] = useState<"payment" | "expense" | null>(params.get("nowa") ? "payment" : null);
   const [msg, setMsg] = useState<{ ok?: string; error?: string }>();
   const [, start] = useTransition();
   const show = (m: { ok?: string; error?: string }) => {

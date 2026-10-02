@@ -139,12 +139,12 @@ async function frameAt(p, t) {
 
 // ---------- kodowanie ----------
 
-function encodeMp4(file, w, h, fps) {
+function encodeMp4(file, w, h, fps, crf = 14) {
   mkdirSync(dirname(file), { recursive: true });
   const ff = spawn(ffmpegPath, [
     "-y", "-loglevel", "error",
     "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", String(fps), "-i", "-",
-    "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-tune", "animation",
+    "-c:v", "libx264", "-preset", "slow", "-crf", String(crf), "-tune", "animation",
     "-pix_fmt", "yuv420p", "-profile:v", "high", "-movflags", "+faststart",
     file,
   ], { stdio: ["pipe", "inherit", "inherit"] });
@@ -230,7 +230,7 @@ export async function renderScene(scene, { outDir, base, mp4 = true, gif = true,
 
   if (mp4) {
     const file = join(outDir, `${base}.mp4`);
-    const enc = encodeMp4(file, w, h, fps);
+    const enc = encodeMp4(file, w, h, fps, scene.crf ?? 14);
     const n = Math.round(duration * fps);
     for (let i = 0; i < n; i++) {
       const shot = await frameAt(p, i / fps);

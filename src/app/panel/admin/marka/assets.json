@@ -1,53 +1,237 @@
 {
   "version": 2,
-  "generated": "2026-10-02T17:08:51.689Z",
+  "generated": "2026-10-02T17:48:15.574Z",
   "items": [
     {
-      "id": "haslo-01-1500x300",
+      "id": "zapowiedz-01-chrom",
       "category": "animacje",
-      "group": "Baner z hasłem",
-      "title": "Baner z hasłem — 1500 × 300",
-      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
-      "w": 1500,
-      "h": 300,
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Płynny chrom",
+      "description": "Opalizujące krople płynnego metalu (fiolet, magenta, elektryczny błękit) łączą się i rozdzielają za matowym szkłem; hasło „Coś nadchodzi.” wskakuje elastycznie litera po literze.",
+      "w": 1280,
+      "h": 720,
       "duration": 8,
-      "poster": "/brand/animacje/haslo-01-1500x300-poster.jpg",
+      "poster": "/brand/zapowiedzi/zapowiedz-01-chrom-poster.jpg",
       "files": [
         {
           "kind": "mp4",
-          "url": "/brand/animacje/haslo-01-1500x300.mp4",
-          "bytes": 611086,
+          "url": "/brand/zapowiedzi/zapowiedz-01-chrom.mp4",
+          "bytes": 1362180,
           "label": "MP4"
         },
         {
           "kind": "gif",
-          "url": "/brand/animacje/haslo-01-1500x300.gif",
-          "bytes": 2211074,
+          "url": "/brand/zapowiedzi/zapowiedz-01-chrom.gif",
+          "bytes": 12014772,
           "label": "GIF"
         }
       ]
     },
     {
-      "id": "haslo-01-1500x500",
+      "id": "zapowiedz-01-chrom-1500x500",
       "category": "animacje",
-      "group": "Baner z hasłem",
-      "title": "Baner z hasłem — 1500 × 500",
-      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Płynny chrom — baner 1500 × 500",
+      "description": "Opalizujące krople płynnego metalu (fiolet, magenta, elektryczny błękit) łączą się i rozdzielają za matowym szkłem; hasło „Coś nadchodzi.” wskakuje elastycznie litera po literze.",
       "w": 1500,
       "h": 500,
       "duration": 8,
-      "poster": "/brand/animacje/haslo-01-1500x500-poster.jpg",
+      "poster": "/brand/zapowiedzi/zapowiedz-01-chrom-1500x500-poster.jpg",
       "files": [
         {
           "kind": "mp4",
-          "url": "/brand/animacje/haslo-01-1500x500.mp4",
-          "bytes": 1093078,
+          "url": "/brand/zapowiedzi/zapowiedz-01-chrom-1500x500.mp4",
+          "bytes": 1240814,
           "label": "MP4"
         },
         {
           "kind": "gif",
-          "url": "/brand/animacje/haslo-01-1500x500.gif",
-          "bytes": 3767958,
+          "url": "/brand/zapowiedzi/zapowiedz-01-chrom-1500x500.gif",
+          "bytes": 12098813,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-02-zorza",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Zorza",
+      "description": "Szmaragdowo-turkusowo-fioletowe wstęgi zorzy płyną nad gwiaździstym niebem i odbijają się w jeziorze; spadająca gwiazda, a „WKRÓTCE” wyłania się bardzo wolno z szerokiego rozstrzelenia. „Nowe światło na horyzoncie.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 10,
+      "poster": "/brand/zapowiedzi/zapowiedz-02-zorza-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-02-zorza.mp4",
+          "bytes": 786256,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-02-zorza.gif",
+          "bytes": 9334162,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-02-zorza-1500x500",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Zorza — baner 1500 × 500",
+      "description": "Szmaragdowo-turkusowo-fioletowe wstęgi zorzy płyną nad gwiaździstym niebem i odbijają się w jeziorze; spadająca gwiazda, a „WKRÓTCE” wyłania się bardzo wolno z szerokiego rozstrzelenia. „Nowe światło na horyzoncie.”",
+      "w": 1500,
+      "h": 500,
+      "duration": 10,
+      "poster": "/brand/zapowiedzi/zapowiedz-02-zorza-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-02-zorza-1500x500.mp4",
+          "bytes": 691527,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-02-zorza-1500x500.gif",
+          "bytes": 11085352,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-03-neon",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Neon / synth",
+      "description": "Retro synth: różowo-cyjanowa siatka pędzi do widza pod pociętym słońcem, linie skanowania; twarde cięcia w takt z glitchem RGB — „NOWY” → „ROZDZIAŁ” → chromowane „NOWY ROZDZIAŁ” z echem → neonowy znak af. i migające „WKRÓTCE”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8,
+      "poster": "/brand/zapowiedzi/zapowiedz-03-neon-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-03-neon.mp4",
+          "bytes": 3035825,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-03-neon.gif",
+          "bytes": 7135032,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-03-neon-1500x500",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Neon / synth — baner 1500 × 500",
+      "description": "Retro synth: różowo-cyjanowa siatka pędzi do widza pod pociętym słońcem, linie skanowania; twarde cięcia w takt z glitchem RGB — „NOWY” → „ROZDZIAŁ” → chromowane „NOWY ROZDZIAŁ” z echem → neonowy znak af. i migające „WKRÓTCE”.",
+      "w": 1500,
+      "h": 500,
+      "duration": 8,
+      "poster": "/brand/zapowiedzi/zapowiedz-03-neon-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-03-neon-1500x500.mp4",
+          "bytes": 2359619,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-03-neon-1500x500.gif",
+          "bytes": 6583370,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-04-druk",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Druk / edytorial",
+      "description": "Jasna, drukowana estetyka: kremowy papier z fakturą, pomarańcz i czerń, ogromne „Nowy projekt.” odsłaniane blokowymi maskami, raster w kole, obracająca się pieczątka „WKRÓTCE” ze znakiem, kolumna tekstu; pętla zamyka się jak przewrócenie strony.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.5,
+      "poster": "/brand/zapowiedzi/zapowiedz-04-druk-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-04-druk.mp4",
+          "bytes": 2859184,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-04-druk.gif",
+          "bytes": 6060554,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-05-czasteczki",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Cząsteczki",
+      "description": "Tysiące fioletowych i limonkowych cząsteczek krąży w roju, składa się w znak af. z limonkową kropką, wybucha łukiem i układa w napis „Coś nowego się szykuje”, po czym wraca do roju; z poświatą.",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/zapowiedzi/zapowiedz-05-czasteczki-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-05-czasteczki.mp4",
+          "bytes": 5738042,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-05-czasteczki.gif",
+          "bytes": 11440417,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-06-warp",
+      "category": "animacje",
+      "section": "Zapowiedzi",
+      "group": "Coś nadchodzi",
+      "title": "Warp",
+      "description": "Elektrycznie niebieskie i fioletowe smugi gwiazd pędzą na widza; cyfry 3-2-1 nadlatują z tunelu, skok w nadprzestrzeń, biały błysk i „Już wkrótce.” z aberracją chromatyczną, która zbiega się w ostry napis.",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/zapowiedzi/zapowiedz-06-warp-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/zapowiedzi/zapowiedz-06-warp.mp4",
+          "bytes": 3896243,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/zapowiedzi/zapowiedz-06-warp.gif",
+          "bytes": 8340241,
           "label": "GIF"
         }
       ]
@@ -55,6 +239,7 @@
     {
       "id": "zapowiedz-nowa-strona-01-szklo",
       "category": "animacje",
+      "section": "Zapowiedź nowej strony",
       "group": "Zapowiedź nowej strony",
       "title": "Szkło — nowa strona składa się w 3D",
       "description": "Szklane okno przeglądarki wyłania się z głębi i obraca; szkielet ładowania zamienia się w warstwy nowej strony (paralaksa), adres wpisuje się „afto.works”, status zmienia się na „Wkrótce online”. Podpis: „Nowa strona. afto.works · już wkrótce”.",
@@ -80,6 +265,7 @@
     {
       "id": "zapowiedz-nowa-strona-02-swiatlo",
       "category": "animacje",
+      "section": "Zapowiedź nowej strony",
       "group": "Zapowiedź nowej strony",
       "title": "Światło — znak w szkle i odliczanie",
       "description": "Laser przecina ciemność i zapala szklaną płytkę ze znakiem; linie „af.” świecą i gasną do bieli, pierścień odlicza 03 · 02 · 01, fala światła i hasło „Nowa strona już wkrótce.”",
@@ -105,6 +291,7 @@
     {
       "id": "zapowiedz-nowa-strona-03-kinetyka",
       "category": "animacje",
+      "section": "Zapowiedź nowej strony",
       "group": "Zapowiedź nowej strony",
       "title": "Kinetyka — „Coś się szykuje…”",
       "description": "Typografia w ruchu: „Coś się szykuje” nadlatuje z głębi z migającymi kropkami marki, przelot kamery przez tekst, kontur „Nowa odsłona.” wypełnia się światłem, finał: znak + „afto.works” i „Nowa strona · wkrótce online”. W tle słowa-duchy w trzech planach.",
@@ -130,6 +317,7 @@
     {
       "id": "zapowiedz-nowa-strona-04-powiadomienie",
       "category": "animacje",
+      "section": "Zapowiedź nowej strony",
       "group": "Zapowiedź nowej strony",
       "title": "Powiadomienie — telefon dostaje wiadomość",
       "description": "Telefon w 3D na ekranie blokady („Dzień premiery”, 9:41) dostaje powiadomienia od afto.works: „Coś się szykuje.” → „Nowa strona jest prawie gotowa”. Dotknięcie otwiera ekran startowy ze znakiem, telefon odjeżdża w bok, obok „Nowa strona. Już wkrótce.”",
@@ -153,226 +341,53 @@
       ]
     },
     {
-      "id": "weryfikacja-01-tarcza-1500x300",
+      "id": "haslo-01-1500x300",
       "category": "animacje",
-      "group": "Weryfikacja",
-      "title": "Weryfikacja — tarcza (1500 × 300)",
-      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "section": "Banery z hasłem",
+      "group": "Baner z hasłem",
+      "title": "Baner z hasłem — 1500 × 300",
+      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
       "w": 1500,
       "h": 300,
-      "duration": 6,
-      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x300-poster.jpg",
+      "duration": 8,
+      "poster": "/brand/animacje/haslo-01-1500x300-poster.jpg",
       "files": [
         {
           "kind": "mp4",
-          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.mp4",
-          "bytes": 294189,
+          "url": "/brand/animacje/haslo-01-1500x300.mp4",
+          "bytes": 611086,
           "label": "MP4"
         },
         {
           "kind": "gif",
-          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.gif",
-          "bytes": 678217,
+          "url": "/brand/animacje/haslo-01-1500x300.gif",
+          "bytes": 2211074,
           "label": "GIF"
         }
       ]
     },
     {
-      "id": "weryfikacja-01-tarcza-1500x500",
+      "id": "haslo-01-1500x500",
       "category": "animacje",
-      "group": "Weryfikacja",
-      "title": "Weryfikacja — tarcza (1500 × 500)",
-      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "section": "Banery z hasłem",
+      "group": "Baner z hasłem",
+      "title": "Baner z hasłem — 1500 × 500",
+      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
       "w": 1500,
       "h": 500,
-      "duration": 6,
-      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x500-poster.jpg",
+      "duration": 8,
+      "poster": "/brand/animacje/haslo-01-1500x500-poster.jpg",
       "files": [
         {
           "kind": "mp4",
-          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.mp4",
-          "bytes": 553519,
+          "url": "/brand/animacje/haslo-01-1500x500.mp4",
+          "bytes": 1093078,
           "label": "MP4"
         },
         {
           "kind": "gif",
-          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.gif",
-          "bytes": 1192467,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "weryfikacja-02-przycisk-1500x300",
-      "category": "animacje",
-      "group": "Weryfikacja",
-      "title": "Weryfikacja — przycisk (1500 × 300)",
-      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
-      "w": 1500,
-      "h": 300,
-      "duration": 6,
-      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x300-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.mp4",
-          "bytes": 290059,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.gif",
-          "bytes": 605745,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "weryfikacja-02-przycisk-1500x500",
-      "category": "animacje",
-      "group": "Weryfikacja",
-      "title": "Weryfikacja — przycisk (1500 × 500)",
-      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
-      "w": 1500,
-      "h": 500,
-      "duration": 6,
-      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x500-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.mp4",
-          "bytes": 528011,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.gif",
-          "bytes": 897340,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "zapowiedz-01-konstrukcja",
-      "category": "animacje",
-      "group": "Zapowiedzi (starsze)",
-      "title": "Konstrukcja znaku",
-      "description": "Siatka i prowadnice, monogram rysowany linia po linii, kropka z falą, potem hasło „Coś nowego nadchodzi.”",
-      "w": 1280,
-      "h": 720,
-      "duration": 7,
-      "poster": "/brand/discord/zapowiedz-01-konstrukcja-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/discord/zapowiedz-01-konstrukcja.mp4",
-          "bytes": 319479,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/discord/zapowiedz-01-konstrukcja.gif",
-          "bytes": 2297299,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "zapowiedz-02-publikacja",
-      "category": "animacje",
-      "group": "Zapowiedzi (starsze)",
-      "title": "Publikacja",
-      "description": "Kursor układa stronę z klocków i klika „Opublikuj” → „✓ Online”, podpis „afto.works · nowa odsłona już wkrótce”.",
-      "w": 1280,
-      "h": 720,
-      "duration": 8.8,
-      "poster": "/brand/discord/zapowiedz-02-publikacja-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/discord/zapowiedz-02-publikacja.mp4",
-          "bytes": 583060,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/discord/zapowiedz-02-publikacja.gif",
-          "bytes": 3468180,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "zapowiedz-03-rozmowa",
-      "category": "animacje",
-      "group": "Zapowiedzi (starsze)",
-      "title": "Rozmowa",
-      "description": "Dymki czatu: „Kiedy startujecie?” → „Już wkrótce. Zaglądaj na afto.works”, z kropkami pisania i plakietką „Nowa odsłona — wkrótce”.",
-      "w": 1280,
-      "h": 720,
-      "duration": 8.3,
-      "poster": "/brand/discord/zapowiedz-03-rozmowa-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/discord/zapowiedz-03-rozmowa.mp4",
-          "bytes": 462073,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/discord/zapowiedz-03-rozmowa.gif",
-          "bytes": 2514659,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "zapowiedz-04-premiera",
-      "category": "animacje",
-      "group": "Zapowiedzi (starsze)",
-      "title": "Premiera",
-      "description": "Wiązka światła przesuwa się po siatce i „zapala” litery hasła „Nowa odsłona.” — typografia kinetyczna.",
-      "w": 1280,
-      "h": 720,
-      "duration": 6.6,
-      "poster": "/brand/discord/zapowiedz-04-premiera-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/discord/zapowiedz-04-premiera.mp4",
-          "bytes": 327596,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/discord/zapowiedz-04-premiera.gif",
-          "bytes": 2828747,
-          "label": "GIF"
-        }
-      ]
-    },
-    {
-      "id": "zapowiedz-05-odliczanie",
-      "category": "animacje",
-      "group": "Zapowiedzi (starsze)",
-      "title": "Odliczanie",
-      "description": "„03 · 02 · 01” z paskiem postępu, który kurczy się w kropkę logotypu — afto. rysuje się od kropki, „Startujemy.”",
-      "w": 1280,
-      "h": 720,
-      "duration": 7.1,
-      "poster": "/brand/discord/zapowiedz-05-odliczanie-poster.jpg",
-      "files": [
-        {
-          "kind": "mp4",
-          "url": "/brand/discord/zapowiedz-05-odliczanie.mp4",
-          "bytes": 187691,
-          "label": "MP4"
-        },
-        {
-          "kind": "gif",
-          "url": "/brand/discord/zapowiedz-05-odliczanie.gif",
-          "bytes": 977972,
+          "url": "/brand/animacje/haslo-01-1500x500.gif",
+          "bytes": 3767958,
           "label": "GIF"
         }
       ]
@@ -380,6 +395,7 @@
     {
       "id": "baner-01-haslo",
       "category": "animacje",
+      "section": "Banery z hasłem",
       "group": "Banery 1500 × 300",
       "title": "Znak + hasło",
       "description": "Monogram, pionowa linia i hasło „Strony, które wyglądają drogo. I sprzedają.” — klasyczny układ logo z lewej.",
@@ -405,6 +421,7 @@
     {
       "id": "baner-02-siatka",
       "category": "animacje",
+      "section": "Banery z hasłem",
       "group": "Banery 1500 × 300",
       "title": "Logotyp na siatce",
       "description": "Logotyp „afto.” na siatce konstrukcyjnej z opisami linii; co pętlę przechodzi po nim wiązka światła.",
@@ -430,6 +447,7 @@
     {
       "id": "baner-03-uslugi",
       "category": "animacje",
+      "section": "Banery z hasłem",
       "group": "Banery 1500 × 300",
       "title": "Usługi — pasek",
       "description": "Pasek usług przesuwa się w pętli (Strony internetowe · Sklepy · Identyfikacja wizualna · UI/UX…), znak przypięty z lewej.",
@@ -455,6 +473,7 @@
     {
       "id": "baner-05-status",
       "category": "animacje",
+      "section": "Banery z hasłem",
       "group": "Banery 1500 × 300",
       "title": "Status + przycisk",
       "description": "„Przyjmuję nowe projekty.” z zielonym statusem i listą usług; kursor najeżdża i klika „Napisz do mnie”.",
@@ -478,8 +497,113 @@
       ]
     },
     {
+      "id": "weryfikacja-01-tarcza-1500x300",
+      "category": "animacje",
+      "section": "Weryfikacja",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — tarcza (1500 × 300)",
+      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "w": 1500,
+      "h": 300,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x300-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.mp4",
+          "bytes": 294189,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.gif",
+          "bytes": 678217,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-01-tarcza-1500x500",
+      "category": "animacje",
+      "section": "Weryfikacja",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — tarcza (1500 × 500)",
+      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "w": 1500,
+      "h": 500,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.mp4",
+          "bytes": 553519,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.gif",
+          "bytes": 1192467,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-02-przycisk-1500x300",
+      "category": "animacje",
+      "section": "Weryfikacja",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — przycisk (1500 × 300)",
+      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
+      "w": 1500,
+      "h": 300,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x300-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.mp4",
+          "bytes": 290059,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.gif",
+          "bytes": 605745,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-02-przycisk-1500x500",
+      "category": "animacje",
+      "section": "Weryfikacja",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — przycisk (1500 × 500)",
+      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
+      "w": 1500,
+      "h": 500,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.mp4",
+          "bytes": 528011,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.gif",
+          "bytes": 897340,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
       "id": "afto-banner-anim",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Baner — animacja",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -499,6 +623,7 @@
     {
       "id": "afto-logo-anim-dark",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Logotyp — ciemny",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -518,6 +643,7 @@
     {
       "id": "afto-logo-anim-light",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Logotyp — jasny",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -537,6 +663,7 @@
     {
       "id": "afto-mark-anim-dark",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Monogram — ciemny",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -556,6 +683,7 @@
     {
       "id": "afto-mark-anim-light",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Monogram — jasny",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -575,6 +703,7 @@
     {
       "id": "afto-post-anim",
       "category": "animacje",
+      "section": "Logo animowane",
       "group": "Animacje logo",
       "title": "Post — kwadrat",
       "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
@@ -592,8 +721,139 @@
       ]
     },
     {
+      "id": "zapowiedz-01-konstrukcja",
+      "category": "animacje",
+      "section": "Archiwum",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Konstrukcja znaku",
+      "description": "Siatka i prowadnice, monogram rysowany linia po linii, kropka z falą, potem hasło „Coś nowego nadchodzi.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7,
+      "poster": "/brand/discord/zapowiedz-01-konstrukcja-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-01-konstrukcja.mp4",
+          "bytes": 319479,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-01-konstrukcja.gif",
+          "bytes": 2297299,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-02-publikacja",
+      "category": "animacje",
+      "section": "Archiwum",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Publikacja",
+      "description": "Kursor układa stronę z klocków i klika „Opublikuj” → „✓ Online”, podpis „afto.works · nowa odsłona już wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.8,
+      "poster": "/brand/discord/zapowiedz-02-publikacja-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-02-publikacja.mp4",
+          "bytes": 583060,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-02-publikacja.gif",
+          "bytes": 3468180,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-03-rozmowa",
+      "category": "animacje",
+      "section": "Archiwum",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Rozmowa",
+      "description": "Dymki czatu: „Kiedy startujecie?” → „Już wkrótce. Zaglądaj na afto.works”, z kropkami pisania i plakietką „Nowa odsłona — wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.3,
+      "poster": "/brand/discord/zapowiedz-03-rozmowa-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-03-rozmowa.mp4",
+          "bytes": 462073,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-03-rozmowa.gif",
+          "bytes": 2514659,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-04-premiera",
+      "category": "animacje",
+      "section": "Archiwum",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Premiera",
+      "description": "Wiązka światła przesuwa się po siatce i „zapala” litery hasła „Nowa odsłona.” — typografia kinetyczna.",
+      "w": 1280,
+      "h": 720,
+      "duration": 6.6,
+      "poster": "/brand/discord/zapowiedz-04-premiera-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-04-premiera.mp4",
+          "bytes": 327596,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-04-premiera.gif",
+          "bytes": 2828747,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-05-odliczanie",
+      "category": "animacje",
+      "section": "Archiwum",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Odliczanie",
+      "description": "„03 · 02 · 01” z paskiem postępu, który kurczy się w kropkę logotypu — afto. rysuje się od kropki, „Startujemy.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7.1,
+      "poster": "/brand/discord/zapowiedz-05-odliczanie-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-05-odliczanie.mp4",
+          "bytes": 187691,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-05-odliczanie.gif",
+          "bytes": 977972,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
       "id": "baner-01-haslo-png",
       "category": "grafiki",
+      "section": "Banery",
       "group": "Banery 1500 × 300",
       "title": "Znak + hasło",
       "description": "Monogram, pionowa linia i hasło „Strony, które wyglądają drogo. I sprzedają.” — klasyczny układ logo z lewej.",
@@ -611,6 +871,7 @@
     {
       "id": "baner-02-siatka-png",
       "category": "grafiki",
+      "section": "Banery",
       "group": "Banery 1500 × 300",
       "title": "Logotyp na siatce",
       "description": "Logotyp „afto.” na siatce konstrukcyjnej z opisami linii; co pętlę przechodzi po nim wiązka światła.",
@@ -628,6 +889,7 @@
     {
       "id": "baner-03-uslugi-png",
       "category": "grafiki",
+      "section": "Banery",
       "group": "Banery 1500 × 300",
       "title": "Usługi — pasek",
       "description": "Pasek usług przesuwa się w pętli (Strony internetowe · Sklepy · Identyfikacja wizualna · UI/UX…), znak przypięty z lewej.",
@@ -645,6 +907,7 @@
     {
       "id": "baner-04-linia-png",
       "category": "grafiki",
+      "section": "Banery",
       "group": "Banery 1500 × 300",
       "title": "Fioletowa linia",
       "description": "Minimalny: duży monogram narysowany samym fioletowym konturem, z prawej przycięty; nazwa i opis z lewej.",
@@ -662,6 +925,7 @@
     {
       "id": "baner-05-status-png",
       "category": "grafiki",
+      "section": "Banery",
       "group": "Banery 1500 × 300",
       "title": "Status + przycisk",
       "description": "„Przyjmuję nowe projekty.” z zielonym statusem i listą usług; kursor najeżdża i klika „Napisz do mnie”.",
@@ -679,6 +943,7 @@
     {
       "id": "afto-icon-accent",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Ikona — fiolet",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -703,6 +968,7 @@
     {
       "id": "afto-icon-dark",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Ikona — ciemna",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -727,6 +993,7 @@
     {
       "id": "afto-icon-light",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Ikona — jasna",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -751,6 +1018,7 @@
     {
       "id": "afto-logo",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Logotyp",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -775,6 +1043,7 @@
     {
       "id": "afto-logo-black",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Logotyp — ciemny",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -799,6 +1068,7 @@
     {
       "id": "afto-logo-mono-black",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Logotyp — czarny",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -823,6 +1093,7 @@
     {
       "id": "afto-logo-mono-white",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Logotyp — biały",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -847,6 +1118,7 @@
     {
       "id": "afto-mark",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Monogram",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -871,6 +1143,7 @@
     {
       "id": "afto-mark-black",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Monogram — ciemny",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -895,6 +1168,7 @@
     {
       "id": "afto-mark-mono-black",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Monogram — czarny",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -919,6 +1193,7 @@
     {
       "id": "afto-mark-mono-white",
       "category": "grafiki",
+      "section": "Logo",
       "group": "Logo — oficjalne",
       "title": "Monogram — biały",
       "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
@@ -943,6 +1218,7 @@
     {
       "id": "logo-01-ikona-ciemna",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Ikona aplikacji — ciemna",
       "description": "Superelipsa o ciągłych narożnikach (jak iOS), delikatne światło od góry, monogram w optycznym środku.",
@@ -973,6 +1249,7 @@
     {
       "id": "logo-01-ikona-fiolet",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Ikona aplikacji — fiolet",
       "description": "Wersja w kolorze marki: biała linia, kropka w kolorze tła — odwrócony akcent.",
@@ -1003,6 +1280,7 @@
     {
       "id": "logo-02-awatar-orbita",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Awatar — orbita",
       "description": "Okrągły awatar 512×512 (Discord): monogram w środku, fioletowa orbita z kwadratową kropką w przerwie.",
@@ -1034,6 +1312,7 @@
     {
       "id": "logo-03-pionowy",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Układ pionowy",
       "description": "Monogram nad nazwą „afto.works” i linią usług — do stopek, okładek i profili.",
@@ -1058,6 +1337,7 @@
     {
       "id": "logo-03-pionowy-jasne-tlo",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Układ pionowy — jasne tło",
       "description": "Ta sama kompozycja w czerni do druku i jasnych tła.",
@@ -1082,6 +1362,7 @@
     {
       "id": "logo-04-kontur-logotyp",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Kontur — logotyp",
       "description": "Logotyp „afto.” w tym samym stylu obrysu — na duże formaty, nadruki, tła wideo.",
@@ -1106,6 +1387,7 @@
     {
       "id": "logo-04-kontur-znak",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Kontur — monogram",
       "description": "Linia znaku jako cienki podwójny obrys, pełna tylko kropka — wariant techniczny/blueprint.",
@@ -1130,6 +1412,7 @@
     {
       "id": "logo-05-poziomy",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Układ poziomy z hasłem",
       "description": "Monogram | nazwa i hasło „Projektowanie stron i identyfikacji” — do stopek maili, faktur, nagłówków.",
@@ -1154,6 +1437,7 @@
     {
       "id": "logo-05-poziomy-jasne-tlo",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Układ poziomy — jasne tło",
       "description": "Wersja na jasne tło (dokumenty, oferty PDF).",
@@ -1178,6 +1462,7 @@
     {
       "id": "logo-06-pieczec",
       "category": "grafiki",
+      "section": "Propozycje logo",
       "group": "Propozycje logo",
       "title": "Pieczęć",
       "description": "Okrągła pieczęć: napis „AFTO.WORKS · STRONY · SKLEPY · IDENTYFIKACJA” po okręgu, monogram w środku — awatar, naklejki, znak wodny.",

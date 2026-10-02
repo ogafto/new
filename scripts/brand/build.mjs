@@ -15,6 +15,7 @@ import { buildLogos } from "./logo.mjs";
 import { slogans } from "./haslo.mjs";
 import { teasers } from "./nowa-strona.mjs";
 import { verification } from "./weryfikacja.mjs";
+import { comingSoon } from "./cos-nadchodzi.mjs";
 
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}`))?.split("=")[1] ?? (process.argv.includes(`--${k}`) ? true : undefined);
 const only = arg("only");
@@ -24,6 +25,7 @@ const pick = (list) => list.filter((s) => !only || s.id.includes(only));
 
 const MANIFEST = join(ROOT, "src", "app", "panel", "admin", "marka", "assets.json");
 const ANIM_DIR = join(PUBLIC, "brand", "animacje");
+const ZAP_DIR = join(PUBLIC, "brand", "zapowiedzi");
 
 // ---------- sceny ----------
 const NEW = () => [...slogans(), ...teasers(), ...verification()];
@@ -32,7 +34,7 @@ const OLD_BAN = () => banners();
 
 if (sheets) {
   mkdirSync(sheets, { recursive: true });
-  for (const s of pick([...NEW(), ...OLD_ANIM(), ...OLD_BAN()])) {
+  for (const s of pick([...comingSoon(), ...NEW(), ...OLD_ANIM(), ...OLD_BAN()])) {
     await stills(s, s.keys ?? Array.from({ length: 6 }, (_, i) => (s.duration * (i + 0.5)) / 6), join(sheets, `${s.id}.png`));
     console.log(`  ✓ ${s.id}`);
   }
@@ -42,6 +44,7 @@ if (sheets) {
 
 if (!manifestOnly) {
   const groups = [
+    ["Zapowiedzi „Coś nadchodzi” (public/brand/zapowiedzi)", pick(comingSoon()), (s) => ({ outDir: ZAP_DIR, base: s.id })],
     ["Animacje premium (public/brand/animacje)", pick(NEW()), (s) => ({ outDir: ANIM_DIR, base: s.id })],
     ["Zapowiedzi starsze (public/brand/discord)", pick(OLD_ANIM()), (s) => ({ outDir: join(PUBLIC, "brand", "discord"), base: s.id })],
     ["Banery 1500×300 (public/brand/banners)", pick(OLD_BAN()), (s) => ({ outDir: join(PUBLIC, "brand", "banners"), base: s.id, png: true, mp4: s.animated, gif: s.animated })],
@@ -72,13 +75,17 @@ const anim = (s, dir, group, extra = {}) => {
   items.push({ id: s.id, category: "animacje", group, title: s.title ?? s.name, description: s.description ?? s.desc, w: s.w, h: s.h, duration: s.duration, ...(poster ? { poster: url(poster) } : {}), files, ...extra });
 };
 
-for (const s of NEW()) anim(s, ANIM_DIR, s.group);
-for (const s of OLD_ANIM()) anim(s, join(PUBLIC, "brand", "discord"), "Zapowiedzi (starsze)");
+// sekcje (podkategorie strony „Marka”): animacje → Zapowiedzi, Zapowiedź nowej strony, Banery z hasłem, Weryfikacja, Logo animowane, Archiwum;
+// grafiki → Banery, Logo, Propozycje logo
+const SECTION_OF = (s) => (s.id.startsWith("haslo") ? "Banery z hasłem" : s.id.startsWith("weryfikacja") ? "Weryfikacja" : "Zapowiedź nowej strony");
+for (const s of comingSoon()) anim(s, ZAP_DIR, s.group, { section: "Zapowiedzi" });
+for (const s of NEW()) anim(s, ANIM_DIR, s.group, { section: SECTION_OF(s) });
+for (const s of OLD_ANIM()) anim(s, join(PUBLIC, "brand", "discord"), "Zapowiedzi (starsze)", { section: "Archiwum" });
 for (const s of OLD_BAN()) {
   const dir = join(PUBLIC, "brand", "banners");
-  if (s.animated) anim(s, dir, "Banery 1500 × 300");
+  if (s.animated) anim(s, dir, "Banery 1500 × 300", { section: "Banery z hasłem" });
   const png = filesFor(dir, s.id, [[".png", "png"]]);
-  if (png.length) items.push({ id: `${s.id}-png`, category: "grafiki", group: "Banery 1500 × 300", title: s.name, description: s.desc, w: s.w, h: s.h, files: png });
+  if (png.length) items.push({ id: `${s.id}-png`, category: "grafiki", section: "Banery", group: "Banery 1500 × 300", title: s.name, description: s.desc, w: s.w, h: s.h, files: png });
 }
 
 // animacje logo (starszy eksport: npm run logo:gif) + kadry podglądu
@@ -96,7 +103,7 @@ for (const [id, title, w, h, duration] of LOGO_ANIMS) {
   if (!existsSync(gif)) continue;
   const poster = join(animDir, `${id}-poster.jpg`);
   if (!existsSync(poster)) spawnSync(ffmpegPath, ["-v", "error", "-y", "-ss", String(duration * 0.55), "-i", gif, "-frames:v", "1", "-q:v", "3", poster]);
-  items.push({ id, category: "animacje", group: "Animacje logo", title, description: "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.", w, h, duration, ...(existsSync(poster) ? { poster: url(poster) } : {}), files: [fileEntry(gif, "gif")] });
+  items.push({ id, category: "animacje", section: "Logo animowane", group: "Animacje logo", title, description: "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.", w, h, duration, ...(existsSync(poster) ? { poster: url(poster) } : {}), files: [fileEntry(gif, "gif")] });
 }
 
 // oficjalne pliki logo (npm run logo)
@@ -122,7 +129,7 @@ for (const [id, title, bg] of OFFICIAL) {
   const files = filesFor(brandDir, id, [[".svg", "svg"], [".png", "png"]]);
   if (!files.length) continue;
   const [w, h] = dims(join(brandDir, `${id}.svg`));
-  items.push({ id, category: "grafiki", group: "Logo — oficjalne", title, description: "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).", w, h, bg, files });
+  items.push({ id, category: "grafiki", section: "Logo", group: "Logo — oficjalne", title, description: "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).", w, h, bg, files });
 }
 
 // propozycje logo (logo.mjs zapisuje metadane obok plików)
@@ -130,12 +137,15 @@ const propDir = join(PUBLIC, "brand", "logo-proposals");
 const propMeta = existsSync(join(propDir, "meta.json")) ? JSON.parse(readFileSync(join(propDir, "meta.json"), "utf8")) : [];
 for (const p of propMeta) {
   const files = filesFor(propDir, p.id, [[".svg", "svg"], [".png", "png"], ["-512.png", "png", "PNG 512 × 512"]]);
-  if (files.length) items.push({ id: p.id, category: "grafiki", group: "Propozycje logo", title: p.name, description: p.desc, w: p.w, h: p.h, bg: p.bg, ...(p.round ? { round: true } : {}), files });
+  if (files.length) items.push({ id: p.id, category: "grafiki", section: "Propozycje logo", group: "Propozycje logo", title: p.name, description: p.desc, w: p.w, h: p.h, bg: p.bg, ...(p.round ? { round: true } : {}), files });
 }
 
-// porządek: grupy w kolejności pojawienia się, wewnątrz wg id
+// porządek: kategoria → sekcja (stała kolejność) → grupa (kolejność pojawienia się) → id
+const SECTIONS = ["Zapowiedzi", "Zapowiedź nowej strony", "Banery z hasłem", "Weryfikacja", "Logo animowane", "Archiwum", "Banery", "Logo", "Propozycje logo"];
 const order = [...new Set(items.map((i) => i.group))];
-items.sort((a, b) => (a.category === b.category ? order.indexOf(a.group) - order.indexOf(b.group) || a.id.localeCompare(b.id) : a.category === "animacje" ? -1 : 1));
+items.sort((a, b) => (a.category === b.category ? SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || order.indexOf(a.group) - order.indexOf(b.group) || a.id.localeCompare(b.id) : a.category === "animacje" ? -1 : 1));
+// każda pozycja ma sekcję i kolejność pól jak w opisie (id, category, section, group, …)
+items.forEach((it, i) => { const { id, category, section, ...rest } = it; items[i] = { id, category, section, ...rest }; if (!section) throw new Error(`brak sekcji: ${id}`); });
 // zgodność wstecz: dotychczasowa strona „Marka” czyta klucze announcements/banners/logos
 const legacyFiles = (it) => Object.fromEntries(it.files.map((f) => [f.url.endsWith("-512.png") ? "avatar" : f.kind, { path: f.url, size: f.bytes }]).concat(it.poster ? [["poster", { path: it.poster, size: 0 }]] : []));
 const legacy = {

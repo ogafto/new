@@ -1,4 +1,1212 @@
 {
+  "version": 2,
+  "generated": "2026-10-02T17:08:51.689Z",
+  "items": [
+    {
+      "id": "haslo-01-1500x300",
+      "category": "animacje",
+      "group": "Baner z hasłem",
+      "title": "Baner z hasłem — 1500 × 300",
+      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
+      "w": 1500,
+      "h": 300,
+      "duration": 8,
+      "poster": "/brand/animacje/haslo-01-1500x300-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/haslo-01-1500x300.mp4",
+          "bytes": 611086,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/haslo-01-1500x300.gif",
+          "bytes": 2211074,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "haslo-01-1500x500",
+      "category": "animacje",
+      "group": "Baner z hasłem",
+      "title": "Baner z hasłem — 1500 × 500",
+      "description": "Szklany kafel ze znakiem wyłania się z głębi i kołysze w 3D, hasło „Strony, które wyglądają drogo. I sprzedają.” pojawia się litera po literze z rozmycia; odblask na szkle i połysk na drugiej linii.",
+      "w": 1500,
+      "h": 500,
+      "duration": 8,
+      "poster": "/brand/animacje/haslo-01-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/haslo-01-1500x500.mp4",
+          "bytes": 1093078,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/haslo-01-1500x500.gif",
+          "bytes": 3767958,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-nowa-strona-01-szklo",
+      "category": "animacje",
+      "group": "Zapowiedź nowej strony",
+      "title": "Szkło — nowa strona składa się w 3D",
+      "description": "Szklane okno przeglądarki wyłania się z głębi i obraca; szkielet ładowania zamienia się w warstwy nowej strony (paralaksa), adres wpisuje się „afto.works”, status zmienia się na „Wkrótce online”. Podpis: „Nowa strona. afto.works · już wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 10,
+      "poster": "/brand/animacje/zapowiedz-nowa-strona-01-szklo-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-01-szklo.mp4",
+          "bytes": 1910055,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-01-szklo.gif",
+          "bytes": 4764395,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-nowa-strona-02-swiatlo",
+      "category": "animacje",
+      "group": "Zapowiedź nowej strony",
+      "title": "Światło — znak w szkle i odliczanie",
+      "description": "Laser przecina ciemność i zapala szklaną płytkę ze znakiem; linie „af.” świecą i gasną do bieli, pierścień odlicza 03 · 02 · 01, fala światła i hasło „Nowa strona już wkrótce.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 9.5,
+      "poster": "/brand/animacje/zapowiedz-nowa-strona-02-swiatlo-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-02-swiatlo.mp4",
+          "bytes": 1215380,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-02-swiatlo.gif",
+          "bytes": 3732187,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-nowa-strona-03-kinetyka",
+      "category": "animacje",
+      "group": "Zapowiedź nowej strony",
+      "title": "Kinetyka — „Coś się szykuje…”",
+      "description": "Typografia w ruchu: „Coś się szykuje” nadlatuje z głębi z migającymi kropkami marki, przelot kamery przez tekst, kontur „Nowa odsłona.” wypełnia się światłem, finał: znak + „afto.works” i „Nowa strona · wkrótce online”. W tle słowa-duchy w trzech planach.",
+      "w": 1280,
+      "h": 720,
+      "duration": 9,
+      "poster": "/brand/animacje/zapowiedz-nowa-strona-03-kinetyka-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-03-kinetyka.mp4",
+          "bytes": 1113836,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-03-kinetyka.gif",
+          "bytes": 2507831,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-nowa-strona-04-powiadomienie",
+      "category": "animacje",
+      "group": "Zapowiedź nowej strony",
+      "title": "Powiadomienie — telefon dostaje wiadomość",
+      "description": "Telefon w 3D na ekranie blokady („Dzień premiery”, 9:41) dostaje powiadomienia od afto.works: „Coś się szykuje.” → „Nowa strona jest prawie gotowa”. Dotknięcie otwiera ekran startowy ze znakiem, telefon odjeżdża w bok, obok „Nowa strona. Już wkrótce.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 10,
+      "poster": "/brand/animacje/zapowiedz-nowa-strona-04-powiadomienie-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-04-powiadomienie.mp4",
+          "bytes": 1255220,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/zapowiedz-nowa-strona-04-powiadomienie.gif",
+          "bytes": 3348230,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-01-tarcza-1500x300",
+      "category": "animacje",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — tarcza (1500 × 300)",
+      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "w": 1500,
+      "h": 300,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x300-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.mp4",
+          "bytes": 294189,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x300.gif",
+          "bytes": 678217,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-01-tarcza-1500x500",
+      "category": "animacje",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — tarcza (1500 × 500)",
+      "description": "„Zweryfikuj się.” z podpisem; w szklanym kaflu tarcza skanowana świetlną linią, potem rysuje się znacznik, fala światła, a status zmienia się z „Oczekuje na weryfikację” przez „Sprawdzanie…” na „Zweryfikowano”.",
+      "w": 1500,
+      "h": 500,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-01-tarcza-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.mp4",
+          "bytes": 553519,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-01-tarcza-1500x500.gif",
+          "bytes": 1192467,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-02-przycisk-1500x300",
+      "category": "animacje",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — przycisk (1500 × 300)",
+      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
+      "w": 1500,
+      "h": 300,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x300-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.mp4",
+          "bytes": 290059,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x300.gif",
+          "bytes": 605745,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "weryfikacja-02-przycisk-1500x500",
+      "category": "animacje",
+      "group": "Weryfikacja",
+      "title": "Weryfikacja — przycisk (1500 × 500)",
+      "description": "„Zweryfikuj się.” z podpisem; kursor najeżdża na fioletowy przycisk „Zweryfikuj”, klika, przycisk ładuje i zmienia się w zielone „✓ Zweryfikowano”, po czym wraca do stanu wyjściowego.",
+      "w": 1500,
+      "h": 500,
+      "duration": 6,
+      "poster": "/brand/animacje/weryfikacja-02-przycisk-1500x500-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.mp4",
+          "bytes": 528011,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/animacje/weryfikacja-02-przycisk-1500x500.gif",
+          "bytes": 897340,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-01-konstrukcja",
+      "category": "animacje",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Konstrukcja znaku",
+      "description": "Siatka i prowadnice, monogram rysowany linia po linii, kropka z falą, potem hasło „Coś nowego nadchodzi.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7,
+      "poster": "/brand/discord/zapowiedz-01-konstrukcja-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-01-konstrukcja.mp4",
+          "bytes": 319479,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-01-konstrukcja.gif",
+          "bytes": 2297299,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-02-publikacja",
+      "category": "animacje",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Publikacja",
+      "description": "Kursor układa stronę z klocków i klika „Opublikuj” → „✓ Online”, podpis „afto.works · nowa odsłona już wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.8,
+      "poster": "/brand/discord/zapowiedz-02-publikacja-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-02-publikacja.mp4",
+          "bytes": 583060,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-02-publikacja.gif",
+          "bytes": 3468180,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-03-rozmowa",
+      "category": "animacje",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Rozmowa",
+      "description": "Dymki czatu: „Kiedy startujecie?” → „Już wkrótce. Zaglądaj na afto.works”, z kropkami pisania i plakietką „Nowa odsłona — wkrótce”.",
+      "w": 1280,
+      "h": 720,
+      "duration": 8.3,
+      "poster": "/brand/discord/zapowiedz-03-rozmowa-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-03-rozmowa.mp4",
+          "bytes": 462073,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-03-rozmowa.gif",
+          "bytes": 2514659,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-04-premiera",
+      "category": "animacje",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Premiera",
+      "description": "Wiązka światła przesuwa się po siatce i „zapala” litery hasła „Nowa odsłona.” — typografia kinetyczna.",
+      "w": 1280,
+      "h": 720,
+      "duration": 6.6,
+      "poster": "/brand/discord/zapowiedz-04-premiera-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-04-premiera.mp4",
+          "bytes": 327596,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-04-premiera.gif",
+          "bytes": 2828747,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "zapowiedz-05-odliczanie",
+      "category": "animacje",
+      "group": "Zapowiedzi (starsze)",
+      "title": "Odliczanie",
+      "description": "„03 · 02 · 01” z paskiem postępu, który kurczy się w kropkę logotypu — afto. rysuje się od kropki, „Startujemy.”",
+      "w": 1280,
+      "h": 720,
+      "duration": 7.1,
+      "poster": "/brand/discord/zapowiedz-05-odliczanie-poster.jpg",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/discord/zapowiedz-05-odliczanie.mp4",
+          "bytes": 187691,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/discord/zapowiedz-05-odliczanie.gif",
+          "bytes": 977972,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "baner-01-haslo",
+      "category": "animacje",
+      "group": "Banery 1500 × 300",
+      "title": "Znak + hasło",
+      "description": "Monogram, pionowa linia i hasło „Strony, które wyglądają drogo. I sprzedają.” — klasyczny układ logo z lewej.",
+      "w": 1500,
+      "h": 300,
+      "duration": 7,
+      "poster": "/brand/banners/baner-01-haslo.png",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/banners/baner-01-haslo.mp4",
+          "bytes": 101129,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/banners/baner-01-haslo.gif",
+          "bytes": 708384,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "baner-02-siatka",
+      "category": "animacje",
+      "group": "Banery 1500 × 300",
+      "title": "Logotyp na siatce",
+      "description": "Logotyp „afto.” na siatce konstrukcyjnej z opisami linii; co pętlę przechodzi po nim wiązka światła.",
+      "w": 1500,
+      "h": 300,
+      "duration": 5,
+      "poster": "/brand/banners/baner-02-siatka.png",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/banners/baner-02-siatka.mp4",
+          "bytes": 134374,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/banners/baner-02-siatka.gif",
+          "bytes": 1490007,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "baner-03-uslugi",
+      "category": "animacje",
+      "group": "Banery 1500 × 300",
+      "title": "Usługi — pasek",
+      "description": "Pasek usług przesuwa się w pętli (Strony internetowe · Sklepy · Identyfikacja wizualna · UI/UX…), znak przypięty z lewej.",
+      "w": 1500,
+      "h": 300,
+      "duration": 12,
+      "poster": "/brand/banners/baner-03-uslugi.png",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/banners/baner-03-uslugi.mp4",
+          "bytes": 892565,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/banners/baner-03-uslugi.gif",
+          "bytes": 4924762,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "baner-05-status",
+      "category": "animacje",
+      "group": "Banery 1500 × 300",
+      "title": "Status + przycisk",
+      "description": "„Przyjmuję nowe projekty.” z zielonym statusem i listą usług; kursor najeżdża i klika „Napisz do mnie”.",
+      "w": 1500,
+      "h": 300,
+      "duration": 4.8,
+      "poster": "/brand/banners/baner-05-status.png",
+      "files": [
+        {
+          "kind": "mp4",
+          "url": "/brand/banners/baner-05-status.mp4",
+          "bytes": 124516,
+          "label": "MP4"
+        },
+        {
+          "kind": "gif",
+          "url": "/brand/banners/baner-05-status.gif",
+          "bytes": 585657,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-banner-anim",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Baner — animacja",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1500,
+      "h": 500,
+      "duration": 6.4,
+      "poster": "/brand/anim/afto-banner-anim-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-banner-anim.gif",
+          "bytes": 693404,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo-anim-dark",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Logotyp — ciemny",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1600,
+      "h": 800,
+      "duration": 5.2,
+      "poster": "/brand/anim/afto-logo-anim-dark-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-logo-anim-dark.gif",
+          "bytes": 406222,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo-anim-light",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Logotyp — jasny",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1600,
+      "h": 800,
+      "duration": 5.2,
+      "poster": "/brand/anim/afto-logo-anim-light-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-logo-anim-light.gif",
+          "bytes": 411303,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark-anim-dark",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Monogram — ciemny",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1080,
+      "h": 1080,
+      "duration": 4.8,
+      "poster": "/brand/anim/afto-mark-anim-dark-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-mark-anim-dark.gif",
+          "bytes": 323909,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark-anim-light",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Monogram — jasny",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1080,
+      "h": 1080,
+      "duration": 4.8,
+      "poster": "/brand/anim/afto-mark-anim-light-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-mark-anim-light.gif",
+          "bytes": 324089,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "afto-post-anim",
+      "category": "animacje",
+      "group": "Animacje logo",
+      "title": "Post — kwadrat",
+      "description": "Monogram i logotyp rysowane linią — GIF 30 kl./s, zapętlony.",
+      "w": 1080,
+      "h": 1080,
+      "duration": 6.4,
+      "poster": "/brand/anim/afto-post-anim-poster.jpg",
+      "files": [
+        {
+          "kind": "gif",
+          "url": "/brand/anim/afto-post-anim.gif",
+          "bytes": 947529,
+          "label": "GIF"
+        }
+      ]
+    },
+    {
+      "id": "baner-01-haslo-png",
+      "category": "grafiki",
+      "group": "Banery 1500 × 300",
+      "title": "Znak + hasło",
+      "description": "Monogram, pionowa linia i hasło „Strony, które wyglądają drogo. I sprzedają.” — klasyczny układ logo z lewej.",
+      "w": 1500,
+      "h": 300,
+      "files": [
+        {
+          "kind": "png",
+          "url": "/brand/banners/baner-01-haslo.png",
+          "bytes": 94605,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "baner-02-siatka-png",
+      "category": "grafiki",
+      "group": "Banery 1500 × 300",
+      "title": "Logotyp na siatce",
+      "description": "Logotyp „afto.” na siatce konstrukcyjnej z opisami linii; co pętlę przechodzi po nim wiązka światła.",
+      "w": 1500,
+      "h": 300,
+      "files": [
+        {
+          "kind": "png",
+          "url": "/brand/banners/baner-02-siatka.png",
+          "bytes": 20307,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "baner-03-uslugi-png",
+      "category": "grafiki",
+      "group": "Banery 1500 × 300",
+      "title": "Usługi — pasek",
+      "description": "Pasek usług przesuwa się w pętli (Strony internetowe · Sklepy · Identyfikacja wizualna · UI/UX…), znak przypięty z lewej.",
+      "w": 1500,
+      "h": 300,
+      "files": [
+        {
+          "kind": "png",
+          "url": "/brand/banners/baner-03-uslugi.png",
+          "bytes": 43482,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "baner-04-linia-png",
+      "category": "grafiki",
+      "group": "Banery 1500 × 300",
+      "title": "Fioletowa linia",
+      "description": "Minimalny: duży monogram narysowany samym fioletowym konturem, z prawej przycięty; nazwa i opis z lewej.",
+      "w": 1500,
+      "h": 300,
+      "files": [
+        {
+          "kind": "png",
+          "url": "/brand/banners/baner-04-linia.png",
+          "bytes": 79464,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "baner-05-status-png",
+      "category": "grafiki",
+      "group": "Banery 1500 × 300",
+      "title": "Status + przycisk",
+      "description": "„Przyjmuję nowe projekty.” z zielonym statusem i listą usług; kursor najeżdża i klika „Napisz do mnie”.",
+      "w": 1500,
+      "h": 300,
+      "files": [
+        {
+          "kind": "png",
+          "url": "/brand/banners/baner-05-status.png",
+          "bytes": 77813,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-icon-accent",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Ikona — fiolet",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 64,
+      "h": 64,
+      "bg": "#15151c",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-icon-accent.svg",
+          "bytes": 429,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-icon-accent.png",
+          "bytes": 40102,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-icon-dark",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Ikona — ciemna",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 64,
+      "h": 64,
+      "bg": "#15151c",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-icon-dark.svg",
+          "bytes": 429,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-icon-dark.png",
+          "bytes": 43596,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-icon-light",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Ikona — jasna",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 64,
+      "h": 64,
+      "bg": "#15151c",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-icon-light.svg",
+          "bytes": 429,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-icon-light.png",
+          "bytes": 44014,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Logotyp",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 106,
+      "h": 44,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-logo.svg",
+          "bytes": 605,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-logo.png",
+          "bytes": 61185,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo-black",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Logotyp — ciemny",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 106,
+      "h": 44,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-logo-black.svg",
+          "bytes": 605,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-logo-black.png",
+          "bytes": 59069,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo-mono-black",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Logotyp — czarny",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 106,
+      "h": 44,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-logo-mono-black.svg",
+          "bytes": 605,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-logo-mono-black.png",
+          "bytes": 51235,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-logo-mono-white",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Logotyp — biały",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 106,
+      "h": 44,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-logo-mono-white.svg",
+          "bytes": 605,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-logo-mono-white.png",
+          "bytes": 45592,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Monogram",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 44,
+      "h": 44,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-mark.svg",
+          "bytes": 358,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-mark.png",
+          "bytes": 27169,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark-black",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Monogram — ciemny",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 44,
+      "h": 44,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-mark-black.svg",
+          "bytes": 358,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-mark-black.png",
+          "bytes": 25856,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark-mono-black",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Monogram — czarny",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 44,
+      "h": 44,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-mark-mono-black.svg",
+          "bytes": 358,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-mark-mono-black.png",
+          "bytes": 21957,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "afto-mark-mono-white",
+      "category": "grafiki",
+      "group": "Logo — oficjalne",
+      "title": "Monogram — biały",
+      "description": "Oficjalny plik znaku (SVG + PNG w wysokiej rozdzielczości).",
+      "w": 44,
+      "h": 44,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/afto-mark-mono-white.svg",
+          "bytes": 358,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/afto-mark-mono-white.png",
+          "bytes": 19325,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-01-ikona-ciemna",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Ikona aplikacji — ciemna",
+      "description": "Superelipsa o ciągłych narożnikach (jak iOS), delikatne światło od góry, monogram w optycznym środku.",
+      "w": 1024,
+      "h": 1024,
+      "bg": "#15151c",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-01-ikona-ciemna.svg",
+          "bytes": 7090,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-01-ikona-ciemna.png",
+          "bytes": 42621,
+          "label": "PNG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-01-ikona-ciemna-512.png",
+          "bytes": 18663,
+          "label": "PNG 512 × 512"
+        }
+      ]
+    },
+    {
+      "id": "logo-01-ikona-fiolet",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Ikona aplikacji — fiolet",
+      "description": "Wersja w kolorze marki: biała linia, kropka w kolorze tła — odwrócony akcent.",
+      "w": 1024,
+      "h": 1024,
+      "bg": "#15151c",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-01-ikona-fiolet.svg",
+          "bytes": 3791,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-01-ikona-fiolet.png",
+          "bytes": 29789,
+          "label": "PNG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-01-ikona-fiolet-512.png",
+          "bytes": 13432,
+          "label": "PNG 512 × 512"
+        }
+      ]
+    },
+    {
+      "id": "logo-02-awatar-orbita",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Awatar — orbita",
+      "description": "Okrągły awatar 512×512 (Discord): monogram w środku, fioletowa orbita z kwadratową kropką w przerwie.",
+      "w": 512,
+      "h": 512,
+      "bg": "#15151c",
+      "round": true,
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-02-awatar-orbita.svg",
+          "bytes": 846,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-02-awatar-orbita.png",
+          "bytes": 83803,
+          "label": "PNG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-02-awatar-orbita-512.png",
+          "bytes": 37598,
+          "label": "PNG 512 × 512"
+        }
+      ]
+    },
+    {
+      "id": "logo-03-pionowy",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Układ pionowy",
+      "description": "Monogram nad nazwą „afto.works” i linią usług — do stopek, okładek i profili.",
+      "w": 1000,
+      "h": 714,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-03-pionowy.svg",
+          "bytes": 11049,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-03-pionowy.png",
+          "bytes": 56974,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-03-pionowy-jasne-tlo",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Układ pionowy — jasne tło",
+      "description": "Ta sama kompozycja w czerni do druku i jasnych tła.",
+      "w": 1000,
+      "h": 714,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-03-pionowy-jasne-tlo.svg",
+          "bytes": 11049,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-03-pionowy-jasne-tlo.png",
+          "bytes": 55215,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-04-kontur-logotyp",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Kontur — logotyp",
+      "description": "Logotyp „afto.” w tym samym stylu obrysu — na duże formaty, nadruki, tła wideo.",
+      "w": 2200,
+      "h": 960,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-04-kontur-logotyp.svg",
+          "bytes": 1506,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-04-kontur-logotyp.png",
+          "bytes": 72758,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-04-kontur-znak",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Kontur — monogram",
+      "description": "Linia znaku jako cienki podwójny obrys, pełna tylko kropka — wariant techniczny/blueprint.",
+      "w": 960,
+      "h": 960,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-04-kontur-znak.svg",
+          "bytes": 900,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-04-kontur-znak.png",
+          "bytes": 31120,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-05-poziomy",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Układ poziomy z hasłem",
+      "description": "Monogram | nazwa i hasło „Projektowanie stron i identyfikacji” — do stopek maili, faktur, nagłówków.",
+      "w": 900,
+      "h": 300,
+      "bg": "#07070a",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-05-poziomy.svg",
+          "bytes": 14921,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-05-poziomy.png",
+          "bytes": 64558,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-05-poziomy-jasne-tlo",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Układ poziomy — jasne tło",
+      "description": "Wersja na jasne tło (dokumenty, oferty PDF).",
+      "w": 900,
+      "h": 300,
+      "bg": "#F2F1EC",
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-05-poziomy-jasne-tlo.svg",
+          "bytes": 14918,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-05-poziomy-jasne-tlo.png",
+          "bytes": 62836,
+          "label": "PNG"
+        }
+      ]
+    },
+    {
+      "id": "logo-06-pieczec",
+      "category": "grafiki",
+      "group": "Propozycje logo",
+      "title": "Pieczęć",
+      "description": "Okrągła pieczęć: napis „AFTO.WORKS · STRONY · SKLEPY · IDENTYFIKACJA” po okręgu, monogram w środku — awatar, naklejki, znak wodny.",
+      "w": 512,
+      "h": 512,
+      "bg": "#15151c",
+      "round": true,
+      "files": [
+        {
+          "kind": "svg",
+          "url": "/brand/logo-proposals/logo-06-pieczec.svg",
+          "bytes": 11551,
+          "label": "SVG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-06-pieczec.png",
+          "bytes": 126727,
+          "label": "PNG"
+        },
+        {
+          "kind": "png",
+          "url": "/brand/logo-proposals/logo-06-pieczec-512.png",
+          "bytes": 56277,
+          "label": "PNG 512 × 512"
+        }
+      ]
+    }
+  ],
   "announcements": [
     {
       "id": "zapowiedz-01-konstrukcja",
@@ -18,7 +1226,7 @@
         },
         "poster": {
           "path": "/brand/discord/zapowiedz-01-konstrukcja-poster.jpg",
-          "size": 14727
+          "size": 0
         }
       }
     },
@@ -40,7 +1248,7 @@
         },
         "poster": {
           "path": "/brand/discord/zapowiedz-02-publikacja-poster.jpg",
-          "size": 22762
+          "size": 0
         }
       }
     },
@@ -62,7 +1270,7 @@
         },
         "poster": {
           "path": "/brand/discord/zapowiedz-03-rozmowa-poster.jpg",
-          "size": 21185
+          "size": 0
         }
       }
     },
@@ -84,7 +1292,7 @@
         },
         "poster": {
           "path": "/brand/discord/zapowiedz-04-premiera-poster.jpg",
-          "size": 19860
+          "size": 0
         }
       }
     },
@@ -106,7 +1314,7 @@
         },
         "poster": {
           "path": "/brand/discord/zapowiedz-05-odliczanie-poster.jpg",
-          "size": 12998
+          "size": 0
         }
       }
     }
@@ -128,6 +1336,10 @@
         "gif": {
           "path": "/brand/banners/baner-01-haslo.gif",
           "size": 708384
+        },
+        "poster": {
+          "path": "/brand/banners/baner-01-haslo.png",
+          "size": 0
         },
         "png": {
           "path": "/brand/banners/baner-01-haslo.png",
@@ -152,6 +1364,10 @@
           "path": "/brand/banners/baner-02-siatka.gif",
           "size": 1490007
         },
+        "poster": {
+          "path": "/brand/banners/baner-02-siatka.png",
+          "size": 0
+        },
         "png": {
           "path": "/brand/banners/baner-02-siatka.png",
           "size": 20307
@@ -174,6 +1390,10 @@
         "gif": {
           "path": "/brand/banners/baner-03-uslugi.gif",
           "size": 4924762
+        },
+        "poster": {
+          "path": "/brand/banners/baner-03-uslugi.png",
+          "size": 0
         },
         "png": {
           "path": "/brand/banners/baner-03-uslugi.png",
@@ -212,6 +1432,10 @@
         "gif": {
           "path": "/brand/banners/baner-05-status.gif",
           "size": 585657
+        },
+        "poster": {
+          "path": "/brand/banners/baner-05-status.png",
+          "size": 0
         },
         "png": {
           "path": "/brand/banners/baner-05-status.png",

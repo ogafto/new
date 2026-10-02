@@ -23,7 +23,7 @@ const num = (v: unknown) => (typeof v === "number" ? v : undefined);
 const ext = (u: string) => u.split("?")[0].split(".").pop()!.toLowerCase();
 
 function files(v: unknown): GenFile[] {
-  if (Array.isArray(v)) return v.map((f: Raw) => ({ kind: str(f.kind) ?? ext(str(f.url) ?? str(f.path) ?? ""), url: str(f.url) ?? str(f.path) ?? "", bytes: num(f.bytes) ?? num(f.size) })).filter((f) => f.url);
+  if (Array.isArray(v)) return v.map((f: Raw) => ({ kind: str(f.kind) ?? ext(str(f.url) ?? str(f.path) ?? ""), url: str(f.url) ?? str(f.path) ?? "", bytes: num(f.bytes) ?? num(f.size), label: str(f.label) })).filter((f) => f.url);
   if (v && typeof v === "object")
     return Object.entries(v as Record<string, Raw | string>)
       .filter(([k]) => k !== "poster")
@@ -97,7 +97,9 @@ export default async function BrandPage() {
   await requireAdmin();
   const [own, colors, token] = await Promise.all([listBrandAssets(), listBrandColors(), setting("blob_token")]);
   const blob = token ? await blobAccess(token).catch(() => null) : null;
-  const generated = [...fromManifest(manifest), ...logoAnims, ...official];
+  // nowy manifest (items) zawiera już animacje logo i oficjalne pliki — starszy nie
+  const hasItems = Array.isArray((manifest as { items?: unknown }).items);
+  const generated = hasItems ? fromManifest(manifest) : [...fromManifest(manifest), ...logoAnims, ...official];
   return (
     <>
       <PageHead kicker="Marka" title="Materiały marki" />

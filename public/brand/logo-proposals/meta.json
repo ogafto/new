@@ -1,0 +1,92 @@
+[
+  {
+    "id": "logo-01-ikona-ciemna",
+    "name": "Ikona aplikacji — ciemna",
+    "desc": "Superelipsa o ciągłych narożnikach (jak iOS), delikatne światło od góry, monogram w optycznym środku.",
+    "bg": "#15151c",
+    "round": false,
+    "w": 1024,
+    "h": 1024
+  },
+  {
+    "id": "logo-01-ikona-fiolet",
+    "name": "Ikona aplikacji — fiolet",
+    "desc": "Wersja w kolorze marki: biała linia, kropka w kolorze tła — odwrócony akcent.",
+    "bg": "#15151c",
+    "round": false,
+    "w": 1024,
+    "h": 1024
+  },
+  {
+    "id": "logo-02-awatar-orbita",
+    "name": "Awatar — orbita",
+    "desc": "Okrągły awatar 512×512 (Discord): monogram w środku, fioletowa orbita z kwadratową kropką w przerwie.",
+    "bg": "#15151c",
+    "round": true,
+    "w": 512,
+    "h": 512
+  },
+  {
+    "id": "logo-03-pionowy",
+    "name": "Układ pionowy",
+    "desc": "Monogram nad nazwą „afto.works” i linią usług — do stopek, okładek i profili.",
+    "bg": "#07070a",
+    "round": false,
+    "w": 1000,
+    "h": 714
+  },
+  {
+    "id": "logo-03-pionowy-jasne-tlo",
+    "name": "Układ pionowy — jasne tło",
+    "desc": "Ta sama kompozycja w czerni do druku i jasnych tła.",
+    "bg": "#F2F1EC",
+    "round": false,
+    "w": 1000,
+    "h": 714
+  },
+  {
+    "id": "logo-04-kontur-znak",
+    "name": "Kontur — monogram",
+    "desc": "Linia znaku jako cienki podwójny obrys, pełna tylko kropka — wariant techniczny/blueprint.",
+    "bg": "#07070a",
+    "round": false,
+    "w": 960,
+    "h": 960
+  },
+  {
+    "id": "logo-04-kontur-logotyp",
+    "name": "Kontur — logotyp",
+    "desc": "Logotyp „afto.” w tym samym stylu obrysu — na duże formaty, nadruki, tła wideo.",
+    "bg": "#07070a",
+    "round": false,
+    "w": 2200,
+    "h": 960
+  },
+  {
+    "id": "logo-05-poziomy",
+    "name": "Układ poziomy z hasłem",
+    "desc": "Monogram | nazwa i hasło „Projektowanie stron i identyfikacji” — do stopek maili, faktur, nagłówków.",
+    "bg": "#07070a",
+    "round": false,
+    "w": 900,
+    "h": 300
+  },
+  {
+    "id": "logo-05-poziomy-jasne-tlo",
+    "name": "Układ poziomy — jasne tło",
+    "desc": "Wersja na jasne tło (dokumenty, oferty PDF).",
+    "bg": "#F2F1EC",
+    "round": false,
+    "w": 900,
+    "h": 300
+  },
+  {
+    "id": "logo-06-pieczec",
+    "name": "Pieczęć",
+    "desc": "Okrągła pieczęć: napis „AFTO.WORKS · STRONY · SKLEPY · IDENTYFIKACJA” po okręgu, monogram w środku — awatar, naklejki, znak wodny.",
+    "bg": "#15151c",
+    "round": true,
+    "w": 512,
+    "h": 512
+  }
+]

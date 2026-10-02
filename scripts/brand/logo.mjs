@@ -305,15 +305,17 @@ ${placeMark(c, c, 5.2, geo(MARK))}`;
   return [{ id: "logo-06-pieczec", name: "Pieczęć", desc: "Okrągła pieczęć: napis „AFTO.WORKS · STRONY · SKLEPY · IDENTYFIKACJA” po okręgu, monogram w środku — awatar, naklejki, znak wodny.", bg: "#15151c", round: true, files: await save("logo-06-pieczec", svg, 1024, { avatar: true }) }];
 }
 
-export async function buildLogos(only) {
+export async function buildLogos() {
   const all = [ikona, awatar, pionowy, kontur, poziomy, pieczec];
   const out = [];
   for (const fn of all) {
     for (const e of await fn()) {
-      if (only && !e.id.includes(only) && only !== "logo") continue;
-      out.push(e);
+      const [, w, h] = readFileSync(join(OUT, `${e.id}.svg`), "utf8").match(/width="([\d.]+)" height="([\d.]+)"/) ?? [];
+      out.push({ ...e, w: +w, h: +h });
       console.log(`  ✓ ${e.id}  ${Object.entries(e.files).map(([k, v]) => `${k} ${(v.size / 1024).toFixed(0)} kB`).join(" · ")}`);
     }
   }
+  // metadane dla manifestu (build.mjs)
+  writeFileSync(join(OUT, "meta.json"), JSON.stringify(out.map(({ id, name, desc, bg, round, w, h }) => ({ id, name, desc, bg, round: !!round, w, h })), null, 2) + "\n");
   return out;
 }

@@ -173,23 +173,39 @@ function dither(rgba, w) {
   return out;
 }
 
-function encodeGif(file, frames, w, h, fps, { ditherOn = true } = {}) {
+function encodeGif(file, frames, w, h, fps, { ditherOn = true, lossy = 0 } = {}) {
   const prepared = frames.map((f) => (ditherOn ? dither(f, w) : f));
   // wspólna paleta z próbki klatek — bez migotania kolorów
   const step = Math.max(1, Math.floor(prepared.length / 24));
   const sample = Buffer.concat(prepared.filter((_, i) => i % step === 0).map((f) => Buffer.from(f.buffer, f.byteOffset, f.byteLength)));
   const palette = quantize(new Uint8Array(sample), 255, { format: "rgb565" });
   const T = palette.length;
+  const pal = palette.slice(0, T);
   palette.push([0, 0, 0]);
   const gif = GIFEncoder();
-  let prev = null;
+  let shown = null; // indeksy pikseli, które aktualnie widzi odbiorca
   const delay = Math.round(1000 / fps);
   prepared.forEach((rgba, i) => {
-    const index = applyPalette(rgba, palette.slice(0, T), "rgb565");
-    // piksele bez zmian względem poprzedniej klatki → przezroczyste
-    const cur = index.slice();
-    if (prev) for (let k = 0; k < index.length; k++) if (index[k] === prev[k]) index[k] = T;
-    prev = cur;
+    const index = applyPalette(rgba, pal, "rgb565");
+    if (!shown) shown = index.slice();
+    else {
+      // piksel bez (widocznej) zmiany → przezroczysty; `lossy` = tolerancja sumy różnic RGB
+      for (let k = 0, o = 0; k < index.length; k++, o += 4) {
+        const s = shown[k];
+        if (index[k] === s) {
+          index[k] = T;
+          continue;
+        }
+        if (lossy) {
+          const c = pal[s];
+          if (Math.abs(c[0] - rgba[o]) + Math.abs(c[1] - rgba[o + 1]) + Math.abs(c[2] - rgba[o + 2]) <= lossy) {
+            index[k] = T;
+            continue;
+          }
+        }
+        shown[k] = index[k];
+      }
+    }
     gif.writeFrame(index, w, h, { palette: i === 0 ? palette : undefined, delay, repeat: 0, transparent: i > 0, transparentIndex: T, dispose: 1 });
   });
   gif.finish();
@@ -228,13 +244,16 @@ export async function renderScene(scene, { outDir, base, mp4 = true, gif = true,
     const file = join(outDir, `${base}.gif`);
     const n = Math.round(duration * gifFps);
     const frames = [];
+    // tryb GIF: sceny mogą uprościć efekty (bez ziarna, statyczna zorza)
+    await p.evaluate(() => document.documentElement.classList.add("gif"));
     for (let i = 0; i < n; i++) {
       const shot = await frameAt(p, i / gifFps);
       let s = sharp(shot);
       if (gifW !== w || gifH !== h) s = s.resize(gifW, gifH, { kernel: "lanczos3" });
       frames.push(new Uint8Array(await s.ensureAlpha().raw().toBuffer()));
     }
-    encodeGif(file, frames, gifW, gifH, gifFps, { ditherOn: scene.dither !== false });
+    await p.evaluate(() => document.documentElement.classList.remove("gif"));
+    encodeGif(file, frames, gifW, gifH, gifFps, { ditherOn: scene.dither !== false, lossy: scene.gifLossy ?? 0 });
     files.gif = { path: rel(file), size: kb(file) };
   }
 

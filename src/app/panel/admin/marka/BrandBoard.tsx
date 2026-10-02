@@ -9,7 +9,7 @@ import { addBrandColor, deleteBrandAsset, deleteBrandColor, registerBrandAsset, 
 
 /* ---------- typy ---------- */
 
-export type GenFile = { kind: string; url: string; bytes?: number };
+export type GenFile = { kind: string; url: string; bytes?: number; label?: string };
 export type Generated = { id: string; category: "animacje" | "grafiki"; group: string; title: string; description?: string; w?: number; h?: number; duration?: number; poster?: string; bg?: string; files: GenFile[] };
 export type PaletteColor = { name: string; hex: string; note?: string };
 type Tab = "animacje" | "grafiki" | "kolory";
@@ -47,7 +47,7 @@ function DownloadPill({ f }: { f: GenFile }) {
   return (
     <a href={f.url} download className="inline-flex items-center gap-1.5 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] transition-colors hover:border-white/40 hover:bg-white/5">
       <Icon d={ICONS.download} className="size-3.5" />
-      {f.kind.toUpperCase()}
+      {f.label ?? f.kind.toUpperCase()}
       {f.bytes ? <span className="text-dim">{size(f.bytes)}</span> : null}
     </a>
   );

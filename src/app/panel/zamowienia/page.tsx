@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
 import { clientOrders, clientRequests, REQUEST_STATUS } from "@/lib/client";
 import { today } from "@/lib/orders";
-import { Badge, Card, CardHead, Empty, Icon, PageHead } from "@/components/panel/kit";
+import { Badge, Card, CardHead, Empty, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import { OrderCard } from "@/components/panel/client/Orders";
 
 export const metadata: Metadata = { title: "Moje zamówienia" };
 
+const fmtDay = (d: string) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short" }).format(new Date(`${d}T12:00:00`));
 const fmt = (ms: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Warsaw" }).format(ms);
 
 export default async function OrdersPage() {
@@ -22,17 +23,7 @@ export default async function OrdersPage() {
 
   return (
     <>
-      <PageHead kicker="Zamówienia" title="Moje zamówienia">
-        <Link href="/panel/zamow" className="group btn btn-primary !h-11 text-[14px]">
-          <span className="roll">
-            <span>Zamów usługę</span>
-            <span aria-hidden>Zamów usługę</span>
-          </span>
-          <span className="dot !size-8">
-            <Icon d={ICONS.plus} className="size-4" />
-          </span>
-        </Link>
-      </PageHead>
+      <PageHead title="Moje zamówienia" text="Zlecenia w realizacji z terminami i status Twoich zgłoszeń." />
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-5">
         <div className="space-y-4 lg:space-y-5">
@@ -78,6 +69,19 @@ export default async function OrdersPage() {
                       {r.timeline ? ` · ${r.timeline}` : ""}
                     </p>
                     <p className="mt-2.5 line-clamp-3 text-[13.5px] leading-relaxed text-muted">{r.message}</p>
+                    {r.status !== "lost" && (
+                      <ol className="mt-4 grid grid-cols-3 gap-1.5">
+                        {["Wysłane", "W toku", r.order_due ? `Termin ${fmtDay(r.order_due)}` : "Przyjęte"].map((label, i) => {
+                          const step = { new: 0, contacted: 1, won: 2 }[r.status as "new"] ?? 0;
+                          return (
+                            <li key={label}>
+                              <span className={`block h-1 rounded-full ${i <= step ? (step === 2 ? "bg-emerald-400" : "bg-gradient-to-r from-accent to-accent-2") : "bg-white/[0.07]"}`} />
+                              <span className={`mt-1.5 block truncate text-[11.5px] ${i <= step ? "text-ink/85" : "text-dim"}`}>{label}</span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
                   </li>
                 );
               })}

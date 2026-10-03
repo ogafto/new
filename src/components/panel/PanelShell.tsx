@@ -6,7 +6,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { logout } from "@/app/konto/actions";
-import { pulse, type PulseEvent } from "@/app/panel/admin/actions";
+import type { PulseEvent } from "@/app/api/panel/pulse/route";
+import { takeInquiry } from "@/app/panel/admin/zapytania/actions";
 import { syncRole } from "@/app/panel/actions";
 import { Mark, Wordmark } from "../brand/Logo";
 import { ease, Icon, ICONS } from "./kit";
@@ -15,11 +16,12 @@ import CommandPalette, { useCommandPalette } from "./CommandPalette";
 export type Note = { id: string; kind: "deadline" | "inquiry"; title: string; text: string; href: string; urgent: boolean };
 type Props = { user: { name: string; email: string }; admin: boolean; notes: Note[]; counts: { inquiries: number }; sites: { id: string; name: string }[]; children: React.ReactNode };
 
-// Puls panelu: licznik „na stronie” + powiadomienia o wpłatach i zapytaniach na żywo (bez przeładowania)
+// Puls panelu: licznik „na stronie” + powiadomienia o wpłatach, zapytaniach i zamówieniach na żywo (bez przeładowania)
 function Live() {
   const router = useRouter();
   const [n, setN] = useState<number | null>(null);
   const [toasts, setToasts] = useState<PulseEvent[]>([]);
+  const [orders, setOrders] = useState<PulseEvent[]>([]);
   // powiadomienia przez portal — nagłówek ma backdrop-filter, który „łapie” elementy fixed
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -28,23 +30,31 @@ function Live() {
   }, []);
   useEffect(() => {
     let alive = true;
-    let since = Date.now();
+    let busy = false;
+    // pierwsze sprawdzenie łapie też zamówienia z ostatnich 10 min (np. świeżo po zalogowaniu)
+    let since = Date.now() - 10 * 60_000;
     const seen = new Set<string>();
-    const tick = () => {
-      if (document.hidden) return;
-      pulse(since)
-        .then((r) => {
-          if (!alive) return;
-          setN(r.live);
-          const fresh = r.events.filter((e) => !seen.has(e.id));
-          if (fresh.length) {
-            fresh.forEach((e) => seen.add(e.id));
-            setToasts((t) => [...fresh, ...t].slice(0, 4));
-            router.refresh(); // kokpit, finanse i zapytania od razu pokazują nowe dane
-          }
-          since = Math.max(since, r.now - 60_000);
-        })
-        .catch(() => {});
+    const tick = async () => {
+      if (document.hidden || busy) return;
+      busy = true;
+      try {
+        const r = (await fetch(`/api/panel/pulse?since=${since}`, { cache: "no-store" }).then((x) => (x.ok ? x.json() : null))) as { live: number; now: number; events: PulseEvent[] } | null;
+        if (!alive || !r) return;
+        setN(r.live);
+        const fresh = r.events.filter((e) => !seen.has(e.id));
+        if (fresh.length) {
+          fresh.forEach((e) => seen.add(e.id));
+          const big = fresh.filter((e) => e.kind === "order");
+          if (big.length) setOrders((o) => [...big, ...o].slice(0, 3));
+          const small = fresh.filter((e) => e.kind !== "order" && e.ts > Date.now() - 2 * 60_000);
+          if (small.length) setToasts((t) => [...small, ...t].slice(0, 4));
+          router.refresh(); // kokpit, finanse i zapytania od razu pokazują nowe dane
+        }
+        since = Math.max(since, r.now - 60_000);
+      } catch {
+      } finally {
+        busy = false;
+      }
     };
     tick();
     const t = setInterval(tick, 8000);
@@ -61,12 +71,27 @@ function Live() {
     const t = setTimeout(() => setToasts((x) => x.slice(0, -1)), 9000);
     return () => clearTimeout(t);
   }, [toasts]);
+  // tytuł karty przeglądarki mruga, dopóki zamówienie czeka
+  useEffect(() => {
+    if (!orders.length) return;
+    const base = document.title.replace(/^\(\d+\) /, "");
+    let on = false;
+    const t = setInterval(() => {
+      on = !on;
+      document.title = on ? `(${orders.length}) Nowe zamówienie` : base;
+    }, 1200);
+    return () => {
+      clearInterval(t);
+      document.title = base;
+    };
+  }, [orders.length]);
+  const dismiss = useCallback((id: string) => setOrders((o) => o.filter((x) => x.id !== id)), []);
 
   return (
     <>
       <Link
         href="/panel/admin/analityka"
-        className="flex items-center gap-2 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] text-muted transition-colors hover:text-ink"
+        className="flex h-10 items-center gap-2 rounded-full border border-line-2 px-3 text-[12.5px] text-muted transition-colors hover:text-ink"
         title="Osoby na stronie w ostatnich 5 minutach"
       >
         <span className="relative flex size-2">
@@ -78,45 +103,122 @@ function Live() {
       </Link>
       {mounted &&
         createPortal(
-          <div className="pointer-events-none fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+96px)] z-[90] flex w-[min(380px,calc(100vw-32px))] flex-col gap-2 sm:right-6 lg:bottom-6">
-            <AnimatePresence initial={false}>
-              {toasts.map((e) => (
-                <motion.div
-                  key={e.id}
-                  layout
-                  initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 40 }}
-                  transition={{ duration: 0.5, ease }}
-                  className="pointer-events-auto"
-                >
-                  <Link
-                    href={e.href}
-                    onClick={() => setToasts((t) => t.filter((x) => x.id !== e.id))}
-                    className={`edge relative flex items-center gap-3.5 overflow-hidden rounded-2xl bg-surface/95 p-4 shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl ${e.kind === "payment" ? "ring-1 ring-emerald-400/30" : "ring-1 ring-accent/30"}`}
+          <>
+            <div className="pointer-events-none fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+96px)] z-[90] flex w-[min(380px,calc(100vw-32px))] flex-col gap-2 sm:right-6 lg:bottom-6">
+              <AnimatePresence initial={false}>
+                {toasts.map((e) => (
+                  <motion.div
+                    key={e.id}
+                    layout
+                    initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 40 }}
+                    transition={{ duration: 0.5, ease }}
+                    className="pointer-events-auto"
                   >
-                    <span className={`absolute inset-y-0 left-0 w-1 ${e.kind === "payment" ? "bg-emerald-400" : "bg-accent"}`} />
-                    <span className={`relative grid size-10 shrink-0 place-items-center rounded-xl ${e.kind === "payment" ? "bg-emerald-400/15 text-emerald-300" : "bg-accent/15 text-accent-2"}`}>
-                      <motion.span
-                        className={`absolute inset-0 rounded-xl ${e.kind === "payment" ? "border border-emerald-400/50" : "border border-accent/50"}`}
-                        initial={{ scale: 1, opacity: 1 }}
-                        animate={{ scale: 1.6, opacity: 0 }}
-                        transition={{ duration: 1.4, repeat: 2 }}
-                      />
-                      <Icon d={e.kind === "payment" ? ICONS.wallet : ICONS.inbox} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-[14.5px]">{e.title}</span>
-                      <span className="block truncate text-[12.5px] text-dim">{e.text}</span>
-                    </span>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>,
+                    <Link
+                      href={e.href}
+                      onClick={() => setToasts((t) => t.filter((x) => x.id !== e.id))}
+                      className={`relative flex items-center gap-3.5 overflow-hidden rounded-2xl border border-white/[0.08] bg-surface p-4 shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)] ${e.kind === "payment" ? "ring-1 ring-emerald-400/30" : "ring-1 ring-accent/30"}`}
+                    >
+                      <span className={`absolute inset-y-0 left-0 w-1 ${e.kind === "payment" ? "bg-emerald-400" : "bg-accent"}`} />
+                      <span className={`relative grid size-10 shrink-0 place-items-center rounded-xl ${e.kind === "payment" ? "bg-emerald-400/15 text-emerald-300" : "bg-accent/15 text-accent-2"}`}>
+                        <motion.span
+                          className={`absolute inset-0 rounded-xl ${e.kind === "payment" ? "border border-emerald-400/50" : "border border-accent/50"}`}
+                          initial={{ scale: 1, opacity: 1 }}
+                          animate={{ scale: 1.6, opacity: 0 }}
+                          transition={{ duration: 1.4, repeat: 2 }}
+                        />
+                        <Icon d={e.kind === "payment" ? ICONS.wallet : ICONS.inbox} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[14.5px]">{e.title}</span>
+                        <span className="block truncate text-[12.5px] text-dim">{e.text}</span>
+                      </span>
+                    </Link>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+            <div className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top)+76px)] z-[95] flex flex-col items-center gap-3 sm:inset-x-auto sm:right-6 sm:top-24 sm:w-[400px]">
+              <AnimatePresence initial={false}>
+                {orders.map((e) => (
+                  <IncomingOrder key={e.id} e={e} onClose={() => dismiss(e.id)} />
+                ))}
+              </AnimatePresence>
+            </div>
+          </>,
           document.body,
         )}
     </>
+  );
+}
+
+// Duża karta „Nowe zamówienie” — zostaje, aż ją obsłużysz: zajmij się, przyjmij z terminem albo zamknij
+function IncomingOrder({ e, onClose }: { e: PulseEvent; onClose: () => void }) {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "busy" | "taken">("idle");
+  const open = (accept: boolean) => {
+    onClose();
+    router.push(`/panel/admin/zapytania?id=${e.iid}${accept ? "&przyjmij=1" : ""}`);
+  };
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -20, scale: 0.94, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.25 } }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      className="pointer-events-auto relative w-full overflow-hidden rounded-[26px] border border-accent/30 bg-[linear-gradient(180deg,rgb(30_26_52/0.98),rgb(14_13_22/0.98))] p-5 shadow-[0_40px_90px_-30px_rgb(0_0_0/0.95),0_0_80px_-30px_rgb(139_108_255/0.8)]"
+      role="alertdialog"
+      aria-label={e.title}
+    >
+      <div className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.4),transparent)]" aria-hidden />
+      <div className="relative flex items-start gap-3.5">
+        <span className="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-white shadow-[0_0_24px_-4px_rgb(139_108_255/0.9)]">
+          <motion.span className="absolute inset-0 rounded-2xl border border-accent-2" animate={{ scale: [1, 1.5], opacity: [0.9, 0] }} transition={{ duration: 1.6, repeat: Infinity }} />
+          <Icon d={ICONS.receipt} className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11.5px] font-medium tracking-[0.14em] text-accent-2 uppercase">Nowe zamówienie z panelu</p>
+          <p className="mt-1 truncate text-[17px] leading-snug">{e.title.replace(/^Nowe zamówienie: /, "")}</p>
+          <p className="mt-0.5 text-[13.5px] text-muted">{e.text}</p>
+          {e.meta && <p className="mt-0.5 text-[12.5px] text-dim">{e.meta}</p>}
+        </div>
+        <button type="button" onClick={onClose} className="-mt-1 -mr-1 grid size-8 shrink-0 place-items-center rounded-full text-dim transition-colors hover:bg-white/[0.06] hover:text-ink" aria-label="Zamknij">
+          <Icon d={ICONS.close} className="size-4" />
+        </button>
+      </div>
+      <div className="relative mt-4 grid grid-cols-2 gap-2">
+        {state === "taken" ? (
+          <button type="button" onClick={() => open(false)} className="flex h-11 items-center justify-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 text-[13.5px] text-emerald-200">
+            <Icon d={ICONS.check} className="size-4" /> Zajmujesz się
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={state === "busy"}
+            onClick={async () => {
+              setState("busy");
+              const r = await takeInquiry(e.iid!).catch(() => null);
+              setState(r?.ok ? "taken" : "idle");
+            }}
+            className="h-11 rounded-full border border-line-2 text-[13.5px] transition-colors hover:border-white/35 hover:bg-white/[0.04] disabled:opacity-60"
+          >
+            {state === "busy" ? "Chwila…" : "Zajmę się tym"}
+          </button>
+        )}
+        <button type="button" onClick={() => open(true)} className="group flex h-11 items-center justify-between rounded-full bg-ink pr-1.5 pl-4 text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
+          Przyjmij
+          <span className="grid size-8 place-items-center rounded-full bg-accent text-white transition-transform duration-500 group-hover:rotate-45">
+            <Icon d={ICONS.arrowUp} className="size-4 rotate-45" />
+          </span>
+        </button>
+      </div>
+      <button type="button" onClick={() => open(false)} className="relative mt-2.5 w-full text-center text-[12.5px] text-dim transition-colors hover:text-ink">
+        Zobacz szczegóły
+      </button>
+    </motion.div>
   );
 }
 
@@ -448,7 +550,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
         initial={{ x: -24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease }}
-        className="fixed inset-y-3 left-3 z-40 hidden w-[256px] flex-col overflow-hidden rounded-[28px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(18_18_25/0.85),rgb(10_10_14/0.85))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_80px_-30px_rgb(0_0_0/0.9)] backdrop-blur-2xl lg:flex"
+        className="fixed inset-y-3 left-3 z-40 hidden w-[256px] flex-col overflow-hidden rounded-[28px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(17_17_24),rgb(10_10_14))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_80px_-30px_rgb(0_0_0/0.9)] lg:flex"
         aria-label="Nawigacja panelu"
       >
         <div className="pointer-events-none absolute -top-24 -left-20 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.22),transparent)]" aria-hidden />

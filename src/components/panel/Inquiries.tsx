@@ -4,10 +4,28 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { deleteInquiry, setInquiryNote, setInquiryStatus } from "@/app/panel/admin/zapytania/actions";
-import { Card, ConfirmBtn, ease, Empty, ICONS, Icon } from "./kit";
+import { Card, ConfirmBtn, ease, Empty, ICONS, Icon, Modal } from "./kit";
+import AcceptOrder from "./AcceptOrder";
 import { ago, Avatar, CopyBtn, fold, Kbd, Portal, Search, Segmented, useNow } from "./crm/ui";
 
-export type Inquiry = { id: string; name: string; email: string; phone: string | null; company: string | null; topic: string | null; budget: string | null; timeline: string | null; message: string; status: "new" | "contacted" | "won" | "lost"; note: string | null; created_at: number; source?: string | null };
+export type Inquiry = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  topic: string | null;
+  budget: string | null;
+  timeline: string | null;
+  message: string;
+  status: "new" | "contacted" | "won" | "lost";
+  note: string | null;
+  created_at: number;
+  source?: string | null;
+  order_id?: string | null;
+  order_due?: string | null;
+  order_title?: string | null;
+};
 type Status = Inquiry["status"];
 type Filter = "all" | Status;
 
@@ -75,7 +93,88 @@ function Chip({ href, icon, children, copy }: { href: string; icon: string; chil
 
 const action = "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line-2 px-3.5 text-[13px] text-ink/90 transition-colors hover:border-white/35 hover:bg-white/[0.03] hover:text-ink";
 
-function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove }: { q: Inquiry; now: number; pos: [number, number] | null; onStatus: (s: Status) => void; onNote: (n: string) => void; onDelete: () => void; onMove?: (d: 1 | -1) => void }) {
+const dayMs = 86_400_000;
+const longDay = (d: string) => new Intl.DateTimeFormat("pl-PL", { weekday: "short", day: "numeric", month: "long" }).format(new Date(`${d}T12:00:00`));
+
+// Co dalej z tym zapytaniem — jedna wyraźna decyzja zamiast szukania statusów
+function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onStatus: (s: Status) => void; onAccept: () => void }) {
+  if (q.status === "won" && q.order_due) {
+    const left = Math.round((Date.parse(`${q.order_due}T12:00:00`) - now) / dayMs);
+    return (
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
+            <Icon d={ICONS.check} className="size-5" />
+          </span>
+          <div>
+            <p className="text-[14.5px]">Zlecenie przyjęte</p>
+            <p className="text-[12.5px] text-emerald-100/70">
+              Termin {longDay(q.order_due)} · {left < 0 ? `${-left} dni po terminie` : left === 0 ? "dziś" : `za ${left} dni`}
+            </p>
+          </div>
+        </div>
+        <Link href="/panel/admin/kalendarz" className="flex h-9 items-center gap-1.5 rounded-full border border-emerald-400/30 px-3.5 text-[13px] text-emerald-100 transition-colors hover:bg-emerald-400/10">
+          <Icon d={ICONS.calendar} className="size-4" /> W kalendarzu
+        </Link>
+      </div>
+    );
+  }
+  if (q.status === "lost")
+    return (
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-line bg-white/[0.015] px-4 py-3">
+        <p className="text-[13.5px] text-muted">Odrzucone — klient widzi status „Zamknięte”.</p>
+        <button type="button" onClick={() => onStatus("new")} className="text-[13px] text-accent-2 hover:underline">
+          Przywróć
+        </button>
+      </div>
+    );
+  const fresh = q.status === "new";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease }}
+      className="relative mt-5 overflow-hidden rounded-2xl border border-accent/30 bg-[linear-gradient(135deg,rgb(139_108_255/0.14),rgb(139_108_255/0.03))] p-4 sm:p-5"
+    >
+      <div className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.35),transparent)]" aria-hidden />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-[15px]">
+            <span className="relative flex size-2">
+              {fresh && <span className="absolute inset-0 animate-ping rounded-full bg-accent-2/80" />}
+              <span className={`relative size-2 rounded-full ${fresh ? "bg-accent-2" : "bg-sky-400"}`} />
+            </span>
+            {fresh ? "Czeka na Twoją decyzję" : q.status === "won" ? "Oznaczone jako zlecenie — ustaw termin" : "Zajmujesz się tym"}
+          </p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
+            {fresh ? "Weź je na siebie albo od razu przyjmij z terminem." : "Gdy ustalicie szczegóły — przyjmij i ustaw termin. Klient zobaczy go w panelu."}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {fresh && (
+            <button type="button" onClick={() => onStatus("contacted")} className={action}>
+              <Icon d={ICONS.clock} className="size-4" />
+              Zajmę się tym
+            </button>
+          )}
+          <button type="button" onClick={onAccept} className="group flex h-9 items-center gap-2 rounded-full bg-ink pr-1 pl-4 text-[13px] font-medium text-bg transition-colors hover:bg-white">
+            Przyjmij
+            <span className="grid size-7 place-items-center rounded-full bg-accent text-white transition-transform duration-500 group-hover:rotate-45">
+              <Icon d={ICONS.arrowUp} className="size-3.5 rotate-45" />
+            </span>
+          </button>
+          {q.status !== "won" && (
+            <button type="button" onClick={() => onStatus("lost")} className="h-9 rounded-full px-3 text-[13px] text-dim transition-colors hover:bg-white/[0.04] hover:text-muted">
+              Odrzuć
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove, onAccept }: { q: Inquiry; now: number; pos: [number, number] | null; onStatus: (s: Status) => void; onNote: (n: string) => void; onDelete: () => void; onMove?: (d: 1 | -1) => void; onAccept: () => void }) {
   const first = q.name.split(" ")[0];
   const [note, setNote] = useState(q.note ?? "");
   const latest = useRef(q.note ?? "");
@@ -156,6 +255,8 @@ function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove }: { q: Inquir
         )}
       </div>
 
+      <NextStep q={q} now={now} onStatus={onStatus} onAccept={onAccept} />
+
       {/* akcje */}
       <div className="mt-5 flex flex-wrap items-center gap-2 border-y border-line py-3">
         <a href={mailto} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-bg transition-colors hover:bg-white">
@@ -168,10 +269,6 @@ function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove }: { q: Inquir
             Zadzwoń
           </a>
         )}
-        <Link href={`/panel/admin/kalendarz?nowe=1&klient=${encodeURIComponent(q.company || q.name)}&email=${encodeURIComponent(q.email)}&tytul=${encodeURIComponent(q.topic?.split(" (")[0] ?? "")}`} className={action}>
-          <Icon d={ICONS.calendar} className="size-4" />
-          Do kalendarza
-        </Link>
         <Link href={`/panel/admin/klienci?zapros=1&email=${encodeURIComponent(q.email)}&imie=${encodeURIComponent(first)}`} className={action}>
           <Icon d={ICONS.users} className="size-4" />
           Zaproś do panelu
@@ -243,14 +340,24 @@ function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove }: { q: Inquir
 }
 
 /* ---------- skrzynka ---------- */
-export default function Inquiries({ rows: initial, now: serverNow }: { rows: Inquiry[]; now: number }) {
+export default function Inquiries({ rows: initial, now: serverNow, focus, accept = false }: { rows: Inquiry[]; now: number; focus?: string; accept?: boolean }) {
   const now = useNow(serverNow);
   const [patch, setPatch] = useState<Record<string, Partial<Inquiry> | null>>({});
   const rows = useMemo(() => initial.filter((r) => patch[r.id] !== null).map((r) => ({ ...r, ...patch[r.id] })), [initial, patch]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const [sel, setSel] = useState<string | null>(() => (initial.find((r) => r.status === "new") ?? initial[0])?.id ?? null);
+  const [sel, setSel] = useState<string | null>(() => (initial.find((r) => r.id === focus) ?? initial.find((r) => r.status === "new") ?? initial[0])?.id ?? null);
   const [sheet, setSheet] = useState(false);
+  const [accepting, setAccepting] = useState<{ id: string; n: number } | null>(() => (accept && focus && initial.some((r) => r.id === focus) ? { id: focus, n: 0 } : null));
+  // wejście z powiadomienia (?id=…) na telefonie — od razu otwórz szczegóły
+  useEffect(() => {
+    if (!focus) return;
+    const t = setTimeout(() => {
+      if (!desktop()) setSheet(true);
+      document.getElementById(`inq-${focus}`)?.scrollIntoView({ block: "nearest" });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [focus]);
   const [sticky, setSticky] = useState<string | null>(null);
   const [, start] = useTransition();
   const search = useRef<HTMLInputElement>(null);
@@ -341,8 +448,10 @@ export default function Inquiries({ rows: initial, now: serverNow }: { rows: Inq
       onStatus={(s) => setStatus(q.id, s)}
       onNote={(n) => setNote(q.id, n)}
       onDelete={() => remove(q.id)}
+      onAccept={() => setAccepting((a) => ({ id: q.id, n: (a?.n ?? 0) + 1 }))}
     />
   );
+  const acceptRow = accepting ? rows.find((r) => r.id === accepting.id) : undefined;
 
   return (
     <>
@@ -428,6 +537,20 @@ export default function Inquiries({ rows: initial, now: serverNow }: { rows: Inq
           </div>
         </div>
       </Card>
+
+      <Modal open={!!accepting && !!acceptRow} onClose={() => setAccepting(null)} title={`Przyjmij zlecenie · ${acceptRow?.name ?? ""}`}>
+        {acceptRow && (
+          <AcceptOrder
+            key={`${acceptRow.id}-${accepting?.n}`}
+            q={acceptRow}
+            onClose={() => setAccepting(null)}
+            onDone={(r) => {
+              setSticky(acceptRow.id);
+              setPatch((p) => ({ ...p, [acceptRow.id]: { ...p[acceptRow.id], status: "won", order_id: r.orderId, order_due: r.due, order_title: r.title } }));
+            }}
+          />
+        )}
+      </Modal>
 
       {/* podgląd (telefon/tablet) — pełny ekran */}
       <Portal>

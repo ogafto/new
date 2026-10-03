@@ -7,17 +7,19 @@ import Inquiries, { type Inquiry } from "@/components/panel/Inquiries";
 export const metadata: Metadata = { title: "Zapytania" };
 
 async function load() {
-  const rows = await all<Inquiry>("SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 300");
+  const rows = await all<Inquiry>(
+    "SELECT i.*, o.due_date AS order_due, o.title AS order_title FROM inquiries i LEFT JOIN orders o ON o.id = i.order_id ORDER BY i.created_at DESC LIMIT 300",
+  );
   return { rows, now: Date.now() };
 }
 
-export default async function InquiriesPage() {
+export default async function InquiriesPage({ searchParams }: { searchParams: Promise<{ id?: string; przyjmij?: string }> }) {
   await requireAdmin();
-  const { rows, now } = await load();
+  const [{ rows, now }, sp] = await Promise.all([load(), searchParams]);
   const fresh = rows.filter((r) => r.status === "new").length;
   return (
     <>
-      <PageHead kicker="Klienci" title="Zapytania">
+      <PageHead title="Zapytania" text="Zapytania ze strony i zamówienia z panelu klientów — zajmij się, przyjmij z terminem albo odrzuć.">
         {fresh > 0 && (
           <Badge tone="accent">
             <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_rgb(139_108_255/0.9)]" />
@@ -25,7 +27,7 @@ export default async function InquiriesPage() {
           </Badge>
         )}
       </PageHead>
-      <Inquiries rows={rows.map((r) => ({ ...r, created_at: Number(r.created_at) }))} now={now} />
+      <Inquiries key={sp.id ?? "all"} rows={rows.map((r) => ({ ...r, created_at: Number(r.created_at) }))} now={now} focus={sp.id} accept={sp.przyjmij === "1"} />
     </>
   );
 }

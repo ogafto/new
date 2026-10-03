@@ -29,7 +29,7 @@ export default async function Cockpit() {
     one<{ n: number }>("SELECT COUNT(*) n FROM orders WHERE status IN ('planned', 'active')"),
     one<{ n: number }>("SELECT COALESCE(SUM(amount), 0) n FROM orders WHERE status IN ('planned', 'active')"),
     one<{ n: number }>("SELECT COUNT(*) n FROM inquiries WHERE status = 'new'"),
-    all<{ id: string; name: string; topic: string | null; status: string; created_at: number }>("SELECT id, name, topic, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT 8"),
+    all<{ id: string; name: string; topic: string | null; status: string; source: string | null; created_at: number }>("SELECT id, name, topic, status, source, created_at FROM inquiries ORDER BY created_at DESC LIMIT 8"),
     upcoming(6),
     topPages(30),
     sources(30),
@@ -47,7 +47,17 @@ export default async function Cockpit() {
   const pln = (gr: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(gr / 100);
   const when = (d: number) => (d < 0 ? `${-d} dni po terminie` : d === 0 ? "dziś" : d === 1 ? "jutro" : `za ${d} dni`);
   const todo: TodoItem[] = [
-    ...inquiries.filter((q) => q.status === "new").map((q) => ({ id: `i${q.id}`, kind: "inquiry" as const, title: q.name, sub: q.topic || "Nowe zapytanie", href: "/panel/admin/zapytania", action: "Odpowiedz", urgent: false })),
+    ...inquiries
+      .filter((q) => q.status === "new")
+      .map((q) => ({
+        id: `i${q.id}`,
+        kind: "inquiry" as const,
+        title: q.source === "panel" ? `Zamówienie · ${q.name}` : q.name,
+        sub: q.topic || "Nowe zapytanie",
+        href: `/panel/admin/zapytania?id=${q.id}`,
+        action: q.source === "panel" ? "Przyjmij" : "Odpowiedz",
+        urgent: false,
+      })),
     ...pay.map((p) => {
       const d = daysBetween(t, p.due_date!);
       return { id: `p${p.id}`, kind: "payment" as const, title: `${p.title} · ${pln(Number(p.amount))}`, sub: `${p.client_name} · ${when(d)}`, href: "/panel/admin/finanse", action: d < 0 ? "Przypomnij" : "Sprawdź", urgent: d < 0 };

@@ -3,7 +3,7 @@
 import { createElement } from "react";
 import { revalidatePath } from "next/cache";
 import InviteEmail from "@/emails/InviteEmail";
-import { all, one, run, type Invite } from "@/lib/db";
+import { one, run, type Invite } from "@/lib/db";
 import { id, inviteCode, normalizeCode, sha256 } from "@/lib/auth/crypto";
 import { requireAdmin } from "@/lib/auth/session";
 import { isAdminEmail } from "@/lib/auth/admin";
@@ -97,24 +97,3 @@ export async function liveCount() {
   return live();
 }
 
-export type PulseEvent = { id: string; kind: "payment" | "inquiry"; title: string; text: string; ts: number; href: string };
-
-// „Puls” panelu: osoby na stronie + nowe wpłaty i zapytania od podanego momentu (sprawdzane co kilka sekund)
-export async function pulse(since: number): Promise<{ live: number; now: number; events: PulseEvent[] }> {
-  await requireAdmin();
-  const now = Date.now();
-  const [n, paid, inq] = await Promise.all([
-    live(),
-    all<{ id: string; title: string; client_name: string; amount: number; paid_at: number }>("SELECT id, title, client_name, amount, paid_at FROM payments WHERE status = 'paid' AND paid_at > ? ORDER BY paid_at DESC LIMIT 5", [since]),
-    all<{ id: string; name: string; topic: string | null; created_at: number }>("SELECT id, name, topic, created_at FROM inquiries WHERE created_at > ? ORDER BY created_at DESC LIMIT 5", [since]),
-  ]);
-  const zl = (gr: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: gr % 100 ? 2 : 0 }).format(gr / 100);
-  return {
-    live: n,
-    now,
-    events: [
-      ...paid.map((p) => ({ id: `p-${p.id}`, kind: "payment" as const, title: `Wpłata ${zl(Number(p.amount))}`, text: `${p.client_name} · ${p.title}`, ts: Number(p.paid_at), href: "/panel/admin/finanse" })),
-      ...inq.map((q) => ({ id: `i-${q.id}`, kind: "inquiry" as const, title: `Nowe zapytanie: ${q.name}`, text: q.topic || "Formularz kontaktowy", ts: Number(q.created_at), href: "/panel/admin/zapytania" })),
-    ].sort((a, b) => b.ts - a.ts),
-  };
-}

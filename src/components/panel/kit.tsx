@@ -14,7 +14,7 @@ export function PageHead({ title, text, children }: { kicker?: string; title: Re
     <div className="mb-6 flex flex-col justify-between gap-5 pt-2 sm:mb-8 sm:flex-row sm:items-end lg:mb-10 lg:pt-4">
       <div className="min-w-0">
         <h1 className="h-display overflow-hidden pb-[0.08em] text-[clamp(2.3rem,4.4vw,4rem)] leading-[0.98]">
-          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.8, ease }}>
+          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.65, ease }}>
             {title}
           </motion.span>
         </h1>
@@ -45,9 +45,9 @@ export function Card({ children, className = "", delay = 0, glow = false, pad = 
     <motion.section
       onPointerMove={spotMove}
       className={`spot relative min-w-0 overflow-hidden rounded-[26px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(21_21_29/0.88),rgb(12_12_17/0.88))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_70px_-45px_rgb(0_0_0/0.95)] ${pad ? "p-5 sm:p-7" : ""} ${className}`}
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.03 + delay * 0.6, duration: 0.5, ease }}
+      transition={{ delay: 0.02 + delay * 0.4, duration: 0.45, ease }}
     >
       {glow && <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent)]" aria-hidden />}
       <div className="relative h-full">{children}</div>

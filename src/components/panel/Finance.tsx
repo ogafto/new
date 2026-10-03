@@ -174,7 +174,6 @@ function NewPaymentForm({ stripe, clients, services, onDone }: { stripe: boolean
           <Icon d={ICONS.check} className="size-6" />
         </div>
         <p className="mt-4 text-[17px]">Link do płatności gotowy</p>
-        <p className="mt-1 text-[13.5px] text-dim">Wyślij go klientowi — po opłaceniu status zmieni się sam.</p>
         <div className="mt-5 flex items-center gap-2 rounded-xl border border-line-2 p-1.5 pl-3.5 text-left">
           <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-accent-2">{link}</span>
           <Btn size="sm" variant="primary" icon={ICONS.copy} onClick={() => navigator.clipboard.writeText(link)}>
@@ -413,7 +412,7 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[15px]">Stripe {stripe ? "podłączony" : "niepodłączony"}</p>
-                <p className="text-[12.5px] text-dim">{stripe ? "Linki: karta, BLIK, Przelewy24 (wg ustawień w Stripe)" : "Dodaj klucz, żeby wysyłać linki do płatności"}</p>
+                <p className="text-[12.5px] text-dim">{stripe ? "Karta · BLIK · Przelewy24" : "Brak klucza"}</p>
               </div>
               <Link href="/panel/admin/ustawienia" className="text-[13px] text-accent-2 hover:underline">
                 {stripe ? "Ustawienia" : "Podłącz"}

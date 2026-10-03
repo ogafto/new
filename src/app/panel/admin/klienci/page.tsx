@@ -33,7 +33,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const { invites, clients, sites } = await load();
   return (
     <>
-      <PageHead kicker="Klienci" title="Klienci i zaproszenia" />
+      <PageHead title="Klienci" />
 
       <Card glow>
         <InviteForm email={sp.email} name={sp.imie} />
@@ -41,7 +41,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
       <div className="mt-4">
         <Card delay={0.08}>
-          <CardHead title="Klienci" sub="Nazwa projektu i etap są widoczne w panelu klienta" />
+          <CardHead title="Klienci" sub="Projekt i etap widzi klient" />
           {clients.length === 0 ? (
             <Empty icon={ICONS.users} title="Nikt jeszcze nie założył konta" text="Wyślij zaproszenie powyżej — klient założy konto kodem z maila." />
           ) : (

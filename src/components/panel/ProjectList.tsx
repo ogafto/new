@@ -103,7 +103,7 @@ export default function ProjectList({ projects, views }: { projects: AdminProjec
           </div>
         </div>
         <div className="flex items-center justify-between px-5 py-3 text-[12.5px] text-dim">
-          <span>{filtering ? `${filtered.length} z ${items.length} · zmiana kolejności tylko bez filtrów` : "Przeciągnij, żeby zmienić kolejność. Pierwsze 6 wyróżnionych trafia na stronę główną."}</span>
+          <span>{filtering ? `${filtered.length} z ${items.length} · zmiana kolejności tylko bez filtrów` : "Przeciągnij, aby zmienić kolejność · 6 pierwszych wyróżnionych jest na stronie głównej"}</span>
           <AnimatePresence>
             {saved && (
               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-emerald-300">

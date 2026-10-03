@@ -45,7 +45,7 @@ export default function InviteForm({ email = "", name = "" }: { email?: string; 
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <h2 className="text-[18px] font-medium tracking-[-0.01em]">Zaproś klienta</h2>
-          <p className="mt-1 text-[14px] text-muted">Klient dostanie maila z kodem. Najpierw wpisze kod, potem swoje dane i potwierdzi e-mail. Kod działa 7 dni i tylko dla tego adresu.</p>
+          <p className="mt-1 text-[14px] text-muted">Kod dostępu trafi na e-mail klienta · ważny 7 dni</p>
         </div>
       </div>
       <form action={action} className="mt-6 grid gap-3 md:grid-cols-[1.2fr_1fr_auto]" key={state?.code ?? "new"}>

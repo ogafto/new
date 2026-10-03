@@ -9,7 +9,7 @@ export default async function NewProject() {
   await requireAdmin();
   return (
     <>
-      <PageHead kicker="Portfolio" title="Nowy projekt" />
+      <PageHead title="Nowy projekt" />
       <ProjectForm />
     </>
   );

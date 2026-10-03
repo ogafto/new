@@ -13,7 +13,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
   const [rows, stats] = await Promise.all([listLogs({ kind: sp.typ, level: sp.poziom, q: sp.q, before: Number(sp.przed) || undefined, limit: limit + 1 }), logStats()]);
   return (
     <>
-      <PageHead kicker="System" title="Logi" />
+      <PageHead title="Logi" />
       <LogList
         rows={rows.slice(0, limit).map((r) => ({ ...r, ts: Number(r.ts) }))}
         more={rows.length > limit}

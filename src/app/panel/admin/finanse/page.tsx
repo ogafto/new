@@ -20,7 +20,7 @@ export default async function FinancePage() {
   ]);
   return (
     <>
-      <PageHead kicker="Biznes" title="Finanse" />
+      <PageHead title="Finanse" />
       <Finance
         payments={payments.map((p) => ({ ...p, amount: Number(p.amount), created_at: Number(p.created_at), paid_at: p.paid_at ? Number(p.paid_at) : null, status: effectiveStatus(p) }))}
         expenses={expenses.map((e) => ({ ...e, amount: Number(e.amount), recurring: Number(e.recurring), created_at: Number(e.created_at) }))}

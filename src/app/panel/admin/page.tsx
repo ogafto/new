@@ -7,10 +7,9 @@ import { daysBetween, STATUS, today, upcoming } from "@/lib/orders";
 import { fmtDateTime } from "@/lib/format";
 import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, Stat } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
-import QuickActions from "@/components/panel/QuickActions";
-import { financeSummary } from "@/lib/finance";
+import { financeSummary, paymentsDueSoon } from "@/lib/finance";
 import { listLogs } from "@/lib/logs";
-import CockpitHero, { Activity } from "@/components/panel/CockpitHero";
+import CockpitHero, { Activity, Todo, type TodoItem } from "@/components/panel/CockpitHero";
 import { getContent } from "@/lib/content-server";
 
 export const metadata: Metadata = { title: "Kokpit" };
@@ -30,7 +29,7 @@ export default async function Cockpit() {
     one<{ n: number }>("SELECT COUNT(*) n FROM orders WHERE status IN ('planned', 'active')"),
     one<{ n: number }>("SELECT COALESCE(SUM(amount), 0) n FROM orders WHERE status IN ('planned', 'active')"),
     one<{ n: number }>("SELECT COUNT(*) n FROM inquiries WHERE status = 'new'"),
-    all<{ id: string; name: string; topic: string | null; status: string; created_at: number }>("SELECT id, name, topic, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT 5"),
+    all<{ id: string; name: string; topic: string | null; status: string; created_at: number }>("SELECT id, name, topic, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT 8"),
     upcoming(6),
     topPages(30),
     sources(30),
@@ -42,6 +41,22 @@ export default async function Cockpit() {
   const soon = (await getContent()).soon.enabled;
   const t = today();
   const conv = k.cur.visitors ? Math.round((funnel[2].n / k.cur.visitors) * 1000) / 10 : 0;
+
+  // „Do zrobienia”: zapytania bez odpowiedzi, płatności do pilnowania, bliskie terminy
+  const pay = await paymentsDueSoon(3);
+  const pln = (gr: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(gr / 100);
+  const when = (d: number) => (d < 0 ? `${-d} dni po terminie` : d === 0 ? "dziś" : d === 1 ? "jutro" : `za ${d} dni`);
+  const todo: TodoItem[] = [
+    ...inquiries.filter((q) => q.status === "new").map((q) => ({ id: `i${q.id}`, kind: "inquiry" as const, title: q.name, sub: q.topic || "Nowe zapytanie", href: "/panel/admin/zapytania", action: "Odpowiedz", urgent: false })),
+    ...pay.map((p) => {
+      const d = daysBetween(t, p.due_date!);
+      return { id: `p${p.id}`, kind: "payment" as const, title: `${p.title} · ${pln(Number(p.amount))}`, sub: `${p.client_name} · ${when(d)}`, href: "/panel/admin/finanse", action: d < 0 ? "Przypomnij" : "Sprawdź", urgent: d < 0 };
+    }),
+    ...next.filter((o) => daysBetween(t, o.due_date) <= 3).map((o) => {
+      const d = daysBetween(t, o.due_date);
+      return { id: `o${o.id}`, kind: "deadline" as const, title: o.title, sub: `${o.client_name} · ${when(d)}`, href: "/panel/admin/kalendarz", action: "Otwórz", urgent: d <= 0 };
+    }),
+  ].sort((a, b) => Number(b.urgent) - Number(a.urgent));
 
   return (
     <>
@@ -55,11 +70,12 @@ export default async function Cockpit() {
           { label: "nowe zapytania", value: Number(newInq?.n ?? 0), href: "/panel/admin/zapytania" },
           { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
         ]}
-      >
-        <div className="hidden sm:block">
-          <QuickActions />
-        </div>
-      </CockpitHero>
+      />
+
+      <div className="mb-4 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <Todo items={todo} />
+        <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="col-span-2 lg:row-span-2" glow>
@@ -86,76 +102,6 @@ export default async function Cockpit() {
         <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.1} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w zleceniach`} />
         <Stat label="Do zapłaty" value={Math.round(fin.pending.amount / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} hint={fin.pending.count ? `${fin.pending.count} ${fin.pending.count === 1 ? "płatność" : "płatności"}${fin.pending.overdue ? ` · ${fin.pending.overdue} po terminie` : ""}` : "Wszystko opłacone"} />
         <Stat label="Konwersja formularza" value={conv} suffix="%" decimals={1} icon={ICONS.target} delay={0.2} hint={`${funnel[2].n} wysłanych · 30 dni`} spark={s.slice(-14).map((d) => d.visitors)} />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
-        <Card delay={0.25}>
-          <CardHead title="Nadchodzące terminy" sub="Zlecenia z kalendarza">
-            <Link href="/panel/admin/kalendarz" className="text-[13px] text-muted transition-colors hover:text-ink">
-              Kalendarz →
-            </Link>
-          </CardHead>
-          {next.length === 0 ? (
-            <Empty icon={ICONS.calendar} title="Brak zaplanowanych zleceń" text="Dodaj zlecenie w kalendarzu, a przypomnę Ci mailem o terminie." />
-          ) : (
-            <ul className="space-y-2">
-              {next.map((o) => {
-                const d = daysBetween(t, o.due_date);
-                const total = Math.max(1, daysBetween(o.start_date, o.due_date));
-                const done = Math.min(1, Math.max(0, daysBetween(o.start_date, t) / total));
-                return (
-                  <li key={o.id} className="rounded-2xl border border-line p-4 transition-colors hover:border-line-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[15px]">{o.title}</p>
-                        <p className="mt-0.5 truncate text-[12.5px] text-dim">
-                          <span className={`mr-1.5 inline-block size-1.5 rounded-full align-middle ${STATUS[o.status].dot}`} />
-                          {o.client_name}
-                          {o.service ? ` · ${o.service}` : ""}
-                        </p>
-                      </div>
-                      <Badge tone={d < 0 ? "red" : d <= 2 ? "amber" : "default"}>{d < 0 ? `${-d} dni po terminie` : d === 0 ? "dziś" : d === 1 ? "jutro" : `za ${d} dni`}</Badge>
-                    </div>
-                    <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className={`h-full rounded-full ${d < 0 ? "bg-red-400" : "bg-gradient-to-r from-accent to-accent-2"}`} style={{ width: `${Math.round(done * 100)}%` }} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
-
-        <Card delay={0.3}>
-          <CardHead title="Ostatnie zapytania" sub="Z formularza na stronie">
-            <Link href="/panel/admin/zapytania" className="text-[13px] text-muted transition-colors hover:text-ink">
-              Wszystkie →
-            </Link>
-          </CardHead>
-          {inquiries.length === 0 ? (
-            <Empty icon={ICONS.inbox} title="Jeszcze cisza" text="Gdy ktoś wyśle formularz, zobaczysz to tutaj." />
-          ) : (
-            <ul className="divide-y divide-line">
-              {inquiries.map((q) => (
-                <li key={q.id}>
-                  <Link href="/panel/admin/zapytania" className="flex items-center gap-3 py-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/[0.05] text-[13px]">{q.name.charAt(0).toUpperCase()}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px]">{q.name}</span>
-                      <span className="block truncate text-[12.5px] text-dim">{q.topic || "—"}</span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      {q.status === "new" && <Badge tone="accent">nowe</Badge>}
-                      <span className="mt-1 block text-[11.5px] text-dim">{fmtDateTime(q.created_at)}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">

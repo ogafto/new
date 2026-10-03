@@ -137,3 +137,12 @@ export async function markPaid(id: string, opts: { via: "webhook" | "check" | "m
   if (opts.via !== "manual") await notifyPaid(p, "Stripe");
   return { ...p, status: "paid" as const, paid_at: now };
 }
+
+/** Oczekujące płatności z terminem w ciągu `days` dni (albo już po terminie) */
+export async function paymentsDueSoon(days: number) {
+  const limit = new Date(Date.now() + days * 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Warsaw" });
+  return all<Pick<Payment, "id" | "title" | "client_name" | "amount" | "due_date">>(
+    "SELECT id, title, client_name, amount, due_date FROM payments WHERE status = 'pending' AND due_date IS NOT NULL AND due_date <= ? ORDER BY due_date LIMIT 5",
+    [limit],
+  );
+}

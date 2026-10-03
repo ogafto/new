@@ -11,7 +11,7 @@ export default async function InquiriesPage() {
   const rows = await all<Inquiry>("SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 300");
   return (
     <>
-      <PageHead kicker="Zapytania" title="Wiadomości z formularza" />
+      <PageHead title="Zapytania" />
       <Inquiries rows={rows.map((r) => ({ ...r, created_at: Number(r.created_at) }))} />
     </>
   );

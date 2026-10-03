@@ -56,7 +56,6 @@ export default function ContentForm({ initial, defaults, services, history }: { 
         <div className="-mx-1 overflow-x-auto px-1 pb-1" data-lenis-prevent>
           <Tabs id="content" value={tab} onChange={setTab} items={SECTIONS} />
         </div>
-        <p className="text-[12.5px] text-dim">Zmiany pojawiają się na stronie od razu po zapisaniu.</p>
       </div>
 
       <AnimatePresence mode="wait">
@@ -185,7 +184,6 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-[16px] font-medium">Pasek ogłoszeń</h2>
-                    <p className="mt-0.5 text-[13px] text-dim">Elegancka wiadomość na dole strony — promocja, nowość, wolne terminy.</p>
                   </div>
                   <Toggle label="" checked={c.announcement.enabled} onChange={(v) => set("announcement", { ...c.announcement, enabled: v })} />
                 </div>
@@ -217,7 +215,6 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-[16px] font-medium">Status dostępności</h2>
-                    <p className="mt-0.5 text-[13px] text-dim">Widoczny przy formularzu kontaktowym — buduje zaufanie i pilność.</p>
                   </div>
                   <Toggle label="" checked={c.availability.open} onChange={(v) => set("availability", { ...c.availability, open: v, text: v ? "Przyjmuję nowe projekty" : "Wolne terminy od przyszłego miesiąca" })} />
                 </div>
@@ -366,7 +363,6 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                   </Card>
                 );
               })}
-              <p className="text-[12.5px] text-dim md:col-span-2">Ceny i czasy trafiają do formularza kontaktu, na podstrony usług (/uslugi) i do danych strukturalnych dla Google.</p>
             </div>
           )}
 
@@ -389,7 +385,6 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     </div>
                     <textarea rows={4} className={`${field} resize-none py-3`} value={c.seo.description} onChange={(e) => set("seo", { ...c.seo, description: e.target.value })} />
                   </div>
-                  <p className="text-[12px] leading-relaxed text-dim">Najważniejsza fraza na początku tytułu. Google ucina tytuły powyżej ~60 znaków i opisy powyżej ~155.</p>
                 </div>
               </Card>
               <Card>
@@ -406,7 +401,7 @@ export default function ContentForm({ initial, defaults, services, history }: { 
           {tab === "legal" && (
             <Card>
               <h2 className="mb-1 text-[16px] font-medium">Dane do regulaminu i polityki prywatności</h2>
-              <p className="mb-5 text-[13px] text-dim">Pojawiają się w dokumentach prawnych i danych strukturalnych.</p>
+              <div className="mb-5" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Label label="Imię i nazwisko / firma">
                   <input className={`${field} h-11`} value={c.legal.owner} onChange={(e) => set("legal", { ...c.legal, owner: e.target.value })} />

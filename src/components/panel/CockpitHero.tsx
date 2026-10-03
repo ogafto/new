@@ -137,3 +137,48 @@ export function Activity({ rows }: { rows: { id: string; ts: number; level: stri
     </Card>
   );
 }
+
+/* ---------- Do zrobienia ---------- */
+
+export type TodoItem = { id: string; kind: "inquiry" | "payment" | "deadline"; title: string; sub: string; href: string; action: string; urgent: boolean };
+
+const TODO_ICON = { inquiry: ICONS.inbox, payment: ICONS.wallet, deadline: ICONS.calendar };
+
+export function Todo({ items }: { items: TodoItem[] }) {
+  return (
+    <Card delay={0.12} glow={items.some((i) => i.urgent)}>
+      <CardHead title="Do zrobienia" sub={items.length ? `${items.length} ${items.length === 1 ? "sprawa" : items.length < 5 ? "sprawy" : "spraw"}` : undefined} />
+      {items.length === 0 ? (
+        <div className="flex flex-col items-center py-8 text-center">
+          <motion.span
+            className="grid size-14 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20"
+            initial={{ scale: 0.6, rotate: -10, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.3 }}
+          >
+            <Icon d={ICONS.check} className="size-6" />
+          </motion.span>
+          <p className="mt-4 text-[15px]">Wszystko ogarnięte</p>
+        </div>
+      ) : (
+        <ul className="-mx-2 space-y-1">
+          {items.slice(0, 7).map((it, i) => (
+            <motion.li key={it.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.04, duration: 0.45, ease }}>
+              <Link href={it.href} className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.04]">
+                <span className={`relative grid size-9 shrink-0 place-items-center rounded-xl ${it.urgent ? "bg-red-400/12 text-red-300" : it.kind === "inquiry" ? "bg-accent/15 text-accent-2" : "bg-white/[0.05] text-muted"}`}>
+                  {it.urgent && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-red-400 ring-2 ring-surface" />}
+                  <Icon d={TODO_ICON[it.kind]} className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px]">{it.title}</span>
+                  <span className={`block truncate text-[12.5px] ${it.urgent ? "text-red-300/80" : "text-dim"}`}>{it.sub}</span>
+                </span>
+                <span className="shrink-0 rounded-full border border-line-2 px-3 py-1 text-[12px] text-muted transition-colors group-hover:border-white/30 group-hover:text-ink">{it.action}</span>
+              </Link>
+            </motion.li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}

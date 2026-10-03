@@ -132,7 +132,6 @@ export default function ProjectForm({ project }: { project?: AdminProject }) {
             <div className="sm:col-span-2">
               <span className="mb-1.5 block text-[13px] text-muted">Paleta kolorów</span>
               <PaletteEditor name="palette" value={colors} onChange={(c) => setV({ ...v, palette: c.join(", ") })} image={img || undefined} />
-              <span className="mt-1.5 block text-[12px] text-dim">Kliknij próbkę, żeby zmienić · „+” dodaje kolor · paleta tworzy tło projektu na telefonach.</span>
             </div>
             <Label label="Adres gotowej strony (opcjonalnie)">
               <input name="url" type="url" defaultValue={project?.url ?? ""} placeholder="https://" className={`${field} h-11`} />
@@ -144,7 +143,7 @@ export default function ProjectForm({ project }: { project?: AdminProject }) {
         </Card>
 
         <Card delay={0.03}>
-          <CardHead title="Wygląd w Google" sub="Opcjonalnie — puste pola uzupełnią się z nazwy i opisu" />
+          <CardHead title="Wygląd w Google" sub="Opcjonalnie" />
           <div className="grid gap-4">
             <Label label={`Tytuł (${seo.title.length}/60)`}>
               <input name="seo_title" value={seo.title} onChange={(e) => setSeo({ ...seo, title: e.target.value })} maxLength={120} placeholder={`${v.name || "Nazwa"} — ${serviceName(v.category).toLowerCase()} · ${v.client || "klient"}`} className={`${field} h-11`} />

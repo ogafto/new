@@ -10,7 +10,7 @@ import { pulse, type PulseEvent } from "@/app/panel/admin/actions";
 import { syncRole } from "@/app/panel/actions";
 import { Mark, Wordmark } from "../brand/Logo";
 import { ease, Icon, ICONS } from "./kit";
-import CommandPalette, { CommandButton, useCommandPalette } from "./CommandPalette";
+import CommandPalette, { useCommandPalette } from "./CommandPalette";
 
 export type Note = { id: string; kind: "deadline" | "inquiry"; title: string; text: string; href: string; urgent: boolean };
 type Props = { user: { name: string; email: string }; admin: boolean; notes: Note[]; counts: { inquiries: number }; sites: { id: string; name: string }[]; children: React.ReactNode };
@@ -30,7 +30,7 @@ function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) 
         group: "Klienci",
         links: [
           { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
-          { href: "/panel/admin/klienci", label: "Klienci i zaproszenia", icon: ICONS.users },
+          { href: "/panel/admin/klienci", label: "Klienci", icon: ICONS.users },
         ],
       },
       { group: "Biznes", links: [{ href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet }] },
@@ -289,6 +289,14 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
   const [menu, setMenu] = useState(false);
   const [create, setCreate] = useState<"side" | "tab" | null>(null);
   const [rail, setRail] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const userRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!userMenu) return;
+    const down = (e: PointerEvent) => !userRef.current?.contains(e.target as Node) && setUserMenu(false);
+    addEventListener("pointerdown", down);
+    return () => removeEventListener("pointerdown", down);
+  }, [userMenu]);
   const closeCreate = useCallback(() => setCreate(null), []);
   const [cmdk, setCmdk] = useCommandPalette();
   const nav = navFor(admin, counts, sites);
@@ -331,7 +339,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
     <nav className="space-y-6" aria-label="Panel">
       {nav.map((g, gi) => (
         <motion.div key={g.group} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + gi * 0.06, duration: 0.6, ease }}>
-          {compact ? <div className="mx-auto mb-2 h-px w-6 bg-line" /> : <p className="mb-1.5 px-3 text-[11.5px] font-medium tracking-[0.04em] text-dim uppercase">{g.group}</p>}
+          {compact ? <div className="mx-auto mb-2 h-px w-6 bg-line" /> : <p className="mb-1 px-3 text-[12px] text-dim">{g.group}</p>}
           <ul className="space-y-0.5">
             {(g.links as NavLink[]).map((l) => {
               const on = active(l.href) && current?.href === l.href;
@@ -341,7 +349,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
                   <Link
                     href={l.href}
                     title={compact ? l.label : undefined}
-                    className={`group relative flex items-center rounded-xl py-2.5 text-[14px] transition-colors ${compact ? "justify-center px-0" : "gap-3 px-3"} ${on ? "text-ink" : "text-muted hover:bg-white/[0.03] hover:text-ink"}`}
+                    className={`group relative flex items-center rounded-[10px] py-2 text-[14px] transition-colors ${compact ? "justify-center px-0 py-2.5" : "gap-3 px-3"} ${on ? "text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
                   >
                     {on && (
                       <motion.span layoutId={compact ? "panel-nav-rail" : "panel-nav"} className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent/[0.16] to-white/[0.03] ring-1 ring-accent/25" transition={{ type: "spring", stiffness: 420, damping: 36 }}>
@@ -368,7 +376,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
     <Link
       href="/panel/admin/tresci#soon"
       title={soon ? "Tryb zapowiedzi — strona ukryta" : "Strona online"}
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-[12.5px] transition-colors ${rail ? "justify-center" : ""} ${soon ? "border-amber-300/25 bg-amber-300/[0.06] text-amber-100 hover:bg-amber-300/10" : "border-line text-muted hover:bg-white/[0.03] hover:text-ink"}`}
+      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] transition-colors ${rail ? "justify-center" : ""} ${soon ? "bg-amber-300/[0.07] text-amber-100 hover:bg-amber-300/10" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
     >
       <span className="relative flex size-2 shrink-0">
         <span className={`absolute inset-0 animate-ping rounded-full ${soon ? "bg-amber-300/70" : "bg-emerald-400/70"}`} />
@@ -379,19 +387,55 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
   );
 
   const userCard = (compact: boolean) => (
-    <div className={`edge flex items-center gap-3 rounded-2xl bg-white/[0.02] p-2.5 ${compact ? "flex-col" : ""}`}>
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white shadow-[0_0_20px_-4px_rgb(139_108_255/0.7)]">{user.name.charAt(0).toUpperCase()}</span>
-      {!compact && (
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px]">{user.name}</span>
-          <span className="block truncate text-[11.5px] text-dim">{admin ? "Administrator" : user.email}</span>
-        </span>
-      )}
-      <form action={logout}>
-        <button type="submit" className="grid size-8 place-items-center rounded-full text-dim transition-colors hover:bg-white/5 hover:text-ink" aria-label="Wyloguj" title="Wyloguj">
-          <Icon d={ICONS.logout} className="size-4" />
-        </button>
-      </form>
+    <div className="relative" ref={userRef}>
+      <AnimatePresence>
+        {userMenu && (
+          <motion.div
+            className="edge absolute bottom-[calc(100%+8px)] left-0 z-[80] w-[232px] overflow-hidden rounded-2xl bg-surface p-1.5 shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)]"
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.2, ease }}
+          >
+            <div className="border-b border-line px-3 pt-2 pb-2.5">
+              <p className="truncate text-[13.5px]">{user.name}</p>
+              <p className="truncate text-[12px] text-dim">{user.email}</p>
+            </div>
+            {admin && (
+              <Link href="/panel/admin/ustawienia" className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
+                <Icon d={ICONS.gear} className="size-4" /> Ustawienia
+              </Link>
+            )}
+            <a href="/" target="_blank" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
+              <Icon d={ICONS.site} className="size-4" /> Otwórz stronę
+            </a>
+            <form action={logout}>
+              <button type="submit" className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-red-400/10 hover:text-red-200">
+                <Icon d={ICONS.logout} className="size-4" /> Wyloguj
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <button
+        type="button"
+        onClick={() => setUserMenu((o) => !o)}
+        className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/[0.04] ${compact ? "justify-center" : ""} ${userMenu ? "bg-white/[0.05]" : ""}`}
+        aria-label="Konto"
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[13px] font-medium text-white shadow-[0_0_18px_-4px_rgb(139_108_255/0.8)]">{user.name.charAt(0).toUpperCase()}</span>
+        {!compact && (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13.5px]">{user.name}</span>
+              <span className="block truncate text-[11.5px] text-dim">{admin ? "Administrator" : user.email}</span>
+            </span>
+            <svg viewBox="0 0 24 24" className="size-4 text-dim" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+              <path d="M8 10l4-4 4 4M8 14l4 4 4-4" />
+            </svg>
+          </>
+        )}
+      </button>
     </div>
   );
 
@@ -421,43 +465,59 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease }}
       >
-        <div className={`flex items-center ${rail ? "justify-center" : "justify-between px-2"}`}>
+        <div className={`flex items-center ${rail ? "flex-col gap-3" : "justify-between pl-2"}`}>
           <Link href={admin ? "/panel/admin" : "/panel"} className="flex items-center gap-3" aria-label="Panel — start">
             <Mark className="size-8" />
             {!rail && <Wordmark className="h-[19px] w-auto" />}
           </Link>
-          {!rail && <span className="rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] tracking-[0.06em] text-dim uppercase">{admin ? "Admin" : "Klient"}</span>}
+          <button type="button" onClick={toggleRail} className="grid size-8 place-items-center rounded-lg text-dim transition-colors hover:bg-white/[0.05] hover:text-ink" aria-label={rail ? "Rozwiń menu" : "Zwiń menu"} title={rail ? "Rozwiń menu" : "Zwiń menu"}>
+            <svg viewBox="0 0 24 24" className={`size-[18px] transition-transform duration-500 ${rail ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M4 5h16v14H4zM9 5v14M15.5 10l-2 2 2 2" />
+            </svg>
+          </button>
         </div>
 
         {admin && (
-          <div className="relative mt-6">
+          <div className={`relative mt-5 flex gap-2 ${rail ? "flex-col" : ""}`}>
+            <button
+              type="button"
+              onClick={() => setCmdk(true)}
+              className={`flex h-10 items-center gap-2.5 rounded-xl border border-line-2 bg-white/[0.025] text-[13.5px] text-dim transition-colors hover:border-white/25 hover:text-ink ${rail ? "justify-center" : "flex-1 px-3"}`}
+              aria-label="Szukaj (⌘K)"
+              title="Szukaj (⌘K)"
+            >
+              <Icon d={ICONS.search} className="size-4" />
+              {!rail && (
+                <>
+                  <span className="flex-1 text-left">Szukaj…</span>
+                  <kbd className="rounded-md border border-line-2 px-1.5 text-[11px]">⌘K</kbd>
+                </>
+              )}
+            </button>
             <button
               type="button"
               data-create-trigger
               onClick={() => setCreate(create === "side" ? null : "side")}
-              className={`group flex w-full items-center justify-center gap-2 rounded-xl bg-ink py-2.5 text-[14px] font-medium text-bg transition-colors hover:bg-white ${rail ? "px-0" : "px-3"}`}
+              className="grid h-10 w-full shrink-0 place-items-center rounded-xl bg-ink text-bg shadow-[0_8px_24px_-10px_rgb(255_255_255/0.5)] transition-colors hover:bg-white data-[rail=false]:w-10"
+              data-rail={rail}
               aria-label="Nowe"
+              title="Nowe"
             >
-              <Icon d={ICONS.plus} className={`size-4 transition-transform duration-300 ${create === "side" ? "rotate-45" : ""}`} />
-              {!rail && "Nowe"}
+              <Icon d={ICONS.plus} className={`size-[18px] transition-transform duration-300 ${create === "side" ? "rotate-45" : ""}`} />
             </button>
-            <CreateMenu open={create === "side"} onClose={closeCreate} />
+            <div className="absolute top-full left-0">
+              <CreateMenu open={create === "side"} onClose={closeCreate} />
+            </div>
           </div>
         )}
 
-        <div className="mt-6 flex-1 overflow-y-auto pb-4 [scrollbar-width:none]" data-lenis-prevent>
+        <div className="mt-6 -mr-2 flex-1 overflow-y-auto pr-2 pb-4 [scrollbar-width:none]" data-lenis-prevent>
           {navList(rail)}
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-1.5 border-t border-line pt-3">
           {status}
           {userCard(rail)}
-          <button type="button" onClick={toggleRail} className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-[12px] text-dim transition-colors hover:text-ink" aria-label={rail ? "Rozwiń menu" : "Zwiń menu"}>
-            <svg viewBox="0 0 24 24" className={`size-4 transition-transform duration-500 ${rail ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M4 5h16v14H4zM9 5v14M15.5 10l-2 2 2 2" />
-            </svg>
-            {!rail && "Zwiń menu"}
-          </button>
         </div>
       </motion.aside>
 
@@ -519,9 +579,8 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
             </nav>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {admin && <CommandButton />}
             {admin && (
-              <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full border border-line-2 text-muted sm:hidden" aria-label="Szukaj">
+              <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full border border-line-2 text-muted lg:hidden" aria-label="Szukaj">
                 <Icon d={ICONS.search} className="size-[18px]" />
               </button>
             )}

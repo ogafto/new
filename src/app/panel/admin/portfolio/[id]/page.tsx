@@ -13,7 +13,7 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
   if (!p) notFound();
   return (
     <>
-      <PageHead kicker="Portfolio" title={p.name} />
+      <PageHead title={p.name} />
       <ProjectForm project={p} />
     </>
   );

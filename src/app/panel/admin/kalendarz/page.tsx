@@ -14,7 +14,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const [orders, clients] = await Promise.all([listOrders(), all<{ id: string; name: string; email: string }>("SELECT id, name, email FROM users WHERE role = 'client' AND verified_at IS NOT NULL ORDER BY name")]);
   return (
     <>
-      <PageHead kicker="Kalendarz" title="Zlecenia i terminy" />
+      <PageHead title="Kalendarz" />
       <Calendar
         orders={orders.map((o) => ({ ...o, amount: o.amount === null ? null : Number(o.amount), remind_days: Number(o.remind_days) }))}
         clients={clients}

@@ -21,7 +21,7 @@ export default async function SettingsPage() {
   ];
   return (
     <>
-      <PageHead kicker="System" title="Ustawienia" />
+      <PageHead title="Ustawienia" />
       <SettingsForm
         groups={GROUPS}
         defs={SETTINGS.map(({ env, ...d }) => ({ ...d, env: env[0] }))}

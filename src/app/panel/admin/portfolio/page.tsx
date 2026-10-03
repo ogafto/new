@@ -15,7 +15,7 @@ export default async function PortfolioAdmin() {
   const views = Object.fromEntries(stats.map((s) => [s.slug, { views: Number(s.views), visitors: Number(s.visitors) }]));
   return (
     <>
-      <PageHead kicker="Portfolio" title="Twoje projekty">
+      <PageHead title="Portfolio">
         <Link href="/panel/admin/portfolio/nowy" className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
           <Icon d={ICONS.plus} className="size-4" />
           Dodaj projekt

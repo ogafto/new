@@ -15,7 +15,7 @@ export default async function SitesPage() {
   const [sites, clients] = await Promise.all([listSites(), all<{ id: string; name: string; email: string }>("SELECT id, name, email FROM users WHERE role = 'client' AND verified_at IS NOT NULL ORDER BY name")]);
   return (
     <>
-      <PageHead kicker="CMS" title="Strony klientów">
+      <PageHead title="Strony klientów">
         <NewSite clients={clients} />
       </PageHead>
       {sites.length === 0 ? (

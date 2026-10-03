@@ -13,7 +13,7 @@ export default async function ContentPage() {
   const [content, history] = await Promise.all([getContent(), contentHistory()]);
   return (
     <>
-      <PageHead kicker="Treści" title="Treści strony" />
+      <PageHead title="Treści strony" />
       <ContentForm initial={content} defaults={defaultContent()} services={services.map((s) => ({ id: s.id, name: s.name }))} history={history.map((h) => ({ ts: h.ts, actor: h.actor, section: h.section }))} />
     </>
   );

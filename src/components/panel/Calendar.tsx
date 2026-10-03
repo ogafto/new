@@ -233,7 +233,7 @@ export default function Calendar({ orders, clients, today, mail, prefill }: { or
           )}
         </Card>
         <Card delay={0.15}>
-          <CardHead title="Przypomnienia" sub={mail ? "Mail codziennie rano na Twój adres" : "Podłącz e-mail w Ustawieniach, żeby dostawać maile"} />
+          <CardHead title="Przypomnienia" sub={mail ? "Codziennie rano na e-mail" : "E-mail niepodłączony"} />
           <Btn
             size="sm"
             variant="outline"

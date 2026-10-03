@@ -87,7 +87,6 @@ function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][numb
             <h2 className="text-[16px] font-medium">{g.title}</h2>
             <Badge tone={status === "ok" ? "green" : status === "part" ? "amber" : "default"}>{status === "ok" ? "Skonfigurowane" : status === "part" ? "Częściowo" : "Nieustawione"}</Badge>
           </div>
-          <p className="mt-0.5 text-[13px] text-dim">{g.text}</p>
         </div>
       </div>
 
@@ -149,19 +148,17 @@ function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][numb
                   </button>
                 )}
               </div>
-              {d.hint && <p className="mt-1.5 text-[12px] leading-relaxed text-dim">{d.hint}</p>}
             </div>
           );
         })}
 
         {g.id === "stripe" && (
           <div className="rounded-2xl border border-line bg-white/[0.02] p-3.5">
-            <p className="text-[12.5px] text-muted">Adres webhooka do wklejenia w Stripe</p>
+            <p className="text-[12.5px] text-muted">Webhook Stripe</p>
             <div className="mt-2 flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-lg bg-black/30 px-3 py-2 text-[12.5px] text-accent-2">{webhookUrl}</code>
               <Copy value={webhookUrl} />
             </div>
-            <p className="mt-2 text-[12px] text-dim">Zdarzenia: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, charge.refunded.</p>
           </div>
         )}
 
@@ -186,18 +183,6 @@ function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][numb
 export default function SettingsForm({ groups, defs, states, webhookUrl, envOnly, secretKey }: Props) {
   return (
     <div className="space-y-4">
-      <motion.div
-        className="edge flex items-start gap-3 rounded-[22px] bg-accent/[0.06] p-4 text-[13.5px] leading-relaxed text-muted sm:p-5"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease }}
-      >
-        <Icon d={ICONS.shield} className="mt-0.5 size-[18px] shrink-0 text-accent-2" />
-        <p>
-          Wszystko, co wpiszesz tutaj, działa od razu — bez edytowania <code className="text-ink">.env</code> i bez ponownego wdrożenia. Klucze i webhooki są zapisane w bazie w postaci zaszyfrowanej i nigdy nie są pokazywane w całości. Jeśli coś jest ustawione w zmiennych środowiskowych, panel ma pierwszeństwo.
-        </p>
-      </motion.div>
-
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-lenis-prevent>
         {groups.map((g) => {
           const ds = defs.filter((d) => d.group === g.id);
@@ -223,33 +208,20 @@ export default function SettingsForm({ groups, defs, states, webhookUrl, envOnly
       </div>
 
       <Card delay={0.3}>
-        <div className="mb-4 flex items-start gap-3.5">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-muted">
-            <Icon d={ICONS.key} />
-          </span>
-          <div>
-            <h2 className="text-[16px] font-medium">Zostaje w zmiennych środowiskowych</h2>
-            <p className="mt-0.5 text-[13px] text-dim">Bez tych wartości aplikacja nie wystartuje (albo używa ich sam Vercel), więc nie mogą być w bazie. Ustawiasz je raz w Vercel → Settings → Environment Variables.</p>
-          </div>
-        </div>
-        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {envOnly.map((e) => (
-            <li key={e.key} className="flex items-center gap-3 rounded-xl border border-line px-3.5 py-2.5">
-              <span className={`grid size-6 shrink-0 place-items-center rounded-full ${e.set ? "bg-emerald-400/15 text-emerald-300" : "bg-white/[0.05] text-dim"}`}>
-                <Icon d={e.set ? ICONS.check : ICONS.close} className="size-3.5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate font-mono text-[12.5px]">{e.key}</span>
-                <span className="block truncate text-[12px] text-dim">{e.label}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        {!secretKey && (
-          <p className="mt-4 text-[12.5px] leading-relaxed text-dim">
-            Wskazówka: dodaj <code className="text-muted">SECRET_KEY</code> (dowolny długi losowy ciąg). Bez niego sekrety są szyfrowane kluczem pochodnym od hasła admina — po zmianie hasła trzeba je wpisać ponownie.
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <p className="flex shrink-0 items-center gap-2 text-[13.5px] text-muted">
+            <Icon d={ICONS.key} className="size-4" /> Zmienne środowiskowe
           </p>
-        )}
+          <ul className="flex flex-wrap gap-1.5 lg:ml-auto">
+            {envOnly.map((e) => (
+              <li key={e.key} title={e.label} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11.5px] ${e.set ? "border-emerald-400/20 text-emerald-200/90" : "border-line-2 text-dim"}`}>
+                <span className={`size-1.5 rounded-full ${e.set ? "bg-emerald-400" : "bg-white/25"}`} />
+                {e.key}
+              </li>
+            ))}
+          </ul>
+        </div>
+        {!secretKey && <p className="mt-3 text-[12px] text-dim">Dodaj SECRET_KEY w Vercelu — wtedy zmiana hasła admina nie wymaże zapisanych kluczy.</p>}
       </Card>
     </div>
   );

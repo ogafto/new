@@ -203,7 +203,7 @@ function Open({ children, enter = "up", className = "aspect-square max-w-[520px]
 /* ---------- świecąca ścieżka między etapami ---------- */
 
 function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>; nodes: React.RefObject<(HTMLSpanElement | null)[]> }) {
-  const [geo, setGeo] = useState({ d: "", w: 0, h: 0, len: 0 });
+  const [geo, setGeo] = useState<{ d: string; w: number; h: number; len: number; lut?: Float32Array }>({ d: "", w: 0, h: 0, len: 0 });
   const base = useRef<SVGPathElement>(null);
   const lit = useRef<SVGPathElement>(null);
   const glow = useRef<SVGPathElement>(null);
@@ -230,10 +230,21 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
         const dy = (y1 - y0) * 0.55;
         d += ` C${x0},${y0 + dy} ${x1},${y1 - dy} ${x1},${y1}`;
       }
-      // długość liczona na tymczasowej ścieżce
+      // długość liczona na tymczasowej ścieżce + tablica punktów (y rośnie wzdłuż ścieżki),
+      // żeby przy przewijaniu nie wołać getPointAtLength ~20 razy na klatkę
       const tmp = document.createElementNS("http://www.w3.org/2000/svg", "path");
       tmp.setAttribute("d", d);
-      setGeo({ d, w: r.width, h: r.height, len: tmp.getTotalLength() });
+      const len = tmp.getTotalLength();
+      const n = Math.max(64, Math.min(1200, Math.round(len / 4)));
+      const lut = new Float32Array((n + 1) * 3);
+      for (let k = 0; k <= n; k++) {
+        const l = (k / n) * len;
+        const pt = tmp.getPointAtLength(l);
+        lut[k * 3] = l;
+        lut[k * 3 + 1] = pt.x;
+        lut[k * 3 + 2] = pt.y;
+      }
+      setGeo({ d, w: r.width, h: r.height, len, lut });
     };
     const t0 = setTimeout(measure, 0);
     const ro = new ResizeObserver(measure);
@@ -254,18 +265,26 @@ function Beam({ track, nodes }: { track: React.RefObject<HTMLDivElement | null>;
   const p = useSpring(scrollYProgress, { stiffness: 140, damping: 26 });
   const update = useCallback(
     (v: number) => {
-      const el = base.current;
-      if (!el || !geo.len) return;
+      const { lut, len } = geo;
+      if (!lut || !len) return;
+      // pierwszy punkt ścieżki na wysokości y (wyszukiwanie binarne w tablicy) + interpolacja liniowa
       const y = v * geo.h;
+      const n = lut.length / 3 - 1;
       let lo = 0;
-      let hi = geo.len;
-      for (let k = 0; k < 22; k++) {
-        const mid = (lo + hi) / 2;
-        if (el.getPointAtLength(mid).y < y) lo = mid;
+      let hi = n;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (lut[mid * 3 + 2] < y) lo = mid + 1;
         else hi = mid;
       }
-      const pt = el.getPointAtLength(lo);
-      const off = String(geo.len - lo);
+      const b = Math.max(1, lo);
+      const a = b - 1;
+      const ya = lut[a * 3 + 2];
+      const yb = lut[b * 3 + 2];
+      const f = yb > ya ? Math.min(1, Math.max(0, (y - ya) / (yb - ya))) : 0;
+      const at = lut[a * 3] + (lut[b * 3] - lut[a * 3]) * f;
+      const pt = { x: lut[a * 3 + 1] + (lut[b * 3 + 1] - lut[a * 3 + 1]) * f, y: ya + (yb - ya) * f };
+      const off = String(len - at);
       lit.current?.setAttribute("stroke-dashoffset", off);
       glow.current?.setAttribute("stroke-dashoffset", off);
       head.current?.setAttribute("transform", `translate(${pt.x} ${pt.y})`);

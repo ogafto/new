@@ -27,7 +27,7 @@ function useCountdown(date: string) {
   return left;
 }
 
-function Split({ text, delay, className = "" }: { text: string; delay: number; className?: string }) {
+function Split({ text, delay, className = "", children }: { text: string; delay: number; className?: string; children?: React.ReactNode }) {
   return (
     <span className={`inline-block ${className}`} aria-label={text}>
       {text.split(" ").map((w, wi, arr) => (
@@ -40,7 +40,38 @@ function Split({ text, delay, className = "" }: { text: string; delay: number; c
           {wi < arr.length - 1 && " "}
         </span>
       ))}
+      {children}
     </span>
+  );
+}
+
+// Napis z przesuwającym się błyskiem: biała kopia tekstu odsłaniana ruchomą maską gradientu (klasy .shine-* w globals.css).
+// Maska i kopia przesuwają się transformacją, więc animację liczy kompozytor — wcześniejsze animowane background-position
+// (gradient przycięty do tekstu) przemalowywało wielki nagłówek w każdej klatce i zajmowało GPU w 100%.
+function Shine({ text, delay }: { text: string; delay: number }) {
+  const words = text.split(" ");
+  // błysk startuje, gdy ostatnia litera wjedzie na miejsce
+  const last = Math.max(0, ...words.map((w, wi) => wi * 4 + w.length - 1));
+  const start = delay + last * 0.035 + 1.1;
+  return (
+    <Split text={text} delay={delay} className="relative text-accent-2">
+      <span className="shine-band" style={{ "--shine-delay": `${start}s` } as React.CSSProperties} aria-hidden>
+        <span className="shine-track">
+          <span className="block w-[calc(100%+1px)] text-white">
+            {words.map((w, wi) => (
+              <span key={wi} className="inline-block overflow-hidden pb-[0.12em] align-bottom whitespace-nowrap">
+                {[...w].map((ch, ci) => (
+                  <span key={ci} className="inline-block">
+                    {ch}
+                  </span>
+                ))}
+                {wi < words.length - 1 && " "}
+              </span>
+            ))}
+          </span>
+        </span>
+      </span>
+    </Split>
   );
 }
 
@@ -95,7 +126,7 @@ export default function ComingSoon({ soon, email }: { soon: Soon; email: string 
           <h1 className="h-display mt-7 text-[clamp(3.2rem,11vw,10rem)] leading-[0.92]">
             {loaded && <Split text={soon.title} delay={0.45} />}
             <br />
-            {loaded && <Split text={soon.accent} delay={0.75} className="bg-gradient-to-r from-accent-2 via-white to-accent-2 bg-[length:200%_100%] bg-clip-text text-transparent [animation:shine_5s_linear_infinite]" />}
+            {loaded && <Shine text={soon.accent} delay={0.75} />}
           </h1>
           <motion.p className="mt-7 max-w-[520px] text-[17px] leading-relaxed text-muted" initial={{ opacity: 0, y: 14 }} animate={loaded ? { opacity: 1, y: 0 } : {}} transition={{ delay: d + 1.1, duration: 1, ease }}>
             {soon.text}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon, ICONS } from "./kit";
 
@@ -61,7 +61,12 @@ export default function PaletteEditor({ name, value, onChange, image }: { name: 
   const add = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const dropper = typeof window !== "undefined" && "EyeDropper" in window;
+  // pipeta tylko po stronie przeglądarki (bez rozjazdu przy hydracji)
+  const [dropper, setDropper] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setDropper("EyeDropper" in window), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const push = (c: string) => {
     const n = norm(c);
@@ -75,9 +80,9 @@ export default function PaletteEditor({ name, value, onChange, image }: { name: 
         <AnimatePresence initial={false}>
           {value.map((c, i) => (
             <motion.div key={c + i} layout initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.25 }} className="group relative">
-              <label className="relative block size-12 cursor-pointer overflow-hidden rounded-xl ring-1 ring-white/15 transition-transform hover:scale-105" style={{ background: c }} title={`${c} — kliknij, żeby zmienić`}>
+              <label className="relative block size-14 cursor-pointer overflow-hidden rounded-2xl shadow-[0_8px_20px_-10px_rgb(0_0_0/0.8)] ring-1 ring-white/15 transition-transform duration-300 ease-out-expo hover:-translate-y-0.5 hover:scale-105" style={{ background: c }} title={`${c} — kliknij, żeby zmienić`}>
                 <input type="color" value={c.toLowerCase()} onChange={(e) => onChange(value.map((x, j) => (j === i ? e.target.value.toUpperCase() : x)))} className="absolute inset-0 cursor-pointer opacity-0" aria-label={`Zmień kolor ${c}`} />
-                <span className={`pointer-events-none absolute inset-x-0 bottom-0.5 text-center font-mono text-[8.5px] opacity-0 transition-opacity group-hover:opacity-100 ${light(c) ? "text-black/70" : "text-white/80"}`}>{c.slice(1)}</span>
+                <span className={`pointer-events-none absolute inset-x-0 bottom-1 text-center font-mono text-[9px] opacity-0 transition-opacity group-hover:opacity-100 ${light(c) ? "text-black/70" : "text-white/80"}`}>{c.slice(1)}</span>
               </label>
               <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))} className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-bg text-muted opacity-0 ring-1 ring-line-2 transition-opacity group-hover:opacity-100 hover:text-red-300 focus:opacity-100" aria-label={`Usuń ${c}`}>
                 <Icon d={ICONS.close} className="size-3" />
@@ -86,13 +91,14 @@ export default function PaletteEditor({ name, value, onChange, image }: { name: 
           ))}
         </AnimatePresence>
         {value.length < 8 && (
-          <label className="relative grid size-12 cursor-pointer place-items-center rounded-xl border border-dashed border-line-2 text-muted transition-colors hover:border-white/35 hover:text-ink" title="Dodaj kolor">
+          <label className="relative grid size-14 cursor-pointer place-items-center rounded-2xl border border-dashed border-white/[0.14] text-muted transition-colors hover:border-accent/50 hover:bg-accent/[0.06] hover:text-ink" title="Dodaj kolor">
             <Icon d={ICONS.plus} className="size-4" />
             <input ref={add} type="color" defaultValue="#8b6cff" onChange={(e) => push(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" aria-label="Dodaj kolor" />
           </label>
         )}
+        {value.length === 0 && <span className="pl-1 text-[13px] text-dim">Brak kolorów</span>}
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-4 flex flex-wrap gap-1.5">
         {dropper && (
           <button
             type="button"

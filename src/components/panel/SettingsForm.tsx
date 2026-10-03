@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { saveSettings, testConnection, type SaveResult } from "@/app/panel/admin/ustawienia/actions";
 import type { SettingGroup, SettingState } from "@/lib/settings";
-import { Badge, Btn, Card, ease, field, Icon, ICONS } from "./kit";
+import { Badge, Btn, ease, field, Icon, ICONS } from "./kit";
+import { FieldRow, Note, SectionCard, SectionNav, type NavItem, type NavStatus } from "./settings/SectionNav";
 
 type Def = { key: string; group: SettingGroup; label: string; hint?: string; placeholder?: string; secret?: boolean; env: string; type?: string };
 type Props = {
@@ -26,72 +27,152 @@ const GROUP_ICON: Record<SettingGroup, string> = {
   storage: ICONS.upload,
 };
 const TESTS: Partial<Record<SettingGroup, "mail" | "discord" | "stripe">> = { mail: "mail", discord: "discord", stripe: "stripe" };
+const EYE_OFF = "M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.2A10.4 10.4 0 0112 5c6.5 0 10 7 10 7a17.6 17.6 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 005.4-1.6";
+const ENV_ICON = "M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16";
 
-function Result({ r }: { r: SaveResult }) {
-  return (
-    <AnimatePresence mode="wait">
-      {r && (r.ok || r.error) && (
-        <motion.p
-          key={(r.ok ?? "") + (r.error ?? "")}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className={`rounded-xl border px-3.5 py-2.5 text-[13px] ${r.error ? "border-red-400/25 bg-red-400/10 text-red-200" : "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"}`}
-        >
-          {r.error ?? r.ok}
-        </motion.p>
-      )}
-    </AnimatePresence>
-  );
-}
+const statusOf = (defs: Def[], states: SettingState[]): NavStatus => {
+  const filled = defs.filter((d) => {
+    const s = states.find((x) => x.key === d.key);
+    return s && s.source !== "none" && !s.broken;
+  }).length;
+  return filled === defs.length ? "ok" : filled ? "part" : "none";
+};
 
-function Copy({ value }: { value: string }) {
+function CopyBtn({ value }: { value: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
       type="button"
-      onClick={() => {
+      onClick={() =>
         navigator.clipboard.writeText(value).then(() => {
           setDone(true);
           setTimeout(() => setDone(false), 1500);
-        });
-      }}
-      className="grid size-9 shrink-0 place-items-center rounded-lg border border-line-2 text-muted transition-colors hover:text-ink"
-      aria-label="Kopiuj"
+        })
+      }
+      className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[12.5px] transition-colors ${done ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-line-2 text-muted hover:border-white/30 hover:text-ink"}`}
     >
-      <Icon d={done ? ICONS.check : ICONS.copy} className="size-4" />
+      <Icon d={done ? ICONS.check : ICONS.copy} className="size-3.5" />
+      {done ? "Skopiowano" : "Kopiuj"}
     </button>
+  );
+}
+
+/* Sekret: zamaskowany podgląd → „Zmień” otwiera pole (z podglądem wpisywanej wartości) */
+function SecretField({ d, s, value, onChange, removing, onRemove }: { d: Def; s: SettingState; value: string; onChange: (v: string) => void; removing: boolean; onRemove?: () => void }) {
+  const [edit, setEdit] = useState(!s.preview || !!s.broken);
+  const [show, setShow] = useState(false);
+
+  if (!edit)
+    return (
+      <div className={`flex h-11 items-center gap-2 rounded-xl border border-line-2 bg-white/[0.02] pr-1.5 pl-3.5 transition-opacity ${removing ? "opacity-60" : ""}`}>
+        <Icon d={ICONS.key} className="size-3.5 shrink-0 text-dim" />
+        <code className={`min-w-0 flex-1 truncate font-mono text-[13px] tracking-wide ${removing ? "text-red-200/80 line-through" : "text-muted"}`}>{s.preview}</code>
+        {onRemove && (
+          <button type="button" onClick={onRemove} className={`h-8 shrink-0 rounded-lg px-2.5 text-[12.5px] transition-colors ${removing ? "bg-red-400/10 text-red-200" : "text-dim hover:bg-red-400/10 hover:text-red-200"}`}>
+            {removing ? "Cofnij" : "Usuń"}
+          </button>
+        )}
+        {!removing && (
+          <button type="button" onClick={() => setEdit(true)} className="h-8 shrink-0 rounded-lg border border-line-2 px-3 text-[12.5px] text-ink transition-colors hover:border-white/30 hover:bg-white/[0.04]">
+            Zmień
+          </button>
+        )}
+      </div>
+    );
+
+  return (
+    <div className="flex gap-2">
+      <div className="relative min-w-0 flex-1">
+        <input
+          id={`s-${d.key}`}
+          type={show ? "text" : "password"}
+          autoComplete="off"
+          spellCheck={false}
+          autoFocus={!!s.preview}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={d.placeholder}
+          className={`${field} h-11 pr-11 font-mono text-[13px]`}
+        />
+        <button type="button" onClick={() => setShow((x) => !x)} className="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-dim transition-colors hover:text-ink" aria-label={show ? "Ukryj" : "Pokaż"}>
+          <Icon d={show ? EYE_OFF : ICONS.eye} className="size-4" />
+        </button>
+      </div>
+      {s.preview && !s.broken && (
+        <Btn
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="!h-11"
+          onClick={() => {
+            onChange("");
+            setEdit(false);
+          }}
+        >
+          Anuluj
+        </Btn>
+      )}
+    </div>
   );
 }
 
 function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][number]; defs: Def[]; states: SettingState[]; webhookUrl: string; delay: number }) {
   const router = useRouter();
-  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(defs.map((d) => [d.key, d.secret ? "" : (states.find((s) => s.key === d.key)?.source === "panel" ? states.find((s) => s.key === d.key)!.preview : "")])));
+  const st = (k: string) => states.find((s) => s.key === k)!;
+  const initial = () => Object.fromEntries(defs.map((d) => [d.key, d.secret ? "" : st(d.key)?.source === "panel" ? st(d.key).preview : ""]));
+  const [base, setBase] = useState<Record<string, string>>(initial);
+  const [values, setValues] = useState<Record<string, string>>(initial);
   const [clear, setClear] = useState<string[]>([]);
   const [result, setResult] = useState<SaveResult>();
   const [saving, startSave] = useTransition();
   const [testing, startTest] = useTransition();
-  const st = (k: string) => states.find((s) => s.key === k)!;
-  const filled = defs.filter((d) => st(d.key).source !== "none" && !st(d.key).broken).length;
-  const status = filled === defs.length ? "ok" : filled ? "part" : "none";
+  const status = statusOf(defs, states);
   const test = TESTS[g.id];
+  const dirty = clear.length > 0 || defs.some((d) => (values[d.key] ?? "") !== (base[d.key] ?? ""));
+
+  useEffect(() => {
+    if (!result) return;
+    const t = setTimeout(() => setResult(undefined), 6000);
+    return () => clearTimeout(t);
+  }, [result]);
 
   return (
-    <Card delay={delay} className="flex flex-col">
-      <div className="mb-5 flex items-start gap-3.5">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-accent-2">
-          <Icon d={GROUP_ICON[g.id]} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-[16px] font-medium">{g.title}</h2>
-            <Badge tone={status === "ok" ? "green" : status === "part" ? "amber" : "default"}>{status === "ok" ? "Skonfigurowane" : status === "part" ? "Częściowo" : "Nieustawione"}</Badge>
+    <SectionCard
+      id={`g-${g.id}`}
+      icon={GROUP_ICON[g.id]}
+      title={g.title}
+      text={g.text}
+      delay={delay}
+      badge={<Badge tone={status === "ok" ? "green" : status === "part" ? "amber" : "default"}>{status === "ok" ? "Skonfigurowane" : status === "part" ? "Częściowo" : "Nieustawione"}</Badge>}
+      footer={
+        <>
+          <div className="min-h-5 min-w-0 flex-1">
+            <AnimatePresence mode="wait">
+              {result && (result.ok || result.error) ? (
+                <Note key="r" ok={result.ok} error={result.error} />
+              ) : dirty ? (
+                <motion.p key="d" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-[13px] text-amber-200/90">
+                  <span className="size-1.5 rounded-full bg-amber-300" /> Niezapisane zmiany
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
           </div>
-        </div>
-      </div>
-
+          <div className="flex shrink-0 gap-2">
+            {test && (
+              <Btn type="button" size="sm" icon={ICONS.refresh} disabled={testing || status === "none"} onClick={() => startTest(async () => setResult(await testConnection(test)))}>
+                {testing ? "Sprawdzam…" : test === "mail" ? "Wyślij test" : "Test połączenia"}
+              </Btn>
+            )}
+            <Btn type="submit" form={`f-${g.id}`} variant="primary" size="sm" icon={ICONS.check} disabled={saving || !dirty} className="min-w-[96px]">
+              {saving ? "Zapisuję…" : "Zapisz"}
+            </Btn>
+          </div>
+        </>
+      }
+    >
       <form
-        className="flex flex-1 flex-col gap-4"
+        id={`f-${g.id}`}
+        className="divide-y divide-white/[0.05]"
         onSubmit={(e) => {
           e.preventDefault();
           startSave(async () => {
@@ -99,7 +180,9 @@ function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][numb
             setResult(r);
             if (r?.ok) {
               setClear([]);
-              setValues((v) => Object.fromEntries(Object.entries(v).map(([k, x]) => [k, defs.find((d) => d.key === k)?.secret ? "" : x])));
+              const next = Object.fromEntries(Object.entries(values).map(([k, x]) => [k, defs.find((d) => d.key === k)?.secret ? "" : x]));
+              setValues(next);
+              setBase(next);
               router.refresh();
             }
           });
@@ -108,121 +191,146 @@ function Group({ g, defs, states, webhookUrl, delay }: { g: Props["groups"][numb
         {defs.map((d) => {
           const s = st(d.key);
           const removing = clear.includes(d.key);
+          const src = s.broken ? (
+            <Badge tone="red">wpisz ponownie</Badge>
+          ) : s.source === "panel" ? (
+            <span className="rounded-md bg-emerald-400/10 px-1.5 py-px text-[11px] text-emerald-200/90">panel</span>
+          ) : s.source === "env" ? (
+            <span className="rounded-md bg-white/[0.05] px-1.5 py-px font-mono text-[10.5px] text-dim" title={`Ze zmiennej ${d.env}`}>
+              env
+            </span>
+          ) : null;
           return (
-            <div key={d.key}>
-              <div className="mb-1.5 flex items-center justify-between gap-3">
-                <label htmlFor={`s-${d.key}`} className="text-[13px] text-muted">
-                  {d.label}
-                </label>
-                {s.broken ? (
-                  <Badge tone="red">wpisz ponownie</Badge>
-                ) : s.source === "panel" ? (
-                  <span className="text-[11.5px] text-emerald-300/80">zapisane w panelu</span>
-                ) : s.source === "env" ? (
-                  <span className="text-[11.5px] text-dim" title={`Ze zmiennej ${d.env}`}>
-                    z env · {d.env}
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex gap-2">
+            <FieldRow key={d.key} label={d.label} htmlFor={`s-${d.key}`} hint={d.hint} aside={src}>
+              {d.secret ? (
+                <SecretField
+                  key={`${s.source}-${s.updatedAt ?? 0}-${s.preview}`}
+                  d={d}
+                  s={s}
+                  value={values[d.key] ?? ""}
+                  onChange={(v) => setValues((x) => ({ ...x, [d.key]: v }))}
+                  removing={removing}
+                  onRemove={s.source === "panel" ? () => setClear((c) => (c.includes(d.key) ? c.filter((x) => x !== d.key) : [...c, d.key])) : undefined}
+                />
+              ) : (
                 <input
                   id={`s-${d.key}`}
-                  type={d.secret ? "password" : d.type === "email" ? "email" : d.type === "url" ? "url" : "text"}
+                  type={d.type === "email" ? "email" : d.type === "url" ? "url" : "text"}
                   autoComplete="off"
                   spellCheck={false}
-                  disabled={removing}
                   value={values[d.key] ?? ""}
                   onChange={(e) => setValues((v) => ({ ...v, [d.key]: e.target.value }))}
-                  placeholder={d.secret && s.preview ? `${s.preview} — wpisz nowy, żeby zmienić` : (s.source === "env" ? s.preview : d.placeholder)}
-                  className={`${field} h-11 min-w-0 font-mono text-[13.5px] ${removing ? "line-through opacity-50" : ""}`}
+                  placeholder={s.source === "env" ? s.preview : d.placeholder}
+                  className={`${field} h-11 text-[14px]`}
                 />
-                {d.secret && s.source === "panel" && (
-                  <button
-                    type="button"
-                    onClick={() => setClear((c) => (c.includes(d.key) ? c.filter((x) => x !== d.key) : [...c, d.key]))}
-                    className={`grid size-11 shrink-0 place-items-center rounded-xl border transition-colors ${removing ? "border-red-400/40 bg-red-400/10 text-red-200" : "border-line-2 text-dim hover:text-red-200"}`}
-                    aria-label={removing ? "Cofnij usuwanie" : "Usuń z panelu"}
-                    title={removing ? "Cofnij" : "Usuń z panelu"}
-                  >
-                    <Icon d={removing ? ICONS.refresh : ICONS.trash} className="size-4" />
-                  </button>
-                )}
-              </div>
-            </div>
+              )}
+            </FieldRow>
           );
         })}
 
         {g.id === "stripe" && (
-          <div className="rounded-2xl border border-line bg-white/[0.02] p-3.5">
-            <p className="text-[12.5px] text-muted">Webhook Stripe</p>
-            <div className="mt-2 flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate rounded-lg bg-black/30 px-3 py-2 text-[12.5px] text-accent-2">{webhookUrl}</code>
-              <Copy value={webhookUrl} />
+          <FieldRow label="Adres webhooka" hint="Wklej w Stripe → Webhooks.">
+            <div className="flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/[0.05] p-1 pl-3.5">
+              <Icon d={ICONS.link} className="size-3.5 shrink-0 text-accent-2" />
+              <code className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-accent-2">{webhookUrl}</code>
+              <CopyBtn value={webhookUrl} />
             </div>
-          </div>
+          </FieldRow>
         )}
-
-        <div className="mt-auto space-y-3 pt-2">
-          <Result r={result} />
-          <div className="flex flex-wrap gap-2">
-            <Btn type="submit" variant="primary" icon={ICONS.check} disabled={saving}>
-              {saving ? "Zapisywanie…" : "Zapisz"}
-            </Btn>
-            {test && (
-              <Btn type="button" icon={ICONS.refresh} disabled={testing || status === "none"} onClick={() => startTest(async () => setResult(await testConnection(test)))}>
-                {testing ? "Sprawdzam…" : test === "mail" ? "Wyślij test" : "Sprawdź połączenie"}
-              </Btn>
-            )}
-          </div>
-        </div>
       </form>
-    </Card>
+    </SectionCard>
+  );
+}
+
+function EnvCard({ envOnly, secretKey, delay }: { envOnly: Props["envOnly"]; secretKey: boolean; delay: number }) {
+  const set = envOnly.filter((e) => e.set).length;
+  return (
+    <SectionCard id="g-env" icon={ENV_ICON} title="Zmienne środowiskowe" text="Ustawiane w Vercelu, tylko do odczytu." delay={delay} badge={<Badge tone={set === envOnly.length ? "green" : "default"}>{`${set}/${envOnly.length}`}</Badge>}>
+      <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.06] sm:grid-cols-2">
+        {envOnly.map((e) => (
+          <li key={e.key} className="flex min-w-0 items-center gap-3 bg-[rgb(14_14_19)] px-4 py-3">
+            <span className={`size-1.5 shrink-0 rounded-full ${e.set ? "bg-emerald-400 shadow-[0_0_8px_rgb(52_211_153/0.7)]" : "bg-white/20"}`} />
+            <span className="min-w-0 flex-1">
+              <span className={`block truncate font-mono text-[12px] ${e.set ? "text-ink" : "text-dim"}`}>{e.key}</span>
+              <span className="block truncate text-[11.5px] text-dim">{e.label}</span>
+            </span>
+            <span className={`shrink-0 text-[11.5px] ${e.set ? "text-emerald-300/80" : "text-dim"}`}>{e.set ? "ustawiona" : "brak"}</span>
+          </li>
+        ))}
+      </ul>
+      {!secretKey && (
+        <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] px-3.5 py-3 text-[12.5px] leading-relaxed text-amber-100/80">
+          <Icon d={ICONS.shield} className="mt-px size-4 shrink-0 text-amber-200" />
+          Dodaj SECRET_KEY — zmiana hasła admina nie wymaże wtedy zapisanych kluczy.
+        </p>
+      )}
+    </SectionCard>
   );
 }
 
 export default function SettingsForm({ groups, defs, states, webhookUrl, envOnly, secretKey }: Props) {
+  const [active, setActive] = useState<string>(groups[0]?.id ?? "env");
+
+  // scroll-spy: aktywna jest ostatnia sekcja, której góra minęła linię pod nagłówkiem
+  useEffect(() => {
+    const ids = [...groups.map((g) => g.id), "env"];
+    let raf = 0;
+    const calc = () => {
+      raf = 0;
+      const atEnd = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+      let cur = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(`g-${id}`);
+        if (el && el.getBoundingClientRect().top <= 180) cur = id;
+      }
+      setActive(atEnd ? ids[ids.length - 1] : cur);
+    };
+    const on = () => (raf ||= requestAnimationFrame(calc));
+    addEventListener("scroll", on, { passive: true });
+    return () => {
+      removeEventListener("scroll", on);
+      cancelAnimationFrame(raf);
+    };
+  }, [groups]);
+
+  const items: NavItem[] = [
+    ...groups.map((g) => ({ id: g.id, label: g.title.replace(/ \(.+\)$/, ""), icon: GROUP_ICON[g.id], status: statusOf(defs.filter((d) => d.group === g.id), states) })),
+    { id: "env", label: "Środowisko", icon: ENV_ICON, status: (envOnly.every((e) => e.set) ? "ok" : "part") as NavStatus },
+  ];
+  const ok = items.slice(0, -1).filter((i) => i.status === "ok").length;
+
+  const pick = (id: string) => {
+    setActive(id);
+    document.getElementById(`g-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-lenis-prevent>
-        {groups.map((g) => {
-          const ds = defs.filter((d) => d.group === g.id);
-          const set = ds.filter((d) => {
-            const st = states.find((x) => x.key === d.key);
-            return st && st.source !== "none" && !st.broken;
-          }).length;
-          return (
-            <a key={g.id} href={`#g-${g.id}`} className="flex shrink-0 items-center gap-2 rounded-full border border-line-2 px-3.5 py-2 text-[13px] text-muted transition-colors hover:border-white/30 hover:text-ink">
-              <span className={`size-1.5 rounded-full ${set === ds.length ? "bg-emerald-400" : set ? "bg-amber-300" : "bg-white/25"}`} />
-              {g.title}
-            </a>
-          );
-        })}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {groups.map((g, i) => (
-          <div key={g.id} id={`g-${g.id}`} className="flex min-w-0 scroll-mt-24 flex-col [&>section]:flex-1">
-            <Group g={g} defs={defs.filter((d) => d.group === g.id)} states={states} webhookUrl={webhookUrl} delay={0.04 * i} />
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 lg:grid-cols-[212px_minmax(0,1fr)]">
+      <SectionNav
+        id="settings"
+        items={items}
+        active={active}
+        onPick={pick}
+        footer={
+          <div className="px-3">
+            <div className="flex items-baseline justify-between text-[12px]">
+              <span className="text-dim">Integracje</span>
+              <span className="text-muted tabular-nums">
+                {ok}/{groups.length}
+              </span>
+            </div>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2" initial={{ width: 0 }} animate={{ width: `${(ok / Math.max(1, groups.length)) * 100}%` }} transition={{ delay: 0.3, duration: 0.9, ease }} />
+            </div>
           </div>
+        }
+      />
+      <div className="min-w-0 space-y-4">
+        {groups.map((g, i) => (
+          <Group key={g.id} g={g} defs={defs.filter((d) => d.group === g.id)} states={states} webhookUrl={webhookUrl} delay={0.04 * i} />
         ))}
+        <EnvCard envOnly={envOnly} secretKey={secretKey} delay={0.28} />
       </div>
-
-      <Card delay={0.3}>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <p className="flex shrink-0 items-center gap-2 text-[13.5px] text-muted">
-            <Icon d={ICONS.key} className="size-4" /> Zmienne środowiskowe
-          </p>
-          <ul className="flex flex-wrap gap-1.5 lg:ml-auto">
-            {envOnly.map((e) => (
-              <li key={e.key} title={e.label} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11.5px] ${e.set ? "border-emerald-400/20 text-emerald-200/90" : "border-line-2 text-dim"}`}>
-                <span className={`size-1.5 rounded-full ${e.set ? "bg-emerald-400" : "bg-white/25"}`} />
-                {e.key}
-              </li>
-            ))}
-          </ul>
-        </div>
-        {!secretKey && <p className="mt-3 text-[12px] text-dim">Dodaj SECRET_KEY w Vercelu — wtedy zmiana hasła admina nie wymaże zapisanych kluczy.</p>}
-      </Card>
     </div>
   );
 }

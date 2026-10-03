@@ -41,9 +41,13 @@ export async function log(kind: LogKind, message: string, opts: { level?: LogLev
   } catch {}
 }
 
-export async function listLogs({ kind, level, q, before, limit = 60 }: { kind?: string; level?: string; q?: string; before?: number; limit?: number }) {
+export async function listLogs({ kind, level, q, before, limit = 60, skip }: { kind?: string; level?: string; q?: string; before?: number; limit?: number; skip?: string[] }) {
   const where: string[] = [];
   const args: (string | number)[] = [];
+  if (skip?.length) {
+    where.push(`kind NOT IN (${skip.map(() => "?").join(", ")})`);
+    args.push(...skip);
+  }
   if (kind && kind in KINDS) {
     where.push("kind = ?");
     args.push(kind);

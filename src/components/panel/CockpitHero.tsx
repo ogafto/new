@@ -32,10 +32,13 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
     const el = ref.current;
     if (!scene3d || !el || window.innerWidth < 1024) return;
     let t: ReturnType<typeof setTimeout> | undefined;
+    let first = true;
     const ro = new ResizeObserver(([e]) => {
       const aspect = e.contentRect.width / Math.max(1, e.contentRect.height);
       clearTimeout(t);
-      t = setTimeout(() => setAt(Math.max(0, 25.45 * aspect * 0.56)), 200);
+      // start po animacji powitania — kompilacja shaderów nie przycina wejścia tekstu
+      t = setTimeout(() => setAt(Math.max(0, 25.45 * aspect * 0.56)), first ? 1100 : 200);
+      first = false;
     });
     ro.observe(el);
     return () => {
@@ -45,7 +48,7 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
   }, [scene3d]);
   const label = (s: S) => (
     <>
-      <dt className="flex items-center gap-2 text-[12.5px] text-dim">
+      <dt className="flex items-center gap-2 truncate text-[12.5px] text-dim">
         {s.live && (
           <span className="relative flex size-1.5">
             <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
@@ -55,7 +58,7 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
         {s.label}
       </dt>
       <dd className="mt-1.5 flex items-center justify-between gap-2">
-        <Count value={s.value} suffix={s.suffix} className="h-display text-[28px] leading-none sm:text-[34px]" />
+        <Count value={s.value} suffix={s.suffix} className="h-display text-[26px] leading-none whitespace-nowrap sm:text-[30px] xl:text-[36px]" />
         {s.href && <Icon d={ICONS.arrowUp} className="size-4 rotate-45 text-dim opacity-0 transition-all duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink group-hover:opacity-100" />}
       </dd>
     </>
@@ -79,6 +82,7 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
         </motion.div>
       )}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--color-bg)_15%,rgb(7_7_10/0.55)_42%,transparent_62%)]" aria-hidden />
+      <span className="glow-edge z-10" aria-hidden />
 
       <div className="relative px-5 pt-6 pb-7 sm:px-10 sm:pt-9 lg:px-12 lg:pt-11 lg:pb-10">
         <motion.div className="flex flex-wrap items-center gap-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
@@ -94,7 +98,7 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
           )}
         </motion.div>
 
-        <h1 className="h-display mt-6 text-[clamp(2.7rem,6.4vw,6.4rem)] leading-[0.93] sm:mt-8">
+        <h1 className="h-display mt-6 text-[clamp(2.6rem,4.7vw,6.2rem)] leading-[0.93] sm:mt-8">
           <Line i={0}>{greeting}</Line>
           <Line i={1}>{name}</Line>
           <Line i={2}>

@@ -257,7 +257,7 @@ export function Kpi({ label, value, suffix, decimals, prev, invert, spark, hint,
             <span className="truncate">{label}</span>
           </p>
           {prev !== undefined && (
-            <span className="max-sm:hidden">
+            <span className="hidden 2xl:inline">
               <Delta cur={value} prev={prev} invert={invert} />
             </span>
           )}
@@ -265,7 +265,7 @@ export function Kpi({ label, value, suffix, decimals, prev, invert, spark, hint,
         <div className="mt-3.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <Count value={value} suffix={suffix} decimals={decimals} className={`h-display block text-[24px] leading-none sm:text-[32px] ${tone ?? ""}`} />
           {prev !== undefined && (
-            <span className="sm:hidden">
+            <span className="2xl:hidden">
               <Delta cur={value} prev={prev} invert={invert} />
             </span>
           )}

@@ -35,7 +35,7 @@ export default async function Cockpit() {
     sources(30),
     formFunnel(30),
     financeSummary(),
-    listLogs({ limit: 7 }),
+    listLogs({ limit: 7, skip: ["auth", "system"] }),
     live(),
   ]);
   const soon = (await getContent()).soon.enabled;

@@ -439,3 +439,34 @@ html:has(body [data-panel]) .soon-preview {
     transform: translate3d(100vw, 0, 0);
   }
 }
+
+/* panel: światło obiegające krawędź karty (kokpit, nowe zamówienie) */
+@property --edge-a {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes edge-spin {
+  to {
+    --edge-a: 360deg;
+  }
+}
+.glow-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(from var(--edge-a), transparent 0deg 250deg, rgb(139 108 255 / 0.55) 300deg, rgb(214 204 255 / 0.9) 330deg, transparent 360deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: edge-spin 9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-edge {
+    animation: none;
+  }
+}

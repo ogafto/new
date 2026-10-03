@@ -8,9 +8,9 @@ import { ICONS } from "./icons";
 
 export const ease = [0.16, 1, 0.3, 1] as const;
 
-export function PageHead({ kicker, title, children }: { kicker?: string; title: React.ReactNode; children?: React.ReactNode }) {
+export function PageHead({ kicker, title, text, children }: { kicker?: string; title: React.ReactNode; text?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end lg:mb-10">
+    <div className="mb-6 flex flex-col justify-between gap-4 sm:mb-8 sm:flex-row sm:items-end lg:mb-10">
       <div className="min-w-0">
         {kicker && (
           <motion.p className="text-[13px] text-dim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
@@ -18,10 +18,15 @@ export function PageHead({ kicker, title, children }: { kicker?: string; title: 
           </motion.p>
         )}
         <h1 className="h-display mt-2 overflow-hidden pb-[0.1em] text-[clamp(2rem,3.6vw,3rem)]">
-          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.9, ease }}>
+          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.7, ease }}>
             {title}
           </motion.span>
         </h1>
+        {text && (
+          <motion.p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.7 }}>
+            {text}
+          </motion.p>
+        )}
       </div>
       {children && (
         <motion.div className="flex flex-wrap items-center gap-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
@@ -35,10 +40,10 @@ export function PageHead({ kicker, title, children }: { kicker?: string; title: 
 export function Card({ children, className = "", delay = 0, glow = false, pad = true }: { children: React.ReactNode; className?: string; delay?: number; glow?: boolean; pad?: boolean }) {
   return (
     <motion.section
-      className={`edge relative overflow-hidden rounded-[22px] bg-surface/80 ${pad ? "p-5 sm:p-6" : ""} ${className}`}
-      initial={{ opacity: 0, y: 18 }}
+      className={`edge relative overflow-hidden rounded-[22px] bg-[linear-gradient(180deg,rgb(22_22_30/0.82),rgb(13_13_18/0.82))] shadow-[0_1px_0_0_rgb(255_255_255/0.04)_inset,0_24px_60px_-40px_rgb(0_0_0/0.9)] ${pad ? "p-5 sm:p-6" : ""} ${className}`}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 + delay, duration: 0.8, ease }}
+      transition={{ delay: 0.03 + delay * 0.6, duration: 0.5, ease }}
     >
       {glow && <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent)]" aria-hidden />}
       <div className="relative h-full">{children}</div>
@@ -110,7 +115,7 @@ export function Spark({ data, className = "h-10 w-full" }: { data: number[]; cla
   );
 }
 
-export function Stat({ label, value, suffix, prev, spark, icon, delay = 0, invert, hint }: { label: string; value: number; suffix?: string; prev?: number; spark?: number[]; icon?: string; delay?: number; invert?: boolean; hint?: string }) {
+export function Stat({ label, value, suffix, prev, spark, icon, delay = 0, invert, hint, decimals = 0 }: { label: string; value: number; suffix?: string; prev?: number; spark?: number[]; icon?: string; delay?: number; invert?: boolean; hint?: string; decimals?: number }) {
   return (
     <Card delay={delay} className="group">
       <div className="flex items-start justify-between gap-3">
@@ -122,7 +127,7 @@ export function Stat({ label, value, suffix, prev, spark, icon, delay = 0, inver
         )}
       </div>
       <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1.5">
-        <Count value={value} suffix={suffix} className="h-display text-[30px] leading-none sm:text-[38px]" />
+        <Count value={value} suffix={suffix} decimals={decimals} className="h-display text-[30px] leading-none sm:text-[38px]" />
         {prev !== undefined && <Delta cur={value} prev={prev} invert={invert} />}
       </div>
       {hint && <p className="mt-2 text-[12px] text-dim">{hint}</p>}

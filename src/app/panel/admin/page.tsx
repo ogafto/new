@@ -8,7 +8,7 @@ import { fmtDateTime } from "@/lib/format";
 import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, Stat } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import QuickActions from "@/components/panel/QuickActions";
-import { financeSummary, zl } from "@/lib/finance";
+import { financeSummary } from "@/lib/finance";
 import { listLogs } from "@/lib/logs";
 import CockpitHero, { Activity } from "@/components/panel/CockpitHero";
 import { getContent } from "@/lib/content-server";
@@ -56,7 +56,9 @@ export default async function Cockpit() {
           { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
         ]}
       >
-        <QuickActions />
+        <div className="hidden sm:block">
+          <QuickActions />
+        </div>
       </CockpitHero>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -80,40 +82,11 @@ export default async function Cockpit() {
             <AreaChart data={s.map((d) => ({ t: d.t, a: d.visitors, b: d.views }))} label={["Odwiedzający", "Odsłony"]} />
           </div>
         </Card>
-        <Stat label="Strona główna dziś" value={home.today} hint={`${home.month.toLocaleString("pl-PL")} osób w 30 dni`} icon={ICONS.eye} spark={s.slice(-14).map((d) => d.visitors)} delay={0.05} />
-        <Stat label="Klienci z kontem" value={Number(clients?.n ?? 0)} icon={ICONS.users} delay={0.1} hint="Zweryfikowane konta" />
-        <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.15} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w trakcie`} />
-        <Stat label="Nowe zapytania" value={Number(newInq?.n ?? 0)} icon={ICONS.inbox} delay={0.2} hint={`Konwersja formularza ${conv.toLocaleString("pl-PL")}%`} />
+        <Stat label="Klienci z kontem" value={Number(clients?.n ?? 0)} icon={ICONS.users} delay={0.05} hint="Zweryfikowane konta" />
+        <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.1} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w zleceniach`} />
+        <Stat label="Do zapłaty" value={Math.round(fin.pending.amount / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} hint={fin.pending.count ? `${fin.pending.count} ${fin.pending.count === 1 ? "płatność" : "płatności"}${fin.pending.overdue ? ` · ${fin.pending.overdue} po terminie` : ""}` : "Wszystko opłacone"} />
+        <Stat label="Konwersja formularza" value={conv} suffix="%" decimals={1} icon={ICONS.target} delay={0.2} hint={`${funnel[2].n} wysłanych · 30 dni`} spark={s.slice(-14).map((d) => d.visitors)} />
       </div>
-
-      <Card delay={0.22} className="mt-4">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center">
-          <div className="flex items-center gap-3.5 md:w-[220px]">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent-2">
-              <Icon d={ICONS.wallet} />
-            </span>
-            <div>
-              <p className="text-[15px]">Finanse</p>
-              <p className="text-[12.5px] text-dim capitalize">{new Intl.DateTimeFormat("pl-PL", { month: "long", year: "numeric" }).format(new Date())}</p>
-            </div>
-          </div>
-          <dl className="grid flex-1 grid-cols-3 gap-3">
-            {[
-              ["Przychód", zl(fin.month.revenue), ""],
-              ["Do zapłaty", zl(fin.pending.amount), fin.pending.overdue ? "text-red-300" : ""],
-              ["Zysk", zl(fin.month.profit), ""],
-            ].map(([l, v, c]) => (
-              <div key={l} className="min-w-0">
-                <dt className="truncate text-[12px] text-dim">{l}</dt>
-                <dd className={`mt-1 truncate text-[17px] tabular-nums sm:text-[22px] ${c}`}>{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <Link href="/panel/admin/finanse" className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] text-muted transition-colors hover:text-ink">
-            Finanse →
-          </Link>
-        </div>
-      </Card>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
         <Card delay={0.25}>

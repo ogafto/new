@@ -198,9 +198,27 @@ export default function SettingsForm({ groups, defs, states, webhookUrl, envOnly
         </p>
       </motion.div>
 
+      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-lenis-prevent>
+        {groups.map((g) => {
+          const ds = defs.filter((d) => d.group === g.id);
+          const set = ds.filter((d) => {
+            const st = states.find((x) => x.key === d.key);
+            return st && st.source !== "none" && !st.broken;
+          }).length;
+          return (
+            <a key={g.id} href={`#g-${g.id}`} className="flex shrink-0 items-center gap-2 rounded-full border border-line-2 px-3.5 py-2 text-[13px] text-muted transition-colors hover:border-white/30 hover:text-ink">
+              <span className={`size-1.5 rounded-full ${set === ds.length ? "bg-emerald-400" : set ? "bg-amber-300" : "bg-white/25"}`} />
+              {g.title}
+            </a>
+          );
+        })}
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         {groups.map((g, i) => (
-          <Group key={g.id} g={g} defs={defs.filter((d) => d.group === g.id)} states={states} webhookUrl={webhookUrl} delay={0.04 * i} />
+          <div key={g.id} id={`g-${g.id}`} className="flex min-w-0 scroll-mt-24 flex-col [&>section]:flex-1">
+            <Group g={g} defs={defs.filter((d) => d.group === g.id)} states={states} webhookUrl={webhookUrl} delay={0.04 * i} />
+          </div>
         ))}
       </div>
 

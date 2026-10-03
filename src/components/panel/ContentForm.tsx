@@ -430,7 +430,7 @@ export default function ContentForm({ initial, defaults, services, history }: { 
       </AnimatePresence>
 
       {/* pasek zapisu */}
-      <div className="sticky bottom-3 z-30 lg:bottom-5">
+      <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 lg:bottom-5">
         <motion.div
           className="edge flex flex-col gap-3 rounded-[20px] bg-bg/95 p-3 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.9)] sm:flex-row sm:items-center sm:justify-between sm:pl-5"
           initial={{ opacity: 0, y: 20 }}

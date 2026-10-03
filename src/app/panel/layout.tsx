@@ -4,6 +4,7 @@ import { isAdmin, requireUser } from "@/lib/auth/session";
 import { sitesForUser } from "@/lib/cms";
 import { today, daysBetween, type Order } from "@/lib/orders";
 import PanelShell, { type Note } from "@/components/panel/PanelShell";
+import { getContent } from "@/lib/content-server";
 
 export const metadata: Metadata = { title: "Panel", robots: { index: false } };
 
@@ -37,6 +38,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
       notes={notes}
       counts={{ inquiries: Number(newInq?.n ?? 0) }}
       sites={sites.map((s) => ({ id: s.id, name: s.name }))}
+      soon={admin ? (await getContent()).soon.enabled : false}
     >
       {children}
     </PanelShell>

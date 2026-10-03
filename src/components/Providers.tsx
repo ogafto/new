@@ -39,7 +39,7 @@ export default function Providers({ children, content, gaId }: { children: React
   const [loaded, setLoaded] = useState(app);
 
   return (
-    <ReactLenis root options={{ lerp: 0.1, anchors: { offset: -80, duration: 1.4 } }}>
+    <ReactLenis root options={{ lerp: 0.1, anchors: { offset: -80, duration: 1.4 }, smoothWheel: !app }}>
       <MotionConfig reducedMotion="user">
         <LoadedContext.Provider value={loaded}>
           <CookieConsent ready={loaded} gaId={gaId}>

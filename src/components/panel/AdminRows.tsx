@@ -41,8 +41,8 @@ export function ClientRow({ c }: { c: C }) {
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
   return (
-    <li className="grid gap-4 py-4 md:grid-cols-[1fr_1.4fr] md:items-center">
-      <div className="flex items-center gap-3">
+    <li className="grid min-w-0 grid-cols-1 gap-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:items-center">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent/40 to-accent-2/20 text-[14px]">{c.name.charAt(0).toUpperCase()}</span>
         <span className="min-w-0">
           <span className="block truncate text-[15px]">
@@ -62,7 +62,7 @@ export function ClientRow({ c }: { c: C }) {
       </div>
       <form
         key={`${c.stage}-${c.project}`}
-        className="flex flex-wrap items-center gap-2 md:justify-end"
+        className="flex min-w-0 flex-wrap items-center gap-2 md:justify-end"
         action={(f) =>
           start(async () => {
             await updateClient(c.id, f);
@@ -75,9 +75,9 @@ export function ClientRow({ c }: { c: C }) {
           name="project"
           defaultValue={c.project}
           placeholder="Nazwa projektu"
-          className="h-10 min-w-0 flex-1 rounded-xl border border-line-2 bg-white/[0.02] px-3 text-[14px] outline-none transition-colors placeholder:text-dim focus:border-accent md:max-w-[220px]"
+          className="h-10 min-w-0 basis-full rounded-xl border border-line-2 bg-white/[0.02] px-3 text-[14px] outline-none transition-colors placeholder:text-dim focus:border-accent sm:flex-1 sm:basis-auto md:max-w-[220px]"
         />
-        <select name="stage" defaultValue={c.stage} className="h-10 rounded-xl border border-line-2 bg-surface px-3 text-[14px] outline-none focus:border-accent">
+        <select name="stage" defaultValue={c.stage} className="h-10 min-w-0 flex-1 rounded-xl border border-line-2 bg-surface px-3 text-[14px] outline-none focus:border-accent sm:flex-none">
           {STAGES.map((s, i) => (
             <option key={s} value={i}>
               {i < 4 ? `${i + 1}. ${s}` : s}

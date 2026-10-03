@@ -8,22 +8,18 @@ import { ICONS } from "./icons";
 
 export const ease = [0.16, 1, 0.3, 1] as const;
 
-export function PageHead({ kicker, title, text, children }: { kicker?: string; title: React.ReactNode; text?: string; children?: React.ReactNode }) {
+// Nagłówek podstrony: duży tytuł w stylu strony + opis i akcje (sekcja jest już w górnym pasku)
+export function PageHead({ title, text, children }: { kicker?: string; title: React.ReactNode; text?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-7 flex flex-col justify-between gap-5 sm:mb-9 sm:flex-row sm:items-end lg:mb-12">
+    <div className="mb-6 flex flex-col justify-between gap-5 pt-2 sm:mb-8 sm:flex-row sm:items-end lg:mb-10 lg:pt-4">
       <div className="min-w-0">
-        {kicker && (
-          <motion.p className="kicker mb-5" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}>
-            {kicker}
-          </motion.p>
-        )}
-        <h1 className="h-display overflow-hidden pb-[0.1em] text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.95]">
-          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.7, ease }}>
+        <h1 className="h-display overflow-hidden pb-[0.08em] text-[clamp(2.3rem,4.4vw,4rem)] leading-[0.98]">
+          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.8, ease }}>
             {title}
           </motion.span>
         </h1>
         {text && (
-          <motion.p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.7 }}>
+          <motion.p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
             {text}
           </motion.p>
         )}
@@ -48,7 +44,7 @@ export function Card({ children, className = "", delay = 0, glow = false, pad = 
   return (
     <motion.section
       onPointerMove={spotMove}
-      className={`spot edge relative overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgb(22_22_30/0.82),rgb(13_13_18/0.82))] shadow-[0_1px_0_0_rgb(255_255_255/0.04)_inset,0_24px_60px_-40px_rgb(0_0_0/0.9)] ${pad ? "p-5 sm:p-6" : ""} ${className}`}
+      className={`spot relative min-w-0 overflow-hidden rounded-[26px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(21_21_29/0.88),rgb(12_12_17/0.88))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_70px_-45px_rgb(0_0_0/0.95)] ${pad ? "p-5 sm:p-7" : ""} ${className}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.03 + delay * 0.6, duration: 0.5, ease }}
@@ -63,7 +59,7 @@ export function CardHead({ title, sub, children }: { title: string; sub?: string
   return (
     <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-[16px] font-medium tracking-[-0.01em]">{title}</h2>
+        <h2 className="text-[17px] font-medium tracking-[-0.015em]">{title}</h2>
         {sub && <p className="mt-0.5 text-[13px] text-dim">{sub}</p>}
       </div>
       {children}
@@ -103,12 +99,27 @@ export function Delta({ cur, prev, invert = false }: { cur: number; prev: number
   );
 }
 
+// Gładka krzywa przez punkty (Catmull-Rom → Bézier), bez wychodzenia poza zakres osi Y
+function curve(pts: number[][], lo: number, hi: number) {
+  if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : "";
+  const c = (v: number) => Math.min(hi, Math.max(lo, v));
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] ?? p2;
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${c(p1[1] + (p2[1] - p0[1]) / 6)} ${p2[0] - (p3[0] - p1[0]) / 6},${c(p2[1] - (p3[1] - p1[1]) / 6)} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+
 // Mały wykres liniowy
 export function Spark({ data, className = "h-10 w-full" }: { data: number[]; className?: string }) {
   const gid = useId();
   const max = Math.max(1, ...data);
   const pts = data.map((v, i) => [(i / Math.max(1, data.length - 1)) * 100, 30 - (v / max) * 26 - 2]);
-  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0]},${p[1]}`).join(" ");
+  const line = curve(pts, 2, 28);
   return (
     <svg viewBox="0 0 100 30" preserveAspectRatio="none" className={className} aria-hidden>
       <defs>
@@ -155,7 +166,7 @@ export function AreaChart({ data, label, unit = "day" }: { data: { t: number; a:
   const max = Math.max(4, ...data.map((d) => Math.max(d.a, d.b ?? 0)));
   const x = (i: number) => (i / Math.max(1, data.length - 1)) * W;
   const y = (v: number) => H - 8 - (v / max) * (H - 30);
-  const path = (k: "a" | "b") => data.map((d, i) => `${i ? "L" : "M"}${x(i)},${y(d[k] ?? 0)}`).join(" ");
+  const path = (k: "a" | "b") => curve(data.map((d, i) => [x(i), y(d[k] ?? 0)]), 0, H - 8);
   const h = hover !== null ? data[hover] : null;
   return (
     <div className="relative">
@@ -171,7 +182,7 @@ export function AreaChart({ data, label, unit = "day" }: { data: { t: number; a:
       >
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b6cff" stopOpacity="0.32" />
+            <stop offset="0%" stopColor="#8b6cff" stopOpacity="0.38" />
             <stop offset="100%" stopColor="#8b6cff" stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -182,7 +193,8 @@ export function AreaChart({ data, label, unit = "day" }: { data: { t: number; a:
         {data[0]?.b !== undefined && (
           <motion.path d={path("b")} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} />
         )}
-        <motion.path d={path("a")} fill="none" stroke="#b4a2ff" strokeWidth="2" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.6, ease }} />
+        <motion.path d={path("a")} fill="none" stroke="#8b6cff" strokeWidth="6" strokeOpacity="0.25" vectorEffect="non-scaling-stroke" style={{ filter: "blur(4px)" }} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.6, ease }} />
+        <motion.path d={path("a")} fill="none" stroke="#c9bcff" strokeWidth="2" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.6, ease }} />
         {h && hover !== null && (
           <>
             <line x1={x(hover)} x2={x(hover)} y1="0" y2={H} stroke="rgba(255,255,255,0.15)" vectorEffect="non-scaling-stroke" />

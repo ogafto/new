@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { formFunnel, homeVisits, kpis, live, series, sources, topPages } from "@/lib/analytics";
 import { daysBetween, STATUS, today, upcoming } from "@/lib/orders";
 import { fmtDateTime } from "@/lib/format";
-import { AreaChart, Badge, BarList, Card, CardHead, Count, Delta, Empty, Icon, Stat } from "@/components/panel/kit";
+import { AreaChart, BarList, Card, CardHead, Count, Delta, Icon } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import { financeSummary, paymentsDueSoon } from "@/lib/finance";
 import { listLogs } from "@/lib/logs";
@@ -101,44 +101,93 @@ export default async function Cockpit() {
         }
       />
 
-      <div className="mb-4 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <Todo items={todo} />
-        <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
-      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+        <div className="min-w-0 lg:col-span-7">
+          <Todo items={todo} />
+        </div>
+        <div className="min-w-0 lg:col-span-5">
+          <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
+        </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="col-span-2 lg:row-span-2" glow>
+        <Card className="lg:col-span-8" glow delay={0.2}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-[13px] text-muted">Odwiedzający · 30 dni</p>
-              <div className="mt-3 flex items-end gap-3">
-                <Count value={k.cur.visitors} className="h-display text-[44px] leading-none sm:text-[56px]" />
-                <Delta cur={k.cur.visitors} prev={k.prev.visitors} />
+              <div className="mt-2 flex items-end gap-3">
+                <Count value={k.cur.visitors} className="h-display text-[48px] leading-none sm:text-[60px]" />
+                <span className="mb-1.5">
+                  <Delta cur={k.cur.visitors} prev={k.prev.visitors} />
+                </span>
               </div>
-              <p className="mt-2 text-[13px] text-dim">
-                {k.cur.pageviews.toLocaleString("pl-PL")} odsłon · śr. {Math.floor(k.cur.avgTime / 60)}:{String(k.cur.avgTime % 60).padStart(2, "0")} min na wizytę
-              </p>
             </div>
-            <Link href="/panel/admin/analityka" className="flex items-center gap-1.5 rounded-full border border-line-2 px-3.5 py-1.5 text-[13px] text-muted transition-colors hover:text-ink">
-              Pełna analityka <Icon d={ICONS.chart} className="size-3.5" />
+            <Link href="/panel/admin/analityka" className="group flex items-center gap-2 rounded-full border border-line-2 py-1.5 pr-1.5 pl-4 text-[13px] text-muted transition-colors hover:border-white/30 hover:text-ink">
+              Analityka
+              <span className="grid size-7 place-items-center rounded-full bg-white/[0.06] transition-colors group-hover:bg-accent group-hover:text-white">
+                <Icon d={ICONS.arrowUp} className="size-3.5 rotate-45" />
+              </span>
             </Link>
           </div>
-          <div className="mt-6">
+          <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 sm:grid-cols-4">
+            {[
+              ["Odsłony", k.cur.pageviews.toLocaleString("pl-PL")],
+              ["Śr. czas wizyty", `${Math.floor(k.cur.avgTime / 60)}:${String(k.cur.avgTime % 60).padStart(2, "0")} min`],
+              ["Konwersja formularza", `${conv.toLocaleString("pl-PL")}%`],
+              ["Klienci z kontem", String(Number(clients?.n ?? 0))],
+            ].map(([l, v]) => (
+              <div key={l}>
+                <dt className="text-[12px] text-dim">{l}</dt>
+                <dd className="mt-0.5 text-[16px] tabular-nums">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-5">
             <AreaChart data={s.map((d) => ({ t: d.t, a: d.visitors, b: d.views }))} label={["Odwiedzający", "Odsłony"]} />
           </div>
         </Card>
-        <Stat label="Klienci z kontem" value={Number(clients?.n ?? 0)} icon={ICONS.users} delay={0.05} hint="Zweryfikowane konta" />
-        <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.1} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w zleceniach`} />
-        <Stat label="Zysk w miesiącu" value={Math.round(fin.month.profit / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} hint={`przychód ${Math.round(fin.month.revenue / 100).toLocaleString("pl-PL")} zł · koszty ${Math.round(fin.month.costs / 100).toLocaleString("pl-PL")} zł`} />
-        <Stat label="Konwersja formularza" value={conv} suffix="%" decimals={1} icon={ICONS.target} delay={0.2} hint={`${funnel[2].n} wysłanych · 30 dni`} spark={s.slice(-14).map((d) => d.visitors)} />
-      </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Card delay={0.35}>
+        <Card className="lg:col-span-4" delay={0.25}>
+          <CardHead title="Biznes" sub="Ten miesiąc">
+            <Link href="/panel/admin/finanse" className="text-[13px] text-muted transition-colors hover:text-ink">
+              Finanse →
+            </Link>
+          </CardHead>
+          <p className="text-[13px] text-muted">Zysk</p>
+          <Count value={Math.round(fin.month.profit / 100)} suffix=" zł" className={`h-display mt-1 block text-[44px] leading-none sm:text-[52px] ${fin.month.profit < 0 ? "text-red-300" : ""}`} />
+          <div className="mt-6 space-y-3">
+            {[
+              { l: "Przychód", v: fin.month.revenue, c: "from-accent to-accent-2" },
+              { l: "Koszty", v: fin.month.costs, c: "from-white/30 to-white/50" },
+            ].map((r) => (
+              <div key={r.l}>
+                <div className="mb-1.5 flex justify-between text-[13px]">
+                  <span className="text-muted">{r.l}</span>
+                  <span className="tabular-nums">{pln(r.v)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                  <div className={`h-full rounded-full bg-gradient-to-r ${r.c}`} style={{ width: `${Math.round((r.v / Math.max(1, fin.month.revenue, fin.month.costs)) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            <Link href="/panel/admin/kalendarz" className="rounded-2xl border border-line p-3.5 transition-colors hover:border-line-2 hover:bg-white/[0.02]">
+              <p className="text-[12px] text-dim">W realizacji</p>
+              <p className="mt-1 text-[22px] leading-none tabular-nums">{Number(orders?.n ?? 0)}</p>
+              <p className="mt-1.5 truncate text-[12px] text-muted">{Number(money?.n ?? 0).toLocaleString("pl-PL")} zł</p>
+            </Link>
+            <Link href="/panel/admin/finanse" className="rounded-2xl border border-line p-3.5 transition-colors hover:border-line-2 hover:bg-white/[0.02]">
+              <p className="text-[12px] text-dim">Do zapłaty</p>
+              <p className="mt-1 text-[22px] leading-none tabular-nums">{fin.pending.count ?? 0}</p>
+              <p className="mt-1.5 truncate text-[12px] text-muted">{pln(fin.pending.amount)}</p>
+            </Link>
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-6" delay={0.3}>
           <CardHead title="Najczęściej oglądane" sub="30 dni" />
           <BarList items={pages.slice(0, 6).map((p) => ({ name: p.path, n: Number(p.views) }))} />
         </Card>
-        <Card delay={0.4}>
+        <Card className="lg:col-span-6" delay={0.35}>
           <CardHead title="Skąd przychodzą" sub="30 dni" />
           <BarList items={src.slice(0, 6).map((p) => ({ name: p.name, n: Number(p.visitors) }))} />
         </Card>

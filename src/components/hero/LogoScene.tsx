@@ -157,14 +157,14 @@ function useSafeTime() {
   return t;
 }
 
-function Backdrop({ center = false }: { center?: boolean }) {
+function Backdrop({ center = false, at }: { center?: boolean; at?: number }) {
   const beam = useRef<THREE.Mesh>(null);
   const time = useSafeTime();
   const { lines, glow, beamTex, cx } = useMemo(() => {
     // linie wygaszane z dala od monogramu (jasność koloru = widoczność na czarnym tle)
     const pts: number[] = [];
     const cols: number[] = [];
-    const cx = !center && typeof window !== "undefined" && window.innerWidth / window.innerHeight > 1.15 ? 26 : 0;
+    const cx = at ?? (!center && typeof window !== "undefined" && window.innerWidth / window.innerHeight > 1.15 ? 26 : 0);
     for (let x = -150; x <= 150; x += 4) {
       const k = 0.13 * Math.exp(-Math.pow((x - cx) / 38, 2));
       for (const y of [-60, 60]) {
@@ -206,7 +206,7 @@ function Backdrop({ center = false }: { center?: boolean }) {
     bx.fillRect(0, 0, 32, 256);
     const beamTex = new THREE.CanvasTexture(b);
     return { lines, glow, beamTex, cx };
-  }, [center]);
+  }, [center, at]);
 
   useFrame(() => {
     if (beam.current) beam.current.position.x = cx - 32 + ((time.current * 9) % 64);
@@ -231,7 +231,7 @@ function Backdrop({ center = false }: { center?: boolean }) {
   );
 }
 
-function Monogram({ ready, mobile, center = false, quality, moving }: { ready: boolean; mobile: boolean; center?: boolean; quality: Quality; moving: boolean }) {
+function Monogram({ ready, mobile, center = false, at, quality, moving }: { ready: boolean; mobile: boolean; center?: boolean; at?: number; quality: Quality; moving: boolean }) {
   const group = useRef<THREE.Group>(null);
   const { size } = useThree();
   const pointer = useRef(new THREE.Vector2());
@@ -282,7 +282,11 @@ function Monogram({ ready, mobile, center = false, quality, moving }: { ready: b
     const rx = -pointer.current.y * 0.15 + Math.sin(t * 0.45) * 0.05;
     g.rotation.y = moving ? THREE.MathUtils.damp(g.rotation.y, ry, 2.5, dt) : ry;
     g.rotation.x = moving ? THREE.MathUtils.damp(g.rotation.x, rx, 2.5, dt) : rx;
-    if (center) {
+    if (at !== undefined) {
+      // w ramce (kokpit panelu): cały znak widoczny, z prawej strony karty
+      g.position.set(at, 2 + Math.sin(t * 0.7) * 0.7, 0);
+      g.scale.setScalar(0.74 * (0.75 + 0.25 * e) * (1 + boost.current * 0.12));
+    } else if (center) {
       g.position.set(0, (wide ? 1 : 6) + Math.sin(t * 0.7) * 0.7, 0);
       g.scale.setScalar((wide ? 1.35 : 0.85) * (0.75 + 0.25 * e) * (1 + boost.current * 0.12));
     } else {
@@ -316,7 +320,7 @@ function Monogram({ ready, mobile, center = false, quality, moving }: { ready: b
   );
 }
 
-export default function LogoScene({ ready, active, center = false }: { ready: boolean; active: boolean; center?: boolean }) {
+export default function LogoScene({ ready, active, center = false, at }: { ready: boolean; active: boolean; center?: boolean; at?: number }) {
   const [mobile] = useState(() => window.innerWidth < 768);
   const [quality, setQuality] = useState(initialQuality);
   const hz = useRefreshRate();
@@ -351,8 +355,8 @@ export default function LogoScene({ ready, active, center = false }: { ready: bo
     // antialias wyłączony: obraz i tak przechodzi przez EffectComposer (bez MSAA), więc wygładzanie płótna tylko kosztowało
     <Canvas dpr={dpr} frameloop={frameloop} camera={{ position: [0, 0, 95], fov: 30 }} gl={{ antialias: false, powerPreference: "high-performance" }}>
       <color attach="background" args={["#07070a"]} />
-      <Backdrop center={center} />
-      <Monogram ready={ready} mobile={mobile} center={center} quality={quality} moving={moving} />
+      <Backdrop center={center} at={at} />
+      <Monogram ready={ready} mobile={mobile} center={center} at={at} quality={quality} moving={moving} />
       <Environment resolution={256}>
         <Lightformer form="rect" intensity={4} color="#ffffff" position={[25, 30, 30]} scale={[30, 4, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />
         <Lightformer form="rect" intensity={3} color="#ffffff" position={[-35, 0, 20]} scale={[6, 60, 1]} onUpdate={(s) => s.lookAt(0, 0, 0)} />

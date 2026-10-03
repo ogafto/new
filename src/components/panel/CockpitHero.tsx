@@ -22,88 +22,112 @@ function Line({ i, children }: { i: number; children: React.ReactNode }) {
   );
 }
 
-/* Kokpit jak hero strony głównej: szklany znak 3D, ogromne powitanie, pas liczb pod linią */
+/* Kokpit jak hero strony głównej, w ramce: szklany znak 3D z prawej, ogromne powitanie, pas liczb na dole karty */
 export default function CockpitHero({ greeting, name, accent, date, summary, stats, soon, actions, chip, scene3d = true }: { greeting: string; name: string; accent: string; date: string; summary: string; stats: S[]; soon?: boolean; actions?: React.ReactNode; chip?: React.ReactNode; scene3d?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { margin: "-10% 0px" });
-  const [scene, setScene] = useState(false);
+  const [at, setAt] = useState<number | null>(null);
   useEffect(() => {
-    // 3D tylko na większych ekranach, po pierwszym malowaniu
-    if (!scene3d || window.innerWidth < 1024) return;
-    const t = setTimeout(() => setScene(true), 300);
-    return () => clearTimeout(t);
+    // 3D tylko na większych ekranach; pozycja znaku liczona z proporcji karty (pole widzenia kamery: 50,9 jednostki w pionie)
+    const el = ref.current;
+    if (!scene3d || !el || window.innerWidth < 1024) return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const ro = new ResizeObserver(([e]) => {
+      const aspect = e.contentRect.width / Math.max(1, e.contentRect.height);
+      clearTimeout(t);
+      t = setTimeout(() => setAt(Math.max(0, 25.45 * aspect * 0.56)), 200);
+    });
+    ro.observe(el);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+    };
   }, [scene3d]);
+  const label = (s: S) => (
+    <>
+      <dt className="flex items-center gap-2 text-[12.5px] text-dim">
+        {s.live && (
+          <span className="relative flex size-1.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
+            <span className="relative size-1.5 rounded-full bg-emerald-400" />
+          </span>
+        )}
+        {s.label}
+      </dt>
+      <dd className="mt-1.5 flex items-center justify-between gap-2">
+        <Count value={s.value} suffix={s.suffix} className="h-display text-[28px] leading-none sm:text-[34px]" />
+        {s.href && <Icon d={ICONS.arrowUp} className="size-4 rotate-45 text-dim opacity-0 transition-all duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink group-hover:opacity-100" />}
+      </dd>
+    </>
+  );
   return (
-    <section ref={ref} className="relative -mx-4 mb-10 overflow-hidden px-4 sm:-mx-8 sm:px-8 lg:-mx-10 lg:mb-14 lg:px-10">
-      {scene && (
-        <motion.div
-          className="pointer-events-none absolute inset-y-[-15%] right-[-14%] w-[66%] [mask-image:radial-gradient(52%_50%_at_58%_48%,black_30%,transparent_72%)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.6 }}
-          aria-hidden
-        >
-          <LogoScene ready active={inView} />
+    <motion.section
+      ref={ref}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, ease }}
+      className="relative mb-4 overflow-hidden rounded-[30px] border border-white/[0.08] bg-bg shadow-[0_1px_0_0_rgb(255_255_255/0.06)_inset,0_40px_100px_-50px_rgb(139_108_255/0.45)] lg:mb-5 lg:rounded-[36px]"
+    >
+      {/* tło bez 3D (telefon) — linie i poświata jak na stronie */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgb(255_255_255/0.04)_0_1px,transparent_1px_64px)] [mask-image:radial-gradient(70%_80%_at_85%_30%,black,transparent)]" />
+        <div className="absolute -top-1/3 -right-1/4 h-[130%] w-[80%] bg-[radial-gradient(closest-side,rgb(139_108_255/0.32),transparent)]" />
+      </div>
+      {at !== null && (
+        <motion.div className="pointer-events-none absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.8 }} aria-hidden>
+          <LogoScene ready active={inView} at={at} />
         </motion.div>
       )}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--color-bg)_15%,rgb(7_7_10/0.55)_42%,transparent_62%)]" aria-hidden />
 
-      <div className="relative pt-4 lg:pt-10">
-        <motion.div className="flex flex-wrap items-center gap-2.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
+      <div className="relative px-5 pt-6 pb-7 sm:px-10 sm:pt-9 lg:px-12 lg:pt-11 lg:pb-10">
+        <motion.div className="flex flex-wrap items-center gap-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
           <p className="kicker first-letter:uppercase">{date}</p>
           {chip ?? (
-          <Link
-            href="/panel/admin/tresci#soon"
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200"}`}
-          >
-            <span className={`size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
-            {soon ? "Tryb zapowiedzi" : "Strona online"}
-          </Link>
+            <Link
+              href="/panel/admin/tresci#soon"
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] backdrop-blur ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200"}`}
+            >
+              <span className={`size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
+              {soon ? "Tryb zapowiedzi" : "Strona online"}
+            </Link>
           )}
         </motion.div>
 
-        <h1 className="h-display mt-7 text-[clamp(3rem,8vw,8rem)] leading-[0.92]">
+        <h1 className="h-display mt-6 text-[clamp(2.7rem,6.4vw,6.4rem)] leading-[0.93] sm:mt-8">
           <Line i={0}>{greeting}</Line>
           <Line i={1}>{name}</Line>
           <Line i={2}>
-            <span className="text-accent-2">{accent}</span>
+            <span className="bg-gradient-to-r from-accent-2 via-[#d6ccff] to-accent-2 bg-clip-text text-transparent">{accent}</span>
           </Line>
         </h1>
 
-        <div className="mt-10 flex flex-col gap-8 border-t border-line pt-7 lg:flex-row lg:items-end lg:justify-between">
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.9, ease }}>
-            <p className="max-w-[440px] text-[16.5px] leading-relaxed text-muted">{summary}</p>
-            {actions && <div className="mt-6 flex flex-wrap gap-2.5">{actions}</div>}
-          </motion.div>
-          <motion.dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4 lg:gap-x-10" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.9, ease }}>
-            {stats.map((s) => {
-              const inner = (
-                <>
-                  <dt className="flex items-center gap-2 text-[12.5px] text-dim">
-                    {s.live && (
-                      <span className="relative flex size-1.5">
-                        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
-                        <span className="relative size-1.5 rounded-full bg-emerald-400" />
-                      </span>
-                    )}
-                    {s.label}
-                  </dt>
-                  <dd className="mt-1.5">
-                    <Count value={s.value} suffix={s.suffix} className="h-display text-[34px] leading-none sm:text-[40px]" />
-                  </dd>
-                </>
-              );
-              return s.href ? (
-                <Link key={s.label} href={s.href} className="group block transition-opacity hover:opacity-80">
-                  {inner}
-                </Link>
-              ) : (
-                <div key={s.label}>{inner}</div>
-              );
-            })}
-          </motion.dl>
-        </div>
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.9, ease }}>
+          <p className="mt-6 max-w-[460px] text-[15.5px] leading-relaxed text-muted sm:text-[16.5px]">{summary}</p>
+          {actions && <div className="mt-6 flex flex-wrap gap-2.5">{actions}</div>}
+        </motion.div>
       </div>
-    </section>
+
+      <motion.dl
+        className="relative grid grid-cols-2 border-t border-white/[0.07] bg-[rgb(255_255_255/0.025)] backdrop-blur-md sm:grid-cols-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.75, duration: 0.9 }}
+      >
+        {stats.map((s, i) => {
+          const cls = `group block px-5 py-5 transition-colors sm:px-8 lg:px-10 lg:py-6 ${i % 2 ? "border-l border-white/[0.07]" : ""} ${i > 1 ? "border-t border-white/[0.07] sm:border-t-0" : ""} ${i === 2 ? "sm:border-l" : ""}`;
+          return s.href ? (
+            <Link key={s.label} href={s.href} className={`${cls} hover:bg-white/[0.03]`}>
+              {label(s)}
+            </Link>
+          ) : (
+            <div key={s.label} className={cls}>
+              {label(s)}
+            </div>
+          );
+        })}
+      </motion.dl>
+    </motion.section>
   );
 }
 
@@ -130,7 +154,7 @@ export function Activity({ rows }: { rows: { id: string; ts: number; level: stri
     };
   }, []);
   return (
-    <Card delay={0.32}>
+    <Card delay={0.32} className="h-full">
       <CardHead title="Aktywność" sub="Co się ostatnio działo">
         <Link href="/panel/admin/logi" className="text-[13px] text-muted transition-colors hover:text-ink">
           Logi →
@@ -165,7 +189,7 @@ const TODO_ICON = { inquiry: ICONS.inbox, payment: ICONS.wallet, deadline: ICONS
 
 export function Todo({ items }: { items: TodoItem[] }) {
   return (
-    <Card delay={0.12} glow={items.some((i) => i.urgent)}>
+    <Card delay={0.12} glow={items.some((i) => i.urgent)} className="h-full">
       <CardHead title="Do zrobienia" sub={items.length ? `${items.length} ${items.length === 1 ? "sprawa" : items.length < 5 ? "sprawy" : "spraw"}` : undefined} />
       {items.length === 0 ? (
         <div className="flex flex-col items-center py-8 text-center">

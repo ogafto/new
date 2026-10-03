@@ -336,7 +336,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
   }, []);
 
   const navList = (compact: boolean) => (
-    <nav className="space-y-6" aria-label="Panel">
+    <nav className="space-y-4" aria-label="Panel">
       {nav.map((g, gi) => (
         <motion.div key={g.group} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + gi * 0.06, duration: 0.6, ease }}>
           {compact ? <div className="mx-auto mb-2 h-px w-6 bg-line" /> : <p className="mb-1 px-3 text-[12px] text-dim">{g.group}</p>}
@@ -349,14 +349,18 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
                   <Link
                     href={l.href}
                     title={compact ? l.label : undefined}
-                    className={`group relative flex items-center rounded-[10px] py-2 text-[14px] transition-colors ${compact ? "justify-center px-0 py-2.5" : "gap-3 px-3"} ${on ? "text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
+                    className={`group relative flex items-center rounded-[10px] py-[7px] text-[14px] transition-colors ${compact ? "justify-center px-0 py-2.5" : "gap-3 px-3"} ${on ? "text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
                   >
                     {on && (
-                      <motion.span layoutId={compact ? "panel-nav-rail" : "panel-nav"} className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent/[0.16] to-white/[0.03] ring-1 ring-accent/25" transition={{ type: "spring", stiffness: 420, damping: 36 }}>
-                        <span className="absolute top-1/2 -left-[13px] h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent shadow-[0_0_14px_#8b6cff]" />
+                      <motion.span
+                        layoutId={compact ? "panel-nav-rail" : "panel-nav"}
+                        className="absolute inset-0 rounded-[12px] bg-[linear-gradient(100deg,rgb(139_108_255/0.28),rgb(139_108_255/0.08)_60%,rgb(255_255_255/0.02))] shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_8px_24px_-12px_rgb(139_108_255/0.7)] ring-1 ring-accent/30"
+                        transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                      >
+                        <span className="absolute top-1/2 -left-[13px] h-6 w-[3px] -translate-y-1/2 rounded-full bg-accent-2 shadow-[0_0_16px_#b4a2ff]" />
                       </motion.span>
                     )}
-                    <span className={`relative transition-colors ${on ? "text-accent-2" : ""}`}>
+                    <span className={`relative transition-[color,filter] ${on ? "text-white drop-shadow-[0_0_8px_rgb(180_162_255/0.9)]" : "group-hover:text-accent-2"}`}>
                       <Icon d={l.icon} />
                       {compact && badge > 0 && <span className="absolute -top-1.5 -right-2 grid min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[9.5px] font-medium text-white">{badge}</span>}
                     </span>
@@ -450,17 +454,18 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
     : [];
 
   return (
-    <div className={`min-h-[100svh] lg:grid ${rail ? "lg:grid-cols-[84px_1fr]" : "lg:grid-cols-[268px_1fr]"} transition-[grid-template-columns] duration-500 ease-out-expo`}>
-      {/* tło panelu */}
-      <div className="pointer-events-none fixed inset-0 -z-0" aria-hidden>
-        <div className="absolute -top-40 right-[-10%] size-[720px] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.10),transparent)]" />
-        <div className="absolute bottom-[-20%] left-[10%] size-[620px] rounded-full bg-[radial-gradient(closest-side,rgb(180_162_255/0.05),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(80%_60%_at_60%_0%,black,transparent)]" />
+    <div className={`min-h-[100svh] lg:grid ${rail ? "lg:grid-cols-[96px_1fr]" : "lg:grid-cols-[284px_1fr]"} transition-[grid-template-columns] duration-500 ease-out-expo`}>
+      {/* tło panelu: powoli płynąca zorza + siatka kropek */}
+      <div className="panel-aurora pointer-events-none fixed inset-0 -z-0 overflow-hidden bg-[#06060a]" aria-hidden>
+        <div className="absolute -top-[30%] right-[-15%] size-[80vmax] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent_70%)] [animation:panel-drift-a_26s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-35%] left-[-10%] size-[70vmax] rounded-full bg-[radial-gradient(closest-side,rgb(92_70_220/0.12),transparent_70%)] [animation:panel-drift-b_32s_ease-in-out_infinite]" />
+        <div className="absolute top-[30%] left-[35%] size-[40vmax] rounded-full bg-[radial-gradient(closest-side,rgb(180_162_255/0.06),transparent_70%)] [animation:panel-drift-a_40s_ease-in-out_infinite_reverse]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.045)_1px,transparent_1px)] bg-[size:26px_26px] [mask-image:radial-gradient(90%_70%_at_60%_10%,black,transparent)]" />
       </div>
 
       {/* menu boczne (komputer) */}
       <motion.aside
-        className={`sticky top-0 z-30 hidden h-[100svh] flex-col border-r border-line bg-[linear-gradient(180deg,rgb(18_18_24/0.85),rgb(10_10_14/0.85))] py-5 backdrop-blur-xl lg:flex ${rail ? "px-3" : "px-4"}`}
+        className={`sticky top-3 z-30 m-3 mr-0 hidden h-[calc(100svh-24px)] flex-col rounded-[28px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(22_22_32/0.7),rgb(10_10_15/0.78))] py-5 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-2xl lg:flex ${rail ? "px-3" : "px-4"}`}
         initial={{ opacity: 0, x: -24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease }}
@@ -511,7 +516,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
           </div>
         )}
 
-        <div className="mt-6 -mr-2 flex-1 overflow-y-auto pr-2 pb-4 [scrollbar-width:none]" data-lenis-prevent>
+        <div className="mt-5 -mr-2 flex-1 overflow-y-auto pr-2 pb-3 [scrollbar-width:none]" data-lenis-prevent>
           {navList(rail)}
         </div>
 
@@ -557,7 +562,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.7, ease }}
-          className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2.5 sm:px-8 lg:bg-bg/70 lg:pt-3 lg:pb-3 lg:backdrop-blur-xl"
+          className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2.5 sm:px-8 lg:top-3 lg:mx-3 lg:mt-3 lg:rounded-[20px] lg:border lg:border-white/[0.07] lg:bg-[rgb(14_14_20/0.6)] lg:px-5 lg:py-2.5 lg:shadow-[0_20px_50px_-30px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.05)] lg:backdrop-blur-2xl"
         >
           <div className="flex min-w-0 items-center gap-3">
             {!admin && (
@@ -588,18 +593,18 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
             {admin && <Bell notes={notes} />}
           </div>
         </motion.header>
-        <main className={`relative mx-auto max-w-[1280px] px-4 py-6 sm:px-8 lg:py-10 ${admin ? "pb-[calc(env(safe-area-inset-bottom)+104px)] lg:pb-10" : ""}`}>{children}</main>
+        <main className={`relative mx-auto max-w-[1320px] px-4 py-6 sm:px-8 lg:px-6 lg:py-8 ${admin ? "pb-[calc(env(safe-area-inset-bottom)+112px)] lg:pb-10" : ""}`}>{children}</main>
       </div>
 
       {/* dolny pasek nawigacji (telefon/tablet, admin) */}
       {admin && (
-        <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-bg px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] lg:hidden" aria-label="Szybka nawigacja">
-          <ul className="mx-auto grid max-w-[520px] grid-cols-5 items-end">
+        <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-[60] rounded-[26px] border border-white/[0.08] bg-[rgb(16_16_22/0.86)] px-1.5 py-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.95),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-2xl lg:hidden" aria-label="Szybka nawigacja">
+          <ul className="mx-auto grid max-w-[520px] grid-cols-5 items-center">
             {tabs.map((t, i) =>
               t ? (
                 <li key={t.href}>
-                  <Link href={t.href} className={`relative flex flex-col items-center gap-1 rounded-xl py-1.5 text-[10.5px] transition-colors ${active(t.href) && current?.href === t.href ? "text-ink" : "text-dim"}`}>
-                    {active(t.href) && current?.href === t.href && <motion.span layoutId="tab-hl" className="absolute -top-1.5 h-0.5 w-8 rounded-full bg-accent shadow-[0_0_12px_#8b6cff]" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                  <Link href={t.href} className={`relative flex flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] transition-colors ${active(t.href) && current?.href === t.href ? "text-ink" : "text-dim"}`}>
+                    {active(t.href) && current?.href === t.href && <motion.span layoutId="tab-hl" className="absolute inset-0 rounded-[20px] bg-[linear-gradient(180deg,rgb(139_108_255/0.22),rgb(139_108_255/0.06))] ring-1 ring-accent/25" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
                     <span className="relative">
                       <Icon d={t.icon} className="size-[21px]" />
                       {(t.badge ?? 0) > 0 && <span className="absolute -top-1.5 -right-2.5 grid min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[9.5px] font-medium text-white">{t.badge}</span>}
@@ -613,7 +618,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
                     type="button"
                     data-create-trigger
                     onClick={() => setCreate(create === "tab" ? null : "tab")}
-                    className="-mt-6 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-accent to-[#6d4dff] text-white shadow-[0_12px_30px_-8px_rgb(139_108_255/0.8)] ring-4 ring-bg transition-transform active:scale-95"
+                    className="grid size-[52px] place-items-center rounded-[20px] bg-gradient-to-br from-[#a18bff] via-accent to-[#5b3df5] text-white shadow-[0_10px_30px_-6px_rgb(139_108_255/0.9),inset_0_1px_0_rgb(255_255_255/0.35)] transition-transform active:scale-95"
                     aria-label="Nowe"
                   >
                     <Icon d={ICONS.plus} className={`size-6 transition-transform duration-300 ${create === "tab" ? "rotate-45" : ""}`} />
@@ -623,7 +628,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
               ),
             )}
             <li>
-              <button type="button" onClick={() => setMenu(true)} className="flex w-full flex-col items-center gap-1 rounded-xl py-1.5 text-[10.5px] text-dim" aria-label="Menu">
+              <button type="button" onClick={() => setMenu(true)} className="flex w-full flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] text-dim" aria-label="Menu">
                 <Icon d={ICONS.menu} className="size-[21px]" />
                 Menu
               </button>

@@ -9,7 +9,36 @@ import { Card, CardHead, Count, ease, Icon, ICONS } from "./kit";
 
 type S = { label: string; value: number; suffix?: string; href?: string; live?: boolean };
 
-export default function CockpitHero({ greeting, date, stats, soon, children }: { greeting: string; date: string; stats: S[]; soon?: boolean; children?: React.ReactNode }) {
+// „Kula na żywo”: liczba osób na stronie w obracającym się, świecącym pierścieniu
+function LiveOrb({ value }: { value: number }) {
+  return (
+    <Link href="/panel/admin/analityka" className="group relative grid size-[176px] shrink-0 place-items-center sm:size-[200px]" aria-label={`${value} osób na stronie teraz`}>
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="absolute inset-[18%] rounded-full border border-accent/40"
+          initial={{ scale: 1, opacity: 0.6 }}
+          animate={{ scale: 1.9, opacity: 0 }}
+          transition={{ duration: 3.6, delay: i * 1.2, repeat: Infinity, ease: "easeOut" }}
+        />
+      ))}
+      <span className="absolute inset-[10%] rounded-full bg-[conic-gradient(from_0deg,rgb(139_108_255/0),rgb(139_108_255/0.9),rgb(180_162_255/0.2),rgb(52_211_153/0.6),rgb(139_108_255/0))] [animation:orb-spin_6s_linear_infinite] [mask:radial-gradient(farthest-side,transparent_calc(100%-2px),black_calc(100%-1px))]" />
+      <span className="absolute inset-[14%] rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(180_162_255/0.35),rgb(40_30_90/0.55)_45%,rgb(10_10_16/0.9)_75%)] shadow-[inset_0_1px_0_rgb(255_255_255/0.15),0_20px_60px_-10px_rgb(139_108_255/0.55)] transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]" />
+      <span className="relative flex flex-col items-center">
+        <Count value={value} className="h-display text-[52px] leading-none sm:text-[60px]" />
+        <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted">
+          <span className="relative flex size-1.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
+            <span className="relative size-1.5 rounded-full bg-emerald-400" />
+          </span>
+          na stronie teraz
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+export default function CockpitHero({ greeting, name, date, stats, soon, live, children }: { greeting: string; name?: string; date: string; stats: S[]; soon?: boolean; live?: number; children?: React.ReactNode }) {
   return (
     <motion.section
       className="edge relative mb-4 overflow-hidden rounded-[28px] bg-surface/70 p-6 sm:p-8 lg:mb-5 lg:p-10"
@@ -38,15 +67,26 @@ export default function CockpitHero({ greeting, date, stats, soon, children }: {
               {soon ? "Tryb zapowiedzi — strona ukryta" : "Strona online"}
             </Link>
           </motion.div>
-          <h1 className="h-display mt-2 overflow-hidden pb-[0.08em] text-[clamp(2.2rem,4.6vw,3.8rem)]">
+          <h1 className="h-display mt-3 overflow-hidden pb-[0.08em] text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.98]">
             <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ delay: 0.1, duration: 1, ease }}>
               {greeting}
+              {name && (
+                <>
+                  <br />
+                  <span className="bg-[linear-gradient(90deg,#efedf5,#b4a2ff,#8b6cff,#efedf5)] bg-[length:200%_100%] bg-clip-text text-transparent [animation:text-shine_8s_linear_infinite]">{name}</span>
+                </>
+              )}
             </motion.span>
           </h1>
         </div>
         {children && (
           <motion.div className="min-w-0" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease }}>
             {children}
+          </motion.div>
+        )}
+        {live !== undefined && (
+          <motion.div className="hidden self-center sm:block lg:-my-6 lg:mr-4" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25, duration: 1, ease }}>
+            <LiveOrb value={live} />
           </motion.div>
         )}
       </div>

@@ -37,10 +37,18 @@ export function PageHead({ kicker, title, text, children }: { kicker?: string; t
   );
 }
 
+// światło podąża za kursorem (zmienne CSS, bez ponownego renderu)
+export const spotMove = (e: React.PointerEvent<HTMLElement>) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+};
+
 export function Card({ children, className = "", delay = 0, glow = false, pad = true }: { children: React.ReactNode; className?: string; delay?: number; glow?: boolean; pad?: boolean }) {
   return (
     <motion.section
-      className={`edge relative overflow-hidden rounded-[22px] bg-[linear-gradient(180deg,rgb(22_22_30/0.82),rgb(13_13_18/0.82))] shadow-[0_1px_0_0_rgb(255_255_255/0.04)_inset,0_24px_60px_-40px_rgb(0_0_0/0.9)] ${pad ? "p-5 sm:p-6" : ""} ${className}`}
+      onPointerMove={spotMove}
+      className={`spot edge relative overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgb(22_22_30/0.82),rgb(13_13_18/0.82))] shadow-[0_1px_0_0_rgb(255_255_255/0.04)_inset,0_24px_60px_-40px_rgb(0_0_0/0.9)] ${pad ? "p-5 sm:p-6" : ""} ${className}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.03 + delay * 0.6, duration: 0.5, ease }}

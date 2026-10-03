@@ -384,3 +384,47 @@ html:has(body [data-panel]) .soon-preview {
     opacity: 1;
   }
 }
+
+/* ---------- panel: zorza w tle i światło za kursorem ---------- */
+@keyframes panel-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8%, 6%, 0) scale(1.12); }
+}
+@keyframes panel-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(10%, -8%, 0) scale(0.92); }
+}
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes text-shine {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+.spot {
+  --mx: 50%;
+  --my: 50%;
+}
+.spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  background: radial-gradient(520px circle at var(--mx) var(--my), rgb(139 108 255 / 0.09), transparent 42%);
+}
+.spot:hover::after {
+  opacity: 1;
+}
+.spot.edge:hover::before {
+  background:
+    radial-gradient(240px circle at var(--mx) var(--my), rgb(180 162 255 / 0.55), transparent 45%),
+    linear-gradient(160deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.04) 40%, rgb(139 108 255 / 0.25));
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-aurora > * {
+    animation: none !important;
+  }
+}

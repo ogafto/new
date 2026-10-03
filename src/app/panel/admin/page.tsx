@@ -62,13 +62,15 @@ export default async function Cockpit() {
     <>
       <CockpitHero
         soon={soon}
-        greeting={`${greet()}, ${admin.name.split(" ")[0]}.`}
+        live={nowOnline}
+        greeting={`${greet()},`}
+        name={`${admin.name.split(" ")[0]}.`}
         date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
         stats={[
-          { label: "na stronie teraz", value: nowOnline, live: true },
           { label: "dziś na głównej", value: home.today },
           { label: "nowe zapytania", value: Number(newInq?.n ?? 0), href: "/panel/admin/zapytania" },
           { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
+          { label: "do zapłaty", value: Math.round(fin.pending.amount / 100), suffix: " zł", href: "/panel/admin/finanse" },
         ]}
       />
 
@@ -100,7 +102,7 @@ export default async function Cockpit() {
         </Card>
         <Stat label="Klienci z kontem" value={Number(clients?.n ?? 0)} icon={ICONS.users} delay={0.05} hint="Zweryfikowane konta" />
         <Stat label="W realizacji" value={Number(orders?.n ?? 0)} icon={ICONS.clock} delay={0.1} hint={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w zleceniach`} />
-        <Stat label="Do zapłaty" value={Math.round(fin.pending.amount / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} hint={fin.pending.count ? `${fin.pending.count} ${fin.pending.count === 1 ? "płatność" : "płatności"}${fin.pending.overdue ? ` · ${fin.pending.overdue} po terminie` : ""}` : "Wszystko opłacone"} />
+        <Stat label="Zysk w miesiącu" value={Math.round(fin.month.profit / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} hint={`przychód ${Math.round(fin.month.revenue / 100).toLocaleString("pl-PL")} zł · koszty ${Math.round(fin.month.costs / 100).toLocaleString("pl-PL")} zł`} />
         <Stat label="Konwersja formularza" value={conv} suffix="%" decimals={1} icon={ICONS.target} delay={0.2} hint={`${funnel[2].n} wysłanych · 30 dni`} spark={s.slice(-14).map((d) => d.visitors)} />
       </div>
 

@@ -266,6 +266,7 @@ const COLUMNS: Record<string, Record<string, string>> = {
   users: { phone: "TEXT" },
   pageviews: { seen: "INTEGER" },
   projects: { seo_title: "TEXT", seo_description: "TEXT" },
+  inquiries: { user_id: "TEXT", source: "TEXT" },
 };
 
 async function migrate(client: Client) {
@@ -277,7 +278,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 7;
+const VERSION = 8;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

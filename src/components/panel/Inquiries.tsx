@@ -7,7 +7,7 @@ import { deleteInquiry, setInquiryNote, setInquiryStatus } from "@/app/panel/adm
 import { Card, ConfirmBtn, ease, Empty, ICONS, Icon } from "./kit";
 import { ago, Avatar, CopyBtn, fold, Kbd, Portal, Search, Segmented, useNow } from "./crm/ui";
 
-export type Inquiry = { id: string; name: string; email: string; phone: string | null; company: string | null; topic: string | null; budget: string | null; timeline: string | null; message: string; status: "new" | "contacted" | "won" | "lost"; note: string | null; created_at: number };
+export type Inquiry = { id: string; name: string; email: string; phone: string | null; company: string | null; topic: string | null; budget: string | null; timeline: string | null; message: string; status: "new" | "contacted" | "won" | "lost"; note: string | null; created_at: number; source?: string | null };
 type Status = Inquiry["status"];
 type Filter = "all" | Status;
 
@@ -36,6 +36,7 @@ function Item({ q, active, now, onClick }: { q: Inquiry; active: boolean; now: n
         <span className="relative min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-3">
             <span className={`truncate text-[14px] ${unread ? "font-medium text-ink" : "text-ink/85"}`}>{q.name}</span>
+            {q.source === "panel" && <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-1.5 text-[10.5px] text-accent-2">panel</span>}
             <span className={`shrink-0 text-[11.5px] tabular-nums ${unread ? "text-accent-2" : "text-dim"}`}>{ago(q.created_at, now)}</span>
           </span>
           <span className={`mt-0.5 block truncate text-[13px] ${unread ? "text-ink/80" : "text-muted"}`}>{q.topic || "Zapytanie ze strony"}</span>
@@ -122,6 +123,7 @@ function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove }: { q: Inquir
         <Avatar name={q.name} size={52} className="hidden sm:grid" />
         <div className="min-w-0 flex-1">
           <h2 className="h-display text-[24px] leading-tight break-words sm:text-[28px]">{q.name}</h2>
+          {q.source === "panel" && <span className="mt-1.5 inline-flex rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[12px] text-accent-2">Zamówienie z panelu klienta</span>}
           <p className="mt-1 text-[13px] text-dim">
             {q.company && <span className="text-muted">{q.company} · </span>}
             <span className="first-letter:uppercase">{full(q.created_at)}</span>

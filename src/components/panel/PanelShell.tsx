@@ -243,7 +243,22 @@ type Section = { id: string; label: string; icon: string; links: NavLink[] };
 
 // 4 główne sekcje (zamiast długiego menu) — podstrony jako zakładki pod tytułem
 function sectionsFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]): Section[] {
-  if (!admin) return [{ id: "panel", label: "Panel", icon: ICONS.home, links: [{ href: "/panel", label: "Przegląd", icon: ICONS.home }, ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers }))] }];
+  if (!admin)
+    return [
+      { id: "kokpit", label: "Kokpit", icon: ICONS.home, links: [{ href: "/panel", label: "Kokpit", icon: ICONS.home }] },
+      {
+        id: "zamowienia",
+        label: "Zamówienia",
+        icon: ICONS.receipt,
+        links: [
+          { href: "/panel/zamowienia", label: "Moje zamówienia", icon: ICONS.receipt },
+          { href: "/panel/zamow", label: "Zamów usługę", icon: ICONS.plus },
+        ],
+      },
+      { id: "platnosci", label: "Płatności", icon: ICONS.wallet, links: [{ href: "/panel/platnosci", label: "Płatności", icon: ICONS.wallet }] },
+      { id: "konto", label: "Konto", icon: ICONS.key, links: [{ href: "/panel/konto", label: "Konto", icon: ICONS.key }] },
+      ...(sites.length ? [{ id: "strona", label: "Moja strona", icon: ICONS.layers, links: sites.map((x) => ({ href: `/panel/strona/${x.id}`, label: x.name, icon: ICONS.layers })) }] : []),
+    ];
   return [
     { id: "kokpit", label: "Kokpit", icon: ICONS.home, links: [{ href: "/panel/admin", label: "Kokpit", icon: ICONS.home }] },
     {
@@ -358,7 +373,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
           </Link>
 
           {/* sekcje */}
-          {admin && (
+          {(
             <nav className="hidden items-center gap-1 lg:flex" aria-label="Sekcje">
               {main.map((x) => {
                 const on = section.id === x.id;
@@ -410,6 +425,17 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
                   <CreateMenu open={create === "top"} onClose={closeCreate} align="right" />
                 </div>
               </div>
+            )}
+            {!admin && (
+              <Link href="/panel/zamow" className="group btn btn-primary !hidden !h-11 !pl-5 text-[14px] lg:!inline-flex">
+                <span className="roll">
+                  <span>Zamów usługę</span>
+                  <span aria-hidden>Zamów usługę</span>
+                </span>
+                <span className="dot !size-8">
+                  <Icon d={ICONS.plus} className="size-4" />
+                </span>
+              </Link>
             )}
             <div className="relative hidden lg:block" ref={userRef}>
               <button type="button" onClick={() => setUserMenu((o) => !o)} className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white shadow-[0_0_24px_-6px_rgb(139_108_255/0.9)]" aria-label="Konto">
@@ -501,7 +527,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
         )}
       </AnimatePresence>
 
-      <main className={`relative mx-auto max-w-[1400px] px-4 pt-4 pb-16 sm:px-8 lg:px-10 lg:pt-6 ${admin ? "pb-[calc(env(safe-area-inset-bottom)+112px)] lg:pb-20" : ""}`}>
+      <main className={`relative mx-auto max-w-[1400px] px-4 pt-4 sm:px-8 lg:px-10 lg:pt-6 pb-[calc(env(safe-area-inset-bottom)+112px)] lg:pb-20`}>
         {/* zakładki podstron sekcji */}
         {section.links.length > 1 && (
           <motion.nav initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="-mx-4 mb-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0" aria-label={section.label} data-lenis-prevent>
@@ -525,11 +551,20 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
         {children}
       </main>
 
-      {/* dok na telefonie (admin) */}
-      {admin && !menu && (
+      {/* dok na telefonie */}
+      {!menu && (
         <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-[60] rounded-[26px] border border-white/[0.08] bg-[rgb(14_14_19/0.92)] p-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.95)] backdrop-blur-2xl lg:hidden" aria-label="Szybka nawigacja">
           <ul className="grid grid-cols-5 items-center">
             {[main[0], main[1], null, main[2], main[3]].map((x, i) =>
+              !x && !admin ? (
+                <li key={`c${i}`} className="flex justify-center">
+                  <Link href="/panel/zamow" className="grid size-[52px] place-items-center rounded-full bg-ink text-bg transition-transform active:scale-95" aria-label="Zamów usługę">
+                    <span className="grid size-9 place-items-center rounded-full bg-accent text-white">
+                      <Icon d={ICONS.plus} className="size-5" />
+                    </span>
+                  </Link>
+                </li>
+              ) :
               x ? (
                 <li key={x.id}>
                   <Link href={x.links[0].href} className={`relative flex flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] transition-colors ${section.id === x.id ? "text-ink" : "text-dim"}`}>

@@ -23,21 +23,21 @@ function Line({ i, children }: { i: number; children: React.ReactNode }) {
 }
 
 /* Kokpit jak hero strony głównej: szklany znak 3D, ogromne powitanie, pas liczb pod linią */
-export default function CockpitHero({ greeting, name, accent, date, summary, stats, soon, actions }: { greeting: string; name: string; accent: string; date: string; summary: string; stats: S[]; soon?: boolean; actions?: React.ReactNode }) {
+export default function CockpitHero({ greeting, name, accent, date, summary, stats, soon, actions, chip, scene3d = true }: { greeting: string; name: string; accent: string; date: string; summary: string; stats: S[]; soon?: boolean; actions?: React.ReactNode; chip?: React.ReactNode; scene3d?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { margin: "-10% 0px" });
   const [scene, setScene] = useState(false);
   useEffect(() => {
     // 3D tylko na większych ekranach, po pierwszym malowaniu
-    if (window.innerWidth < 1024) return;
+    if (!scene3d || window.innerWidth < 1024) return;
     const t = setTimeout(() => setScene(true), 300);
     return () => clearTimeout(t);
-  }, []);
+  }, [scene3d]);
   return (
     <section ref={ref} className="relative -mx-4 mb-10 overflow-hidden px-4 sm:-mx-8 sm:px-8 lg:-mx-10 lg:mb-14 lg:px-10">
       {scene && (
         <motion.div
-          className="pointer-events-none absolute inset-y-[-15%] right-[-14%] w-[66%] [mask-image:radial-gradient(60%_58%_at_55%_48%,black_35%,transparent_78%)]"
+          className="pointer-events-none absolute inset-y-[-15%] right-[-14%] w-[66%] [mask-image:radial-gradient(52%_50%_at_58%_48%,black_30%,transparent_72%)]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.6 }}
@@ -46,11 +46,11 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
           <LogoScene ready active={inView} />
         </motion.div>
       )}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--color-bg)_30%,transparent_75%),linear-gradient(to_top,var(--color-bg),transparent_40%)]" aria-hidden />
 
       <div className="relative pt-4 lg:pt-10">
         <motion.div className="flex flex-wrap items-center gap-2.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
           <p className="kicker first-letter:uppercase">{date}</p>
+          {chip ?? (
           <Link
             href="/panel/admin/tresci#soon"
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200"}`}
@@ -58,6 +58,7 @@ export default function CockpitHero({ greeting, name, accent, date, summary, sta
             <span className={`size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
             {soon ? "Tryb zapowiedzi" : "Strona online"}
           </Link>
+          )}
         </motion.div>
 
         <h1 className="h-display mt-7 text-[clamp(3rem,8vw,8rem)] leading-[0.92]">

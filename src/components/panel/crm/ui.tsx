@@ -86,7 +86,7 @@ export function Search({ value, onChange, placeholder = "Szukaj…", className =
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-full w-full rounded-full border border-line bg-white/[0.025] pr-8 pl-9 text-[13.5px] text-ink outline-none transition-[border-color,box-shadow,background-color] duration-300 placeholder:text-dim hover:border-line-2 focus:border-accent/70 focus:bg-white/[0.04] focus:shadow-[0_0_0_4px_rgb(139_108_255/0.1)]"
+        className="h-full w-full rounded-full border border-transparent bg-white/[0.04] pr-8 pl-9 text-[13.5px] text-ink outline-none transition-[border-color,box-shadow,background-color] duration-300 placeholder:text-dim hover:border-line-2 focus:border-accent/70 focus:bg-white/[0.04] focus:shadow-[0_0_0_4px_rgb(139_108_255/0.1)]"
       />
       {value && (
         <button type="button" onClick={() => onChange("")} className="absolute right-2 grid size-5 place-items-center rounded-full text-dim hover:bg-white/10 hover:text-ink" aria-label="Wyczyść">
@@ -126,7 +126,7 @@ export function CopyBtn({ text, label = "Kopiuj", className = "" }: { text: stri
 // Przełącznik segmentowy z kolorową kropką
 export function Segmented<T extends string>({ value, onChange, items, id, disabled, size = "md", grid = false }: { value: T; onChange: (v: T) => void; items: { value: T; label: string; dot?: string; count?: number }[]; id: string; disabled?: boolean; size?: "sm" | "md"; grid?: boolean }) {
   return (
-    <div className={`max-w-full gap-0.5 rounded-xl border border-line bg-white/[0.02] p-1 [scrollbar-width:none] ${grid ? "grid grid-cols-2 sm:inline-flex sm:overflow-x-auto [&>button]:justify-center sm:[&>button]:justify-start" : "inline-flex overflow-x-auto"}`} role="radiogroup" data-lenis-prevent>
+    <div className={`max-w-full gap-0.5 rounded-xl bg-white/[0.04] p-1 [scrollbar-width:none] ${grid ? "grid grid-cols-2 sm:inline-flex sm:overflow-x-auto [&>button]:justify-center sm:[&>button]:justify-start" : "inline-flex overflow-x-auto"}`} role="radiogroup" data-lenis-prevent>
       {items.map((it) => {
         const on = it.value === value;
         return (

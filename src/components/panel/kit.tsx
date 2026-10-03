@@ -8,24 +8,20 @@ import { ICONS } from "./icons";
 
 export const ease = [0.16, 1, 0.3, 1] as const;
 
-// Nagłówek podstrony: duży tytuł w stylu strony + opis i akcje (sekcja jest już w górnym pasku)
+// Nagłówek podstrony: tytuł jest w górnym pasku — tu krótki opis i akcje (h1 dla czytników ekranu)
 export function PageHead({ title, text, children }: { kicker?: string; title: React.ReactNode; text?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col justify-between gap-5 pt-2 sm:mb-8 sm:flex-row sm:items-end lg:mb-10 lg:pt-4">
-      <div className="min-w-0">
-        <h1 className="h-display overflow-hidden pb-[0.08em] text-[clamp(2.3rem,4.4vw,4rem)] leading-[0.98]">
-          <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.65, ease }}>
-            {title}
-          </motion.span>
-        </h1>
-        {text && (
-          <motion.p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
-            {text}
-          </motion.p>
-        )}
-      </div>
+    <div className={`flex flex-col justify-between gap-4 sm:flex-row sm:items-center ${text || children ? "mb-5 lg:mb-6" : ""}`}>
+      <h1 className="sr-only">{title}</h1>
+      {text ? (
+        <motion.p className="max-w-2xl text-[14.5px] leading-relaxed text-muted" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
+          {text}
+        </motion.p>
+      ) : (
+        <span />
+      )}
       {children && (
-        <motion.div className="flex flex-wrap items-center gap-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease }}>
+        <motion.div className="flex flex-wrap items-center gap-2" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.4, ease }}>
           {children}
         </motion.div>
       )}
@@ -44,12 +40,12 @@ export function Card({ children, className = "", delay = 0, glow = false, pad = 
   return (
     <motion.section
       onPointerMove={spotMove}
-      className={`spot relative min-w-0 overflow-hidden rounded-[26px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(21_21_29/0.88),rgb(12_12_17/0.88))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_70px_-45px_rgb(0_0_0/0.95)] ${pad ? "p-5 sm:p-7" : ""} ${className}`}
+      className={`relative min-w-0 overflow-hidden rounded-[22px] bg-surface ring-1 ring-white/[0.04] ring-inset ${pad ? "p-5 sm:p-6" : ""} ${className}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.02 + delay * 0.4, duration: 0.45, ease }}
     >
-      {glow && <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent)]" aria-hidden />}
+      {glow && <div className="pointer-events-none absolute -top-32 -left-24 size-80 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.2),transparent)]" aria-hidden />}
       <div className="relative h-full">{children}</div>
     </motion.section>
   );
@@ -59,7 +55,7 @@ export function CardHead({ title, sub, children }: { title: string; sub?: string
   return (
     <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-[17px] font-medium tracking-[-0.015em]">{title}</h2>
+        <h2 className="text-[16.5px] font-medium tracking-[-0.01em]">{title}</h2>
         {sub && <p className="mt-0.5 text-[13px] text-dim">{sub}</p>}
       </div>
       {children}
@@ -416,7 +412,7 @@ export function Empty({ icon = ICONS.grid, title, text, children }: { icon?: str
 }
 
 export const field =
-  "w-full rounded-xl border border-line-2 bg-white/[0.02] px-3.5 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-dim hover:border-white/25 focus:border-accent focus:shadow-[0_0_0_4px_rgb(139_108_255/0.12)]";
+  "w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-dim hover:border-white/25 focus:border-accent focus:shadow-[0_0_0_4px_rgb(139_108_255/0.12)]";
 
 export function Label({ label, children, hint, className = "" }: { label: string; children: React.ReactNode; hint?: string; className?: string }) {
   return (
@@ -440,7 +436,7 @@ export function Toggle({ name, defaultChecked, checked, onChange, label }: { nam
 
 export function Tabs<T extends string>({ value, onChange, items, id }: { value: T; onChange: (v: T) => void; items: { value: T; label: string; count?: number }[]; id: string }) {
   return (
-    <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full border border-line p-1 [scrollbar-width:none]" data-lenis-prevent>
+    <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/[0.04] p-1 [scrollbar-width:none]" data-lenis-prevent>
       {items.map((it) => (
         <button key={it.value} type="button" onClick={() => onChange(it.value)} className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-[13px] whitespace-nowrap transition-colors ${value === it.value ? "text-ink" : "text-muted hover:text-ink"}`}>
           {value === it.value && <motion.span layoutId={`tabs-${id}`} className="absolute inset-0 rounded-full bg-white/[0.08]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}

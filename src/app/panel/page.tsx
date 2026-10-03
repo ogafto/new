@@ -6,9 +6,9 @@ import { loadContent } from "@/lib/content-server";
 import { paymentsForUser, zl } from "@/lib/finance";
 import { daysBetween, today } from "@/lib/orders";
 import { site, steps } from "@/lib/site";
-import { Badge, Card, CardHead, Empty, Icon } from "@/components/panel/kit";
+import { Badge, Empty, Icon, PageHead } from "@/components/panel/kit";
+import { Metric, Panel, Row } from "@/components/panel/dash";
 import { ICONS } from "@/components/panel/icons";
-import CockpitHero from "@/components/panel/CockpitHero";
 import ProjectProgress from "@/components/panel/ProjectProgress";
 import { OrderCard } from "@/components/panel/client/Orders";
 
@@ -39,7 +39,7 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
       openRequests.length ? `${openRequests.length} ${openRequests.length === 1 ? "zgłoszenie czeka na odpowiedź" : "zgłoszenia czekają na odpowiedź"}` : null,
     ]
       .filter(Boolean)
-      .join(" · ") || "Zamów stronę, sklep, identyfikację albo projekt UI — wszystko ogarniesz tutaj.";
+      .join(" · ") || "Zamów stronę, sklep, identyfikację albo projekt UI — wszystko ogarniesz tutaj";
 
   const contact = [
     { label: "E-mail", value: site.email, href: `mailto:${site.email}`, icon: ICONS.mail },
@@ -47,123 +47,130 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
     { label: "Discord", value: "Napisz na Discordzie", href: site.socials.find((s) => s.label === "Discord")?.href ?? "#", icon: DISCORD, external: true },
   ];
 
+  const prog = (o: { start_date: string; due_date: string }) => Math.max(0.04, Math.min(1, daysBetween(o.start_date, t) / Math.max(1, daysBetween(o.start_date, o.due_date))));
+  const left = nextDue ? daysBetween(t, nextDue.due_date) : 0;
+  const paidSum = payments.filter((p) => p.status === "paid").reduce((a, p) => a + Number(p.amount), 0);
+  const paidShare = paidSum + dueSum ? paidSum / (paidSum + dueSum) : 1;
+
   return (
     <>
-      <CockpitHero
-        scene3d
-        greeting={witaj ? "Witaj w afto," : "Cześć,"}
-        name={`${first}.`}
-        accent={accent}
-        date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
-        chip={
-          <span className="inline-flex items-center gap-2 rounded-full border border-line-2 px-3 py-1.5 text-[12.5px] text-muted">
-            <span className="size-1.5 rounded-full bg-accent-2" /> Panel klienta
-          </span>
-        }
-        summary={summary}
-        stats={[
-          { label: "aktywne zlecenia", value: active.length, href: "/panel/zamowienia" },
-          { label: "dni do terminu", value: nextDue ? Math.max(0, daysBetween(t, nextDue.due_date)) : 0, href: "/panel/zamowienia" },
-          { label: "do zapłaty", value: Math.round(dueSum / 100), suffix: " zł", href: "/panel/platnosci" },
-          { label: "zgłoszenia", value: requests.length, href: "/panel/zamowienia" },
-        ]}
-        actions={
-          <>
-            <Link href="/panel/zamow" className="group btn btn-primary !h-12 text-[14.5px]">
-              <span className="roll">
-                <span>Zamów usługę</span>
-                <span aria-hidden>Zamów usługę</span>
-              </span>
-              <span className="dot !size-9">
-                <Icon d={ICONS.plus} className="size-4" />
-              </span>
-            </Link>
-            <Link href="/panel/zamowienia" className="btn btn-outline !h-12 text-[14.5px]">
-              Moje zamówienia
-            </Link>
-          </>
-        }
-      />
+      <PageHead title="Kokpit" text={`${witaj ? "Witaj w afto" : "Cześć"}, ${first}. ${accent} ${summary}.`} />
 
-      {hasProject && (
-        <Card className="mb-4 lg:mb-5">
-          <CardHead title={user.project ?? "Twój projekt"} sub={done ? "Projekt opublikowany" : `${steps[stage]?.title ?? ""} · ${steps[stage]?.lead ?? ""}`}>
-            <Badge tone={done ? "green" : "accent"}>{done ? "Gotowe" : `Etap ${stage + 1} z ${steps.length}`}</Badge>
-          </CardHead>
-          <ProjectProgress stage={stage} />
-        </Card>
-      )}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <Metric i={0} label="Zlecenia w toku" value={active.length} viz={{ kind: "lollipop", data: active.length ? active.map(prog) : [0.08, 0.08, 0.08] }} foot={active.length ? "postęp każdego zlecenia" : "brak aktywnych zleceń"} href="/panel/zamowienia" />
+        <Metric
+          i={1}
+          label="Najbliższy termin"
+          value={Math.max(0, left)}
+          suffix={left === 1 ? " dzień" : " dni"}
+          viz={nextDue ? { kind: "gauge", value: prog(nextDue), label: longDate(nextDue.due_date) } : undefined}
+          icon={nextDue ? undefined : ICONS.calendar}
+          foot={nextDue ? nextDue.title : "Termin pojawi się po przyjęciu zamówienia"}
+          href="/panel/zamowienia"
+        />
+        <Metric i={2} label="Do zapłaty" value={Math.round(dueSum / 100)} suffix=" zł" viz={{ kind: "gauge", value: paidShare, label: `opłacono ${Math.round(paidShare * 100)}%` }} foot={due.length ? `${due.length} ${due.length === 1 ? "płatność" : "płatności"} do opłacenia` : "Wszystko opłacone"} href="/panel/platnosci" />
+        <Metric i={3} label="Zgłoszenia" value={requests.length} viz={{ kind: "bars", data: requests.length ? requests.slice(0, 12).reverse().map((r) => ({ new: 1, contacted: 2, won: 3, lost: 0.5 })[r.status as "new"] ?? 1) : [0, 0, 0, 0, 0, 0] }} foot={openRequests.length ? `${openRequests.length} w toku` : "Zamów usługę w minutę"} href="/panel/zamowienia" />
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:gap-5">
-        <Card delay={0.05}>
-          <CardHead title="Zlecenia w toku" sub={active.length ? `${active.length} aktywne` : undefined}>
-            <Link href="/panel/zamowienia" className="text-[13px] text-muted hover:text-ink">
-              Wszystkie →
-            </Link>
-          </CardHead>
-          {active.length ? (
-            <div className="space-y-3">
-              {active.slice(0, 3).map((o) => (
-                <OrderCard key={o.id} o={o} today={t} compact />
-              ))}
-            </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          {hasProject ? (
+            <Panel title={user.project ?? "Twój projekt"} action={<Badge tone={done ? "green" : "accent"}>{done ? "Gotowe" : `Etap ${stage + 1} z ${steps.length}`}</Badge>}>
+              <p className="-mt-2 mb-4 text-[13.5px] text-muted">{done ? "Projekt opublikowany" : `${steps[stage]?.title ?? ""} · ${steps[stage]?.lead ?? ""}`}</p>
+              <ProjectProgress stage={stage} />
+            </Panel>
           ) : (
-            <Empty icon={ICONS.layers} title="Brak aktywnych zleceń" text="Gdy przyjmę Twoje zamówienie, zobaczysz tu postęp i termin.">
-              <Link href="/panel/zamow" className="btn btn-outline !h-10 text-[13.5px]">
-                Zamów usługę
-              </Link>
-            </Empty>
+            <Panel
+              title="Zlecenia w toku"
+              action={
+                <Link href="/panel/zamowienia" className="text-[13px] text-muted hover:text-ink">
+                  Wszystkie →
+                </Link>
+              }
+            >
+              {active.length ? (
+                <div className="space-y-3">
+                  {active.slice(0, 3).map((o) => (
+                    <OrderCard key={o.id} o={o} today={t} compact />
+                  ))}
+                </div>
+              ) : (
+                <Empty icon={ICONS.layers} title="Brak aktywnych zleceń" text="Gdy przyjmę Twoje zamówienie, zobaczysz tu postęp i termin.">
+                  <Link href="/panel/zamow" className="btn btn-outline !h-10 text-[13.5px]">
+                    Zamów usługę
+                  </Link>
+                </Empty>
+              )}
+            </Panel>
           )}
-        </Card>
-
-        <div className="grid content-start gap-4 lg:gap-5">
-          <Card delay={0.1} glow={due.length > 0}>
-            <CardHead title="Płatności" sub={due.length ? `${due.length} do opłacenia` : "Wszystko opłacone"}>
+        </div>
+        <div className="lg:col-span-4">
+          <Panel
+            i={1}
+            title="Płatności"
+            action={
               <Link href="/panel/platnosci" className="text-[13px] text-muted hover:text-ink">
                 Historia →
               </Link>
-            </CardHead>
+            }
+          >
             {due.length ? (
-              <ul className="space-y-2.5">
+              <div className="space-y-2.5">
                 {due.slice(0, 3).map((p) => (
-                  <li key={p.id} className="rounded-2xl border border-accent/25 bg-accent/[0.05] p-4">
+                  <div key={p.id} className="rounded-2xl bg-white/[0.03] p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 text-[14.5px] leading-snug">{p.title}</p>
-                      <p className="shrink-0 text-[17px] tabular-nums">{zl(Number(p.amount))}</p>
+                      <p className="min-w-0 text-[14px] leading-snug">{p.title}</p>
+                      <p className="shrink-0 text-[16px] tabular-nums">{zl(Number(p.amount))}</p>
                     </div>
                     {p.stripe_url && (
                       <a href={p.stripe_url} target="_blank" rel="noopener noreferrer" className="mt-3 flex h-10 items-center justify-center gap-2 rounded-full bg-ink text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
                         <Icon d={ICONS.card} className="size-4" /> Zapłać online
                       </a>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="flex items-center gap-2 text-[14px] text-emerald-200">
                 <Icon d={ICONS.check} className="size-4" /> Nic do zapłaty
               </p>
             )}
-          </Card>
+          </Panel>
+        </div>
+      </div>
 
-          <Card delay={0.15}>
-            <CardHead title="Kontakt" />
-            <ul className="-mx-2 space-y-1">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {hasProject && (
+          <div className="lg:col-span-8">
+            <Panel
+              i={2}
+              title="Zlecenia w toku"
+              action={
+                <Link href="/panel/zamowienia" className="text-[13px] text-muted hover:text-ink">
+                  Wszystkie →
+                </Link>
+              }
+            >
+              {active.length ? (
+                <div className="space-y-3">
+                  {active.slice(0, 3).map((o) => (
+                    <OrderCard key={o.id} o={o} today={t} compact />
+                  ))}
+                </div>
+              ) : (
+                <p className="py-6 text-center text-[13.5px] text-dim">Brak aktywnych zleceń.</p>
+              )}
+            </Panel>
+          </div>
+        )}
+        <div className={hasProject ? "lg:col-span-4" : "lg:col-span-12"}>
+          <Panel i={3} title="Kontakt">
+            <div className={`grid gap-2 ${hasProject ? "" : "sm:grid-cols-3"}`}>
               {contact.map((c) => (
-                <li key={c.label}>
-                  <a href={c.href} target={c.external ? "_blank" : undefined} rel="noopener noreferrer" className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]">
-                    <span className="grid size-9 place-items-center rounded-xl bg-white/[0.04] text-muted group-hover:text-accent-2">
-                      <Icon d={c.icon} className="size-4" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[11.5px] text-dim">{c.label}</span>
-                      <span className="block truncate text-[14px]">{c.value}</span>
-                    </span>
-                  </a>
-                </li>
+                <Row key={c.label} href={c.href} icon={c.icon} title={c.value} sub={c.label} />
               ))}
-            </ul>
-          </Card>
+            </div>
+          </Panel>
         </div>
       </div>
     </>

@@ -2,15 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { all, one } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/session";
-import { formFunnel, homeVisits, kpis, live, series, sources, topPages } from "@/lib/analytics";
+import { kpis, live, series, sources, topPages } from "@/lib/analytics";
 import { daysBetween, STATUS, today, upcoming } from "@/lib/orders";
-import { fmtDateTime } from "@/lib/format";
-import { AreaChart, BarList, Card, CardHead, Count, Delta, Icon } from "@/components/panel/kit";
+import { BarList, PageHead } from "@/components/panel/kit";
+import { Ago, GlowChart, Metric, Panel, Row } from "@/components/panel/dash";
 import { ICONS } from "@/components/panel/icons";
 import { financeSummary, paymentsDueSoon } from "@/lib/finance";
 import { listLogs } from "@/lib/logs";
-import CockpitHero, { Activity, Todo, type TodoItem } from "@/components/panel/CockpitHero";
-import { getContent } from "@/lib/content-server";
 
 export const metadata: Metadata = { title: "Kokpit" };
 
@@ -21,31 +19,26 @@ const greet = () => {
 
 export default async function Cockpit() {
   const admin = await requireAdmin();
-  const [k, s, home, clients, orders, money, newInq, inquiries, next, pages, src, funnel, fin, activity, nowOnline] = await Promise.all([
+  const [k, s, orders, money, inquiries, next, pages, src, fin, activity, nowOnline] = await Promise.all([
     kpis(30),
     series(30),
-    homeVisits(),
-    one<{ n: number }>("SELECT COUNT(*) n FROM users WHERE role = 'client' AND verified_at IS NOT NULL"),
     one<{ n: number }>("SELECT COUNT(*) n FROM orders WHERE status IN ('planned', 'active')"),
     one<{ n: number }>("SELECT COALESCE(SUM(amount), 0) n FROM orders WHERE status IN ('planned', 'active')"),
-    one<{ n: number }>("SELECT COUNT(*) n FROM inquiries WHERE status = 'new'"),
     all<{ id: string; name: string; topic: string | null; status: string; source: string | null; created_at: number }>("SELECT id, name, topic, status, source, created_at FROM inquiries ORDER BY created_at DESC LIMIT 8"),
     upcoming(6),
     topPages(30),
     sources(30),
-    formFunnel(30),
     financeSummary(),
     listLogs({ limit: 7, skip: ["auth", "system"] }),
     live(),
   ]);
-  const soon = (await getContent()).soon.enabled;
   const t = today();
-  const conv = k.cur.visitors ? Math.round((funnel[2].n / k.cur.visitors) * 1000) / 10 : 0;
 
   // „Do zrobienia”: zapytania bez odpowiedzi, płatności do pilnowania, bliskie terminy
   const pay = await paymentsDueSoon(3);
   const pln = (gr: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(gr / 100);
   const when = (d: number) => (d < 0 ? `${-d} dni po terminie` : d === 0 ? "dziś" : d === 1 ? "jutro" : `za ${d} dni`);
+  type TodoItem = { id: string; kind: "inquiry" | "payment" | "deadline"; title: string; sub: string; href: string; action: string; urgent: boolean };
   const todo: TodoItem[] = [
     ...inquiries
       .filter((q) => q.status === "new")
@@ -78,129 +71,127 @@ export default async function Cockpit() {
     .filter(Boolean)
     .join(" · ") + ".";
 
+  const pct = (cur: number, prev: number) => (prev ? Math.round(((cur - prev) / prev) * 1000) / 10 : null);
+  const day = (ms: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short", timeZone: "Europe/Warsaw" }).format(ms);
+  const prog = (o: { start_date: string; due_date: string }) => Math.max(0.04, Math.min(1, daysBetween(o.start_date, t) / Math.max(1, daysBetween(o.start_date, o.due_date))));
+  const paidShare = fin.year.revenue + fin.pending.amount ? fin.year.revenue / (fin.year.revenue + fin.pending.amount) : 0;
+  const ICON = { inquiry: ICONS.inbox, payment: ICONS.wallet, deadline: ICONS.calendar } as const;
+  const peak = s.reduce((b, d) => (d.visitors > b.visitors ? d : b), s[0] ?? { t: 0, visitors: 0, views: 0 });
+  const KIND: Record<string, string> = { payment: ICONS.wallet, inquiry: ICONS.inbox, content: ICONS.doc, client: ICONS.users, mail: ICONS.mail, settings: ICONS.gear };
+
   return (
     <>
-      <CockpitHero
-        soon={soon}
-        greeting={`${greet()},`}
-        name={`${admin.name.split(" ")[0]}.`}
-        accent={todo.length ? `${todo.length} ${todo.length === 1 ? "sprawa czeka." : todo.length < 5 ? "sprawy czekają." : "spraw czeka."}` : "Wszystko ogarnięte."}
-        date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
-        summary={summary}
-        stats={[
-          { label: "na stronie teraz", value: nowOnline, live: true, href: "/panel/admin/analityka" },
-          { label: "dziś na głównej", value: home.today, href: "/panel/admin/analityka" },
-          { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
-          { label: "do zapłaty", value: Math.round(fin.pending.amount / 100), suffix: " zł", href: "/panel/admin/finanse" },
-        ]}
-        actions={
-          <>
-            <Link href={todo[0]?.href ?? "/panel/admin/zapytania"} className="group btn btn-primary !h-12 text-[14.5px]">
-              <span className="roll">
-                <span>{todo.length ? "Zacznij od pierwszej" : "Zobacz zapytania"}</span>
-                <span aria-hidden>{todo.length ? "Zacznij od pierwszej" : "Zobacz zapytania"}</span>
-              </span>
-              <span className="dot !size-9">
-                <Icon d={ICONS.arrowUp} className="size-4 rotate-45" />
-              </span>
-            </Link>
-            <Link href="/panel/admin/finanse?nowa=1" className="btn btn-outline !h-12 text-[14.5px]">
-              Nowa płatność
-            </Link>
-          </>
-        }
-      />
+      <PageHead title="Kokpit" text={`${greet()}, ${admin.name.split(" ")[0]} — ${todo.length ? `${todo.length} ${todo.length === 1 ? "sprawa czeka" : todo.length < 5 ? "sprawy czekają" : "spraw czeka"} na Ciebie. ${summary}` : "wszystko ogarnięte."}`} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
-        <div className="min-w-0 lg:col-span-7">
-          <Todo items={todo} />
-        </div>
-        <div className="min-w-0 lg:col-span-5">
-          <Activity rows={activity.map((r) => ({ id: r.id, ts: Number(r.ts), level: r.level, kind: r.kind, message: r.message }))} />
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <Metric i={0} label="Przychód w tym miesiącu" value={Math.round(fin.month.revenue / 100)} suffix=" zł" viz={{ kind: "dots", data: fin.chart.map((m) => m.revenue) }} delta={pct(fin.month.revenue, fin.month.prevRevenue)} foot="vs poprzedni miesiąc" href="/panel/admin/finanse" />
+        <Metric i={1} label="Odwiedzający · 30 dni" value={k.cur.visitors} viz={{ kind: "bars", data: s.map((d) => d.visitors) }} delta={pct(k.cur.visitors, k.prev.visitors)} foot="vs poprzednie 30 dni" href="/panel/admin/analityka" />
+        <Metric
+          i={2}
+          label="Zlecenia w realizacji"
+          value={Number(orders?.n ?? 0)}
+          viz={{ kind: "lollipop", data: next.length ? next.map(prog) : [0.1, 0.1, 0.1] }}
+          foot={`${Number(money?.n ?? 0).toLocaleString("pl-PL")} zł w zleceniach`}
+          href="/panel/admin/kalendarz"
+        />
+        <Metric
+          i={3}
+          label="Do zapłaty"
+          value={Math.round(fin.pending.amount / 100)}
+          suffix=" zł"
+          viz={{ kind: "gauge", value: paidShare, label: `opłacono ${Math.round(paidShare * 100)}% w tym roku` }}
+          foot={fin.pending.overdue ? <span className="text-red-300">{fin.pending.overdue} po terminie</span> : `${fin.pending.count} ${fin.pending.count === 1 ? "płatność" : "płatności"} czeka`}
+          href="/panel/admin/finanse"
+        />
+      </div>
 
-        <Card className="lg:col-span-8" glow delay={0.2}>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-[13px] text-muted">Odwiedzający · 30 dni</p>
-              <div className="mt-2 flex items-end gap-3">
-                <Count value={k.cur.visitors} className="h-display text-[48px] leading-none sm:text-[60px]" />
-                <span className="mb-1.5">
-                  <Delta cur={k.cur.visitors} prev={k.prev.visitors} />
-                </span>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <GlowChart
+            title="Ruch na stronie"
+            value={
+              <>
+                <span className="text-ink tabular-nums">{k.cur.visitors.toLocaleString("pl-PL")}</span> odwiedzających · <span className="text-ink tabular-nums">{k.cur.pageviews.toLocaleString("pl-PL")}</span> odsłon · teraz{" "}
+                <span className="text-emerald-300 tabular-nums">{nowOnline}</span> na stronie
+              </>
+            }
+            aside={
+              <Link href="/panel/admin/analityka" className="flex items-center gap-1.5 rounded-full bg-white/[0.05] px-3.5 py-2 text-[13px] transition-colors hover:bg-white/[0.09] hover:text-ink">
+                Szczyt {peak.visitors} · {day(peak.t)}
+              </Link>
+            }
+            data={s.map((d) => ({ label: day(d.t), v: d.visitors }))}
+          />
+        </div>
+        <div className="lg:col-span-4">
+          <Panel
+            title={`Do zrobienia${todo.length ? ` · ${todo.length}` : ""}`}
+            action={
+              <Link href="/panel/admin/zapytania" className="text-[13px] text-muted hover:text-ink">
+                Zapytania →
+              </Link>
+            }
+          >
+            {todo.length ? (
+              <div className="-mr-1 max-h-[318px] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]" data-lenis-prevent>
+                {todo.map((it) => (
+                  <Row key={it.id} href={it.href} icon={ICON[it.kind]} title={it.title} sub={it.sub} badge={it.action} tone={it.urgent ? "red" : it.kind === "inquiry" ? "accent" : "muted"} dot={it.urgent} />
+                ))}
               </div>
+            ) : (
+              <div className="grid flex-1 place-items-center py-10 text-center">
+                <p className="text-[15px]">Wszystko ogarnięte</p>
+                <p className="mt-1 text-[13px] text-dim">Nowe sprawy pojawią się tutaj.</p>
+              </div>
+            )}
+          </Panel>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <Panel
+          i={1}
+          title="Aktywność"
+          action={
+            <Link href="/panel/admin/logi" className="text-[13px] text-muted hover:text-ink">
+              Logi →
+            </Link>
+          }
+        >
+          {activity.length ? (
+            <div className="space-y-2">
+              {activity.slice(0, 5).map((r) => (
+                <Row key={r.id} href="/panel/admin/logi" icon={KIND[r.kind] ?? ICONS.logs} title={r.message} badge={<Ago ts={Number(r.ts)} />} tone={r.level === "success" ? "green" : r.level === "error" ? "red" : "muted"} />
+              ))}
             </div>
-            <Link href="/panel/admin/analityka" className="group flex items-center gap-2 rounded-full border border-line-2 py-1.5 pr-1.5 pl-4 text-[13px] text-muted transition-colors hover:border-white/30 hover:text-ink">
-              Analityka
-              <span className="grid size-7 place-items-center rounded-full bg-white/[0.06] transition-colors group-hover:bg-accent group-hover:text-white">
-                <Icon d={ICONS.arrowUp} className="size-3.5 rotate-45" />
-              </span>
+          ) : (
+            <p className="py-8 text-center text-[13px] text-dim">Cisza — zdarzenia pojawią się tutaj.</p>
+          )}
+        </Panel>
+        <Panel
+          i={2}
+          title="Najbliższe terminy"
+          action={
+            <Link href="/panel/admin/kalendarz" className="text-[13px] text-muted hover:text-ink">
+              Kalendarz →
             </Link>
-          </div>
-          <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 sm:grid-cols-4">
-            {[
-              ["Odsłony", k.cur.pageviews.toLocaleString("pl-PL")],
-              ["Śr. czas wizyty", `${Math.floor(k.cur.avgTime / 60)}:${String(k.cur.avgTime % 60).padStart(2, "0")} min`],
-              ["Konwersja formularza", `${conv.toLocaleString("pl-PL")}%`],
-              ["Klienci z kontem", String(Number(clients?.n ?? 0))],
-            ].map(([l, v]) => (
-              <div key={l}>
-                <dt className="text-[12px] text-dim">{l}</dt>
-                <dd className="mt-0.5 text-[16px] tabular-nums">{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="mt-5">
-            <AreaChart data={s.map((d) => ({ t: d.t, a: d.visitors, b: d.views }))} label={["Odwiedzający", "Odsłony"]} />
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-4" delay={0.25}>
-          <CardHead title="Biznes" sub="Ten miesiąc">
-            <Link href="/panel/admin/finanse" className="text-[13px] text-muted transition-colors hover:text-ink">
-              Finanse →
-            </Link>
-          </CardHead>
-          <p className="text-[13px] text-muted">Zysk</p>
-          <Count value={Math.round(fin.month.profit / 100)} suffix=" zł" className={`h-display mt-1 block text-[44px] leading-none sm:text-[52px] ${fin.month.profit < 0 ? "text-red-300" : ""}`} />
-          <div className="mt-6 space-y-3">
-            {[
-              { l: "Przychód", v: fin.month.revenue, c: "from-accent to-accent-2" },
-              { l: "Koszty", v: fin.month.costs, c: "from-white/30 to-white/50" },
-            ].map((r) => (
-              <div key={r.l}>
-                <div className="mb-1.5 flex justify-between text-[13px]">
-                  <span className="text-muted">{r.l}</span>
-                  <span className="tabular-nums">{pln(r.v)}</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${r.c}`} style={{ width: `${Math.round((r.v / Math.max(1, fin.month.revenue, fin.month.costs)) * 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-2">
-            <Link href="/panel/admin/kalendarz" className="rounded-2xl border border-line p-3.5 transition-colors hover:border-line-2 hover:bg-white/[0.02]">
-              <p className="text-[12px] text-dim">W realizacji</p>
-              <p className="mt-1 text-[22px] leading-none tabular-nums">{Number(orders?.n ?? 0)}</p>
-              <p className="mt-1.5 truncate text-[12px] text-muted">{Number(money?.n ?? 0).toLocaleString("pl-PL")} zł</p>
-            </Link>
-            <Link href="/panel/admin/finanse" className="rounded-2xl border border-line p-3.5 transition-colors hover:border-line-2 hover:bg-white/[0.02]">
-              <p className="text-[12px] text-dim">Do zapłaty</p>
-              <p className="mt-1 text-[22px] leading-none tabular-nums">{fin.pending.count ?? 0}</p>
-              <p className="mt-1.5 truncate text-[12px] text-muted">{pln(fin.pending.amount)}</p>
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-6" delay={0.3}>
-          <CardHead title="Najczęściej oglądane" sub="30 dni" />
-          <BarList items={pages.slice(0, 6).map((p) => ({ name: p.path, n: Number(p.views) }))} />
-        </Card>
-        <Card className="lg:col-span-6" delay={0.35}>
-          <CardHead title="Skąd przychodzą" sub="30 dni" />
-          <BarList items={src.slice(0, 6).map((p) => ({ name: p.name, n: Number(p.visitors) }))} />
-        </Card>
+          }
+        >
+          {next.length ? (
+            <div className="space-y-2">
+              {next.slice(0, 5).map((o) => {
+                const d = daysBetween(t, o.due_date);
+                return <Row key={o.id} href="/panel/admin/kalendarz" icon={ICONS.calendar} title={o.title} sub={`${o.client_name} · ${STATUS[o.status].label}`} badge={when(d)} tone={d < 0 ? "red" : d <= 3 ? "amber" : "muted"} />;
+              })}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-[13px] text-dim">Brak zaplanowanych zleceń.</p>
+          )}
+        </Panel>
+        <Panel i={3} title="Skąd przychodzą" className="md:col-span-2 xl:col-span-1">
+          <BarList items={src.slice(0, 5).map((p) => ({ name: p.name, n: Number(p.visitors) }))} />
+          <p className="mt-auto pt-4 text-[12.5px] text-dim">Najczęściej: {pages[0]?.path ?? "—"}</p>
+        </Panel>
       </div>
     </>
   );

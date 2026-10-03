@@ -91,7 +91,7 @@ function Live() {
     <>
       <Link
         href="/panel/admin/analityka"
-        className="flex h-10 items-center gap-2 rounded-full border border-line-2 px-3 text-[12.5px] text-muted transition-colors hover:text-ink"
+        className="flex h-10 items-center gap-2 rounded-full bg-white/[0.05] px-3.5 text-[13px] text-muted transition-colors hover:text-ink lg:h-11 lg:bg-surface lg:ring-1 lg:ring-white/[0.04] lg:ring-inset"
         title="Osoby na stronie w ostatnich 5 minutach"
       >
         <span className="relative flex size-2">
@@ -238,7 +238,7 @@ function Bell({ notes }: { notes: Note[] }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative grid size-10 place-items-center rounded-full border border-line-2 text-muted transition-colors hover:text-ink"
+        className="relative grid size-10 place-items-center rounded-full bg-white/[0.05] text-muted transition-colors hover:text-ink lg:size-11 lg:bg-surface lg:ring-1 lg:ring-white/[0.04] lg:ring-inset"
         aria-label={`Powiadomienia (${notes.length})`}
       >
         <motion.span animate={notes.length ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.8 }}>
@@ -414,20 +414,18 @@ function NavItem({ l, on, big = false, rail = false, layout }: { l: NavLink; on:
     <Link
       href={l.href}
       title={rail ? l.label : undefined}
-      className={`group relative flex items-center gap-3 rounded-full px-2 transition-colors duration-300 ${big ? "h-14 text-[17px]" : "h-10 text-[14.5px] [@media(max-height:820px)]:h-9"} ${rail ? "lg:max-xl:justify-center lg:max-xl:px-0" : ""} ${on ? "text-ink" : "text-muted hover:text-ink"}`}
+      className={`group relative flex items-center gap-3 rounded-[14px] px-3 transition-colors duration-200 ${big ? "h-14 text-[17px]" : "h-11 text-[15px] [@media(max-height:820px)]:h-10"} ${rail ? "lg:max-xl:justify-center lg:max-xl:px-0" : ""} ${on ? "text-ink" : "text-muted hover:text-ink"}`}
     >
-      {on && <motion.span layoutId={layout} className="absolute inset-0 rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] ring-inset" transition={{ type: "spring", stiffness: 480, damping: 40 }} />}
-      {!on && <span className="absolute inset-0 rounded-full bg-white/[0.035] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />}
-      <span className={`relative grid shrink-0 place-items-center rounded-full transition-all duration-500 ${big ? "size-10" : "size-8"} ${on ? "bg-accent text-white shadow-[0_0_20px_-2px_rgb(139_108_255/0.85)]" : "text-dim group-hover:text-ink"}`}>
-        <Icon d={l.icon} className={big ? "size-[18px]" : "size-[16px]"} />
+      {on && <motion.span layoutId={layout} className="absolute inset-0 rounded-[14px] bg-white/[0.07] ring-1 ring-white/[0.05] ring-inset" transition={{ type: "spring", stiffness: 500, damping: 42 }} />}
+      {!on && <span className="absolute inset-0 rounded-[14px] bg-white/[0.035] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />}
+      <span className="relative grid shrink-0 place-items-center">
+        <Icon d={l.icon} className={`${big ? "size-5" : "size-[18px]"} ${on ? "text-ink" : ""}`} />
+        {on && <span className="absolute -right-1 -bottom-0.5 size-1.5 rounded-full bg-accent shadow-[0_0_8px_rgb(139_108_255/0.9)]" />}
       </span>
-      <span className={`roll relative min-w-0 flex-1 truncate ${rail ? "lg:max-xl:hidden" : ""}`}>
-        <span>{l.label}</span>
-        <span aria-hidden>{l.label}</span>
-      </span>
+      <span className={`relative min-w-0 flex-1 truncate ${rail ? "lg:max-xl:hidden" : ""}`}>{l.label}</span>
       {(l.badge ?? 0) > 0 && (
         <span
-          className={`relative mr-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-medium text-white shadow-[0_0_12px_-2px_rgb(139_108_255/0.9)] ${rail ? "lg:max-xl:absolute lg:max-xl:-top-0.5 lg:max-xl:right-1 lg:max-xl:mr-0 lg:max-xl:h-4 lg:max-xl:min-w-4 lg:max-xl:px-1 lg:max-xl:text-[9.5px]" : ""}`}
+          className={`relative grid h-5 min-w-5 place-items-center rounded-full bg-accent/20 px-1.5 text-[11.5px] font-medium text-accent-2 ${rail ? "lg:max-xl:absolute lg:max-xl:top-0.5 lg:max-xl:right-2 lg:max-xl:h-4 lg:max-xl:min-w-4 lg:max-xl:bg-accent lg:max-xl:px-1 lg:max-xl:text-[9.5px] lg:max-xl:text-white" : ""}`}
         >
           {l.badge}
         </span>
@@ -438,10 +436,10 @@ function NavItem({ l, on, big = false, rail = false, layout }: { l: NavLink; on:
 
 function Nav({ groups, current, big = false, rail = false, layout }: { groups: Group[]; current?: string; big?: boolean; rail?: boolean; layout: string }) {
   return (
-    <div className={big ? "space-y-7" : "space-y-4 [@media(max-height:820px)]:space-y-3"}>
+    <div className={big ? "space-y-6" : "space-y-5 [@media(max-height:820px)]:space-y-3"}>
       {groups.map((g, gi) => (
-        <motion.div key={g.id} initial={{ opacity: 0, x: big ? 0 : -8, y: big ? 12 : 0 }} animate={{ opacity: 1, x: 0, y: 0 }} transition={{ delay: 0.05 + gi * 0.05, duration: 0.6, ease }}>
-          <p className={`mb-1 px-3 text-[10.5px] font-medium tracking-[0.16em] text-dim uppercase ${rail ? "lg:max-xl:hidden" : ""}`}>{g.label}</p>
+        <div key={g.id}>
+          {gi > 0 && <p className={`mb-1.5 px-3 text-[13.5px] text-dim ${rail ? "lg:max-xl:hidden" : ""}`}>{g.label}</p>}
           {rail && gi > 0 && <span className="mx-auto mb-2 hidden h-px w-6 bg-line-2 lg:max-xl:block" />}
           <ul className="space-y-0.5">
             {g.links.map((l) => (
@@ -450,25 +448,22 @@ function Nav({ groups, current, big = false, rail = false, layout }: { groups: G
               </li>
             ))}
           </ul>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
 }
 
-function UserRow({ user, rail = false }: { user: Props["user"]; rail?: boolean }) {
+function UserRow({ user, admin, rail = false }: { user: Props["user"]; admin: boolean; rail?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 rounded-full border border-line bg-white/[0.02] p-1.5 pr-2 ${rail ? "lg:max-xl:flex-col lg:max-xl:gap-1 lg:max-xl:rounded-[22px] lg:max-xl:pr-1.5" : ""}`}>
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white shadow-[0_0_20px_-6px_rgb(139_108_255/0.9)]">{user.name.charAt(0).toUpperCase()}</span>
+    <div className={`flex items-center gap-3 ${rail ? "lg:max-xl:flex-col lg:max-xl:gap-1.5" : ""}`}>
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[15px] font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
       <span className={`min-w-0 flex-1 ${rail ? "lg:max-xl:hidden" : ""}`}>
-        <span className="block truncate text-[13.5px] leading-tight">{user.name}</span>
-        <span className="block truncate text-[11.5px] text-dim">{user.email}</span>
+        <span className="block truncate text-[15px] leading-tight">{user.name}</span>
+        <span className="mt-1 inline-block rounded-full bg-white/[0.06] px-2 py-0.5 text-[11.5px] text-muted">{admin ? "Administrator" : "Klient"}</span>
       </span>
-      <a href="/" target="_blank" className="grid size-8 shrink-0 place-items-center rounded-full text-dim transition-colors hover:bg-white/[0.06] hover:text-ink" aria-label="Otwórz stronę" title="Otwórz stronę">
-        <Icon d={ICONS.site} className="size-4" />
-      </a>
-      <form action={logout} className={rail ? "-ml-2 lg:max-xl:ml-0" : "-ml-2"}>
-        <button type="submit" className="grid size-8 place-items-center rounded-full text-dim transition-colors hover:bg-red-400/10 hover:text-red-200" aria-label="Wyloguj" title="Wyloguj">
+      <form action={logout}>
+        <button type="submit" className="grid size-9 place-items-center rounded-full text-dim transition-colors hover:bg-red-400/10 hover:text-red-200" aria-label="Wyloguj" title="Wyloguj">
           <Icon d={ICONS.logout} className="size-4" />
         </button>
       </form>
@@ -476,22 +471,34 @@ function UserRow({ user, rail = false }: { user: Props["user"]; rail?: boolean }
   );
 }
 
-function SiteStatus({ soon }: { soon: boolean }) {
+// karta na dole paska (jak „promo” we wzorze): stan strony i szybkie wyjście na nią / zamówienie usługi
+function SideCard({ admin, soon }: { admin: boolean; soon: boolean }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-line bg-white/[0.02] p-1.5">
-      <Link href="/panel/admin/tresci#soon" className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04]">
-        <span className="relative flex size-2">
-          {!soon && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />}
-          <span className={`relative size-2 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400"}`} />
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-[13px]">{soon ? "Tryb zapowiedzi" : "Strona online"}</span>
-          <span className="block truncate text-[11.5px] text-dim">afto.works</span>
-        </span>
-      </Link>
-      <a href="/" target="_blank" className="grid size-9 shrink-0 place-items-center rounded-xl text-dim transition-colors hover:bg-white/[0.05] hover:text-ink" aria-label="Otwórz stronę" title="Otwórz stronę">
-        <Icon d={ICONS.site} className="size-4" />
-      </a>
+    <div className="relative overflow-hidden rounded-[20px] bg-[linear-gradient(160deg,rgb(139_108_255/0.32),rgb(139_108_255/0.06)_55%,rgb(255_255_255/0.02))] p-4 ring-1 ring-white/[0.06] ring-inset">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.08)_1px,transparent_1.2px)] [mask-image:linear-gradient(to_top,black,transparent_60%)] bg-[size:6px_6px]" aria-hidden />
+      <span className="relative grid size-10 place-items-center rounded-full bg-accent text-white shadow-[0_0_24px_-4px_rgb(139_108_255/0.9)]">
+        <Icon d={admin ? ICONS.globe : ICONS.plus} className="size-5" />
+      </span>
+      {admin ? (
+        <>
+          <p className="relative mt-3 flex items-center gap-2 text-[16px] font-medium">
+            <span className={`size-2 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
+            {soon ? "Tryb zapowiedzi" : "Strona online"}
+          </p>
+          <p className="relative mt-1 text-[12.5px] leading-relaxed text-muted">{soon ? "Odwiedzający widzą zapowiedź. Zmienisz to w Treściach." : "afto.works działa i zbiera zapytania."}</p>
+          <a href="/" target="_blank" className="relative mt-4 flex h-10 items-center justify-center gap-2 rounded-full bg-white/[0.08] text-[13.5px] ring-1 ring-white/[0.1] transition-colors ring-inset hover:bg-white/[0.14]">
+            Otwórz stronę <Icon d="M5 12h14M13 6l6 6-6 6" className="size-4" />
+          </a>
+        </>
+      ) : (
+        <>
+          <p className="relative mt-3 text-[16px] font-medium">Coś nowego?</p>
+          <p className="relative mt-1 text-[12.5px] leading-relaxed text-muted">Strona, sklep, logo albo projekt UI — zamów w minutę.</p>
+          <Link href="/panel/zamow" className="relative mt-4 flex h-10 items-center justify-center gap-2 rounded-full bg-white/[0.08] text-[13.5px] ring-1 ring-white/[0.1] transition-colors ring-inset hover:bg-white/[0.14]">
+            Zamów usługę <Icon d="M5 12h14M13 6l6 6-6 6" className="size-4" />
+          </Link>
+        </>
+      )}
     </div>
   );
 }
@@ -523,7 +530,6 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
   const home = admin ? "/panel/admin" : "/panel";
   const match = (href: string) => (href === home ? path === href : path === href || path.startsWith(href + "/"));
   const current = links.filter((l) => match(l.href)).sort((a, b) => b.href.length - a.href.length)[0];
-  const group = groups.find((g) => g.links.some((l) => l.href === current?.href));
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -551,78 +557,55 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
 
   return (
     <div className="relative min-h-[100svh]">
-      {/* tło: delikatna poświata i linie jak na stronie głównej, wygaszone ku dołowi */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgb(255_255_255/0.028)_0_1px,transparent_1px_120px)] [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" />
-        <div className="absolute -top-[30vh] right-[-10vw] h-[80vh] w-[70vw] bg-[radial-gradient(closest-side,rgb(139_108_255/0.13),transparent)]" />
-        <div className="absolute bottom-[-30vh] left-[10vw] h-[60vh] w-[50vw] bg-[radial-gradient(closest-side,rgb(139_108_255/0.06),transparent)]" />
-      </div>
-
-      {/* boczny pasek (komputer) — pływająca szklana kolumna */}
-      <motion.aside
-        initial={{ x: -24, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease }}
-        className="fixed inset-y-3 left-3 z-40 hidden w-[76px] flex-col xl:w-[256px] overflow-hidden rounded-[28px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(17_17_24),rgb(10_10_14))] shadow-[0_1px_0_0_rgb(255_255_255/0.05)_inset,0_30px_80px_-30px_rgb(0_0_0/0.9)] lg:flex"
-        aria-label="Nawigacja panelu"
-      >
-        <div className="pointer-events-none absolute -top-24 -left-20 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.22),transparent)]" aria-hidden />
-        <div className="relative flex items-center justify-center px-5 pt-5 xl:justify-between">
+      {/* boczny pasek (komputer) — wypełniony panel przy krawędzi */}
+      <aside className="fixed inset-y-3 left-3 z-40 hidden w-[76px] flex-col overflow-hidden rounded-[24px] bg-surface ring-1 ring-white/[0.04] ring-inset lg:flex xl:w-[264px]" aria-label="Nawigacja panelu">
+        <div className="flex h-[76px] shrink-0 items-center justify-center px-5 xl:justify-start">
           <Link href={home} className="group flex items-center gap-2.5" aria-label="Panel — start">
             <Mark className="size-8 transition-transform duration-700 ease-out-expo group-hover:-rotate-12" />
-            <Wordmark className="hidden h-[19px] w-auto xl:block" />
+            <Wordmark className="hidden h-[20px] w-auto xl:block" />
           </Link>
-          <span className="hidden rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] text-muted xl:inline">{admin ? "Studio" : "Klient"}</span>
         </div>
 
-
-        <nav className="relative mt-6 flex-1 overflow-y-auto px-3 pb-3 [scrollbar-width:none] [@media(max-height:820px)]:mt-3" data-lenis-prevent>
+        <nav className="flex-1 overflow-y-auto px-3 pb-4 [scrollbar-width:none]" data-lenis-prevent>
           <Nav groups={groups} current={current?.href} rail layout="side-hl" />
         </nav>
 
-        <div className="relative border-t border-line p-3 [@media(max-height:820px)]:p-2">
-          <UserRow user={user} rail />
+        <div className="hidden shrink-0 px-3 pb-3 xl:block [@media(max-height:1040px)]:hidden">
+          <SideCard admin={admin} soon={soon} />
         </div>
-      </motion.aside>
+        <div className="shrink-0 border-t border-line p-4 lg:max-xl:px-2">
+          <UserRow user={user} admin={admin} rail />
+        </div>
+      </aside>
 
-      <div className="relative lg:pl-[92px] xl:pl-[272px]">
-        {/* górny pasek: gdzie jestem + szybkie akcje */}
-        <header className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,border-color] duration-500 ${scrolled ? "border-b border-line bg-bg lg:bg-bg/70 lg:backdrop-blur-xl" : "border-b border-transparent bg-bg lg:bg-transparent"}`}>
-          <div className="mx-auto flex h-16 max-w-[1640px] items-center justify-between gap-3 px-4 sm:px-8 lg:h-[76px] lg:px-10">
+      <div className="relative lg:pl-[92px] xl:pl-[280px]">
+        {/* górny pasek: tytuł strony + wyszukiwarka i szybkie akcje */}
+        <header className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,border-color] duration-300 ${scrolled ? "border-b border-line bg-bg lg:bg-bg/80 lg:backdrop-blur-xl" : "border-b border-transparent bg-bg"}`}>
+          <div className="mx-auto flex h-16 max-w-[1640px] items-center justify-between gap-3 px-4 sm:px-8 lg:h-[88px] lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <Link href={home} className="shrink-0 lg:hidden" aria-label="Panel — start">
                 <Mark className="size-8" />
               </Link>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p key={current?.href ?? path} className="flex min-w-0 items-center gap-2 text-[14px]" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease }}>
-                  {group && group.links.length > 1 && (
-                    <>
-                      <span className="hidden text-dim sm:inline">{group.label}</span>
-                      <span className="hidden text-line-2 sm:inline">/</span>
-                    </>
-                  )}
-                  <span className="truncate text-ink">{current?.label ?? "Panel"}</span>
-                </motion.p>
-              </AnimatePresence>
+              <h2 className="truncate text-[17px] font-medium tracking-[-0.02em] lg:text-[28px]">{current?.label ?? "Panel"}</h2>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
               {admin && soon && (
-                <Link href="/panel/admin/tresci#soon" className="hidden items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/[0.07] px-3 py-1.5 text-[12px] text-amber-100 xl:flex">
+                <Link href="/panel/admin/tresci#soon" className="hidden h-11 items-center gap-2 rounded-full bg-amber-300/[0.08] px-4 text-[13px] text-amber-100 xl:flex">
                   <span className="size-1.5 rounded-full bg-amber-300" /> Tryb zapowiedzi
                 </Link>
               )}
               {admin && (
                 <>
-                  <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full border border-line-2 text-muted transition-colors hover:text-ink lg:hidden" aria-label="Szukaj">
+                  <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full bg-white/[0.05] text-muted transition-colors hover:text-ink lg:hidden" aria-label="Szukaj">
                     <Icon d={ICONS.search} className="size-[18px]" />
                   </button>
-                  <button type="button" onClick={() => setCmdk(true)} className="mr-1 hidden h-10 w-[200px] items-center gap-2.5 rounded-full border border-line bg-white/[0.025] pr-2 pl-4 text-[13.5px] whitespace-nowrap text-dim transition-colors hover:border-line-2 hover:text-muted lg:flex xl:w-[300px]">
-                    <Icon d={ICONS.search} className="size-4 shrink-0" />
+                  <button type="button" onClick={() => setCmdk(true)} className="hidden h-11 w-[220px] items-center gap-2.5 rounded-full bg-surface pr-2 pl-4 text-[14px] whitespace-nowrap text-dim ring-1 ring-white/[0.04] transition-colors ring-inset hover:text-muted lg:flex xl:w-[320px]">
+                    <Icon d={ICONS.search} className="size-[18px] shrink-0" />
                     <span className="truncate">
                       Szukaj<span className="hidden xl:inline"> klientów, płatności</span>…
                     </span>
-                    <kbd className="ml-auto rounded-md border border-line-2 px-1.5 py-0.5 font-sans text-[11px] text-muted">⌘K</kbd>
+                    <kbd className="ml-auto rounded-md bg-white/[0.06] px-1.5 py-0.5 font-sans text-[11px] text-muted">⌘K</kbd>
                   </button>
                 </>
               )}
@@ -657,7 +640,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
           </div>
         </header>
 
-        <main className="relative mx-auto max-w-[1640px] px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+112px)] sm:px-8 lg:px-10 lg:pt-4 lg:pb-20">{children}</main>
+        <main className="relative mx-auto max-w-[1640px] px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+112px)] sm:px-8 lg:px-8 lg:pt-0 lg:pb-16">{children}</main>
       </div>
 
       {/* menu pełnoekranowe (telefon/tablet) */}
@@ -678,9 +661,11 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
                 )}
               </div>
               <Nav groups={groups} current={current?.href} big layout="sheet-hl" />
-              <div className="mt-8 space-y-2">
-                {admin && <SiteStatus soon={soon} />}
-                <UserRow user={user} />
+              <div className="mt-8 space-y-4">
+                <SideCard admin={admin} soon={soon} />
+                <div className="rounded-[20px] bg-surface p-4">
+                  <UserRow user={user} admin={admin} />
+                </div>
               </div>
             </div>
           </motion.div>

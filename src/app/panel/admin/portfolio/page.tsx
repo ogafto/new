@@ -16,6 +16,10 @@ export default async function PortfolioAdmin() {
   return (
     <>
       <PageHead title="Portfolio">
+        <a href="/portfolio" target="_blank" className="inline-flex h-10 items-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] text-muted transition-colors hover:border-white/30 hover:text-ink">
+          <Icon d={ICONS.site} className="size-4" />
+          Na stronie
+        </a>
         <Link href="/panel/admin/portfolio/nowy" className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
           <Icon d={ICONS.plus} className="size-4" />
           Dodaj projekt

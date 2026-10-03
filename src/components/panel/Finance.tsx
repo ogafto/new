@@ -1,431 +1,673 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { cancelPayment, checkStripe, createPayment, deleteExpense, deletePayment, saveExpense, sendPaymentEmail, setPaid, type NewPayment } from "@/app/panel/admin/finanse/actions";
-import type { Expense, Payment, PaymentStatus } from "@/lib/finance";
-import { Badge, Btn, Card, CardHead, ConfirmBtn, ease, Empty, field, Icon, ICONS, Label, Modal, Stat, Tabs, Toggle } from "./kit";
+import { cancelPayment, checkStripe, deleteExpense, deletePayment, sendPaymentEmail, setPaid } from "@/app/panel/admin/finanse/actions";
+import { Badge, Btn, Card, CardHead, ConfirmBtn, ease, Empty, Icon, ICONS, Modal, PageHead } from "./kit";
+import { Drawer, Kpi, RowMenu, SearchField, Segmented, Th, useToast, type MenuItem } from "./views/ui";
+import RevenueChart from "./finance/RevenueChart";
+import { NewExpenseForm, NewPaymentForm } from "./finance/Forms";
+import { cat, CATS, day, dayFull, daysTo, dueText, hue, initials, isoDay, isOpen, METHOD, monthName, norm, STATUS, zl, type Expense, type Msg, type P, type Summary } from "./finance/shared";
 
-type P = Payment & { status: PaymentStatus };
-type Summary = {
-  month: { revenue: number; costs: number; profit: number; prevRevenue: number; prevCosts: number };
-  year: { revenue: number; costs: number };
-  pending: { count: number; amount: number; overdue: number };
-  chart: { m: string; revenue: number; costs: number }[];
-  paidCount: number;
-};
+type Act = (fn: () => Promise<Msg>, after?: () => void) => void;
 
-const CATS: Record<string, string> = { hosting: "Hosting i domeny", tools: "Narzędzia i subskrypcje", ads: "Reklama", hardware: "Sprzęt", fees: "Opłaty i prowizje", other: "Inne" };
-const STATUS: Record<PaymentStatus, { label: string; tone: "default" | "accent" | "green" | "amber" | "red" | "sky" }> = {
-  pending: { label: "Oczekuje", tone: "sky" },
-  overdue: { label: "Po terminie", tone: "red" },
-  paid: { label: "Opłacone", tone: "green" },
-  canceled: { label: "Anulowane", tone: "default" },
-  refunded: { label: "Zwrot", tone: "amber" },
-};
-const METHOD: Record<string, string> = { stripe: "Stripe", transfer: "Przelew", cash: "Gotówka" };
-
-const zl = (gr: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: gr % 100 ? 2 : 0 }).format(gr / 100);
-const monthName = (m: string, style: "short" | "long" = "short") => new Intl.DateTimeFormat("pl-PL", { month: style }).format(new Date(`${m}-15T12:00:00`));
-const day = (ms: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short" }).format(ms);
-const isoDay = (iso: string) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short" }).format(new Date(`${iso}T12:00:00`));
-const today = () => new Date().toLocaleDateString("sv-SE");
-
-/* ---------- wykres 12 miesięcy ---------- */
-function Chart({ data }: { data: Summary["chart"] }) {
-  const [hover, setHover] = useState<number | null>(null);
-  const max = Math.max(1, ...data.map((d) => Math.max(d.revenue, d.costs)));
-  const h = hover ?? data.length - 1;
-  const cur = data[h];
+function Avatar({ name, size = "size-9" }: { name: string; size?: string }) {
+  const h = hue(name);
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-[13px] text-dim capitalize">{monthName(cur.m, "long")}</p>
-          <p className="mt-1 text-[26px] tracking-[-0.02em] tabular-nums">{zl(cur.revenue)}</p>
-        </div>
-        <div className="flex gap-4 text-[12.5px] text-muted">
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-accent" /> Przychód
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-white/25" /> Koszty {zl(cur.costs)}
-          </span>
-        </div>
-      </div>
-      <div className="flex h-44 items-end gap-1.5 sm:gap-2.5" onMouseLeave={() => setHover(null)}>
-        {data.map((d, i) => (
-          <button key={d.m} type="button" className="group flex h-full flex-1 flex-col items-center justify-end gap-2" onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} onClick={() => setHover(i)} aria-label={`${monthName(d.m, "long")}: ${zl(d.revenue)}`}>
-            <span className="flex h-full w-full items-end justify-center gap-[3px]">
-              <motion.span
-                className={`w-full max-w-[18px] rounded-t-[5px] ${i === h ? "bg-accent" : "bg-accent/45 group-hover:bg-accent/70"}`}
-                initial={{ height: 0 }}
-                animate={{ height: `${Math.max(d.revenue ? 3 : 0, (d.revenue / max) * 100)}%` }}
-                transition={{ delay: 0.15 + i * 0.03, duration: 0.9, ease }}
-              />
-              <motion.span
-                className="w-full max-w-[18px] rounded-t-[5px] bg-white/15"
-                initial={{ height: 0 }}
-                animate={{ height: `${Math.max(d.costs ? 3 : 0, (d.costs / max) * 100)}%` }}
-                transition={{ delay: 0.2 + i * 0.03, duration: 0.9, ease }}
-              />
-            </span>
-            <span className={`text-[10.5px] capitalize sm:text-[11.5px] ${i === h ? "text-ink" : "text-dim"}`}>{monthName(d.m).replace(".", "")}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    <span
+      className={`grid ${size} shrink-0 place-items-center rounded-full text-[12px] font-medium text-white/90 ring-1 ring-white/10`}
+      style={{ background: `linear-gradient(140deg, hsl(${h} 55% 42% / 0.9), hsl(${(h + 40) % 360} 60% 22% / 0.9))` }}
+      aria-hidden
+    >
+      {initials(name) || "?"}
+    </span>
   );
 }
 
-/* ---------- jedna płatność ---------- */
-function Row({ p, onMsg }: { p: P; onMsg: (m: { ok?: string; error?: string }) => void }) {
-  const router = useRouter();
-  const [busy, start] = useTransition();
-  const [copied, setCopied] = useState(false);
-  const act = (fn: () => Promise<{ ok?: string; error?: string }>) =>
-    start(async () => {
-      const r = await fn();
-      onMsg(r);
-      router.refresh();
-    });
-  const open = p.status === "pending" || p.status === "overdue";
+function StatusBadge({ s }: { s: P["status"] }) {
+  const st = STATUS[s];
   return (
-    <motion.li layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }} className={`rounded-2xl border border-line p-4 transition-colors hover:border-line-2 ${busy ? "opacity-60" : ""}`}>
-      <div className="flex items-start gap-3.5">
-        <span className={`hidden size-10 shrink-0 place-items-center rounded-xl sm:grid ${p.status === "paid" ? "bg-emerald-400/10 text-emerald-300" : p.status === "overdue" ? "bg-red-400/10 text-red-300" : "bg-white/[0.05] text-muted"}`}>
-          <Icon d={p.status === "paid" ? ICONS.check : p.method === "stripe" ? ICONS.card : ICONS.wallet} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-            <p className="min-w-0 text-[15px] leading-snug">{p.title}</p>
-            <p className="text-[16px] tabular-nums">{zl(p.amount)}</p>
-          </div>
-          <p className="mt-0.5 truncate text-[13px] text-dim">
-            {p.client_name}
-            {p.client_email ? ` · ${p.client_email}` : ""}
-          </p>
-          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[12px] text-dim">
-            <Badge tone={STATUS[p.status].tone}>{STATUS[p.status].label}</Badge>
-            <span>{METHOD[p.method]}</span>
-            <span>·</span>
-            <span>{p.paid_at ? `opłacono ${day(p.paid_at)}` : p.due_date ? `termin ${isoDay(p.due_date)}` : `utworzono ${day(p.created_at)}`}</span>
-          </div>
-        </div>
-      </div>
-      <div className="mt-3.5 flex flex-wrap gap-1.5 border-t border-line pt-3 sm:pl-[54px]">
-        {open && p.stripe_url && (
-          <>
-            <Btn
-              size="sm"
-              icon={copied ? ICONS.check : ICONS.link}
-              onClick={() =>
-                navigator.clipboard.writeText(p.stripe_url!).then(() => {
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                })
-              }
-            >
-              {copied ? "Skopiowano" : "Kopiuj link"}
-            </Btn>
-            {p.client_email && (
-              <Btn size="sm" icon={ICONS.mail} disabled={busy} onClick={() => act(() => sendPaymentEmail(p.id))}>
-                Wyślij mailem
+    <Badge tone={st.tone}>
+      <span className={`size-1.5 rounded-full ${s === "paid" ? "bg-emerald-400" : s === "overdue" ? "bg-red-400" : s === "pending" ? "bg-sky-400" : s === "refunded" ? "bg-amber-300" : "bg-white/40"}`} />
+      {st.label}
+    </Badge>
+  );
+}
+
+function When({ p, compact }: { p: P; compact?: boolean }) {
+  if (p.paid_at)
+    return (
+      <span className="text-muted">
+        {compact ? "" : <span className="text-dim">Opłacono </span>}
+        {day(p.paid_at)}
+      </span>
+    );
+  if (p.due_date) {
+    const late = isOpen(p) && daysTo(p.due_date) < 0;
+    return (
+      <span className="flex flex-col leading-tight">
+        <span className="text-muted">{isoDay(p.due_date)}</span>
+        {isOpen(p) && <span className={`text-[11.5px] ${late ? "text-red-300" : "text-dim"}`}>{dueText(p.due_date)}</span>}
+      </span>
+    );
+  }
+  return <span className="text-dim">—</span>;
+}
+
+const copy = (text: string, onMsg: (m: Msg) => void) => navigator.clipboard.writeText(text).then(() => onMsg({ ok: "Skopiowano link." }));
+
+function paymentMenu(p: P, act: Act, onMsg: (m: Msg) => void, onOpen?: () => void): MenuItem[] {
+  const open = isOpen(p);
+  return [
+    { label: "Szczegóły", icon: ICONS.eye, onSelect: () => onOpen?.(), hidden: !onOpen },
+    { label: "Kopiuj link", icon: ICONS.link, onSelect: () => copy(p.stripe_url!, onMsg), hidden: !open || !p.stripe_url },
+    { label: "Wyślij mailem", icon: ICONS.mail, onSelect: () => act(() => sendPaymentEmail(p.id)), hidden: !open || !p.stripe_url || !p.client_email },
+    { label: "Sprawdź w Stripe", icon: ICONS.refresh, onSelect: () => act(() => checkStripe(p.id)), hidden: !open || !p.stripe_session },
+    { label: "Oznacz jako opłacone", icon: ICONS.check, onSelect: () => act(() => setPaid(p.id)), hidden: !open, sep: true },
+    { label: "Anuluj", icon: ICONS.close, onSelect: () => act(() => cancelPayment(p.id)), hidden: !open },
+    { label: "Usuń", icon: ICONS.trash, tone: "danger", onSelect: () => act(() => deletePayment(p.id)), sep: true },
+  ];
+}
+
+/* ---------- szczegóły płatności ---------- */
+function PaymentDrawer({ p, onClose, act, onMsg, busy }: { p: P | null; onClose: () => void; act: Act; onMsg: (m: Msg) => void; busy: boolean }) {
+  const open = p ? isOpen(p) : false;
+  const steps = p
+    ? [
+        { label: "Utworzono", at: dayFull(p.created_at), done: true },
+        p.due_date ? { label: "Termin płatności", at: `${isoDay(p.due_date, true)}${open ? ` · ${dueText(p.due_date)}` : ""}`, done: !open || daysTo(p.due_date) < 0, late: open && daysTo(p.due_date) < 0 } : null,
+        p.paid_at ? { label: p.status === "refunded" ? "Opłacono, potem zwrot" : "Opłacono", at: dayFull(p.paid_at), done: true, ok: true } : p.status === "canceled" ? { label: "Anulowano", at: "", done: true } : { label: "Oczekuje na wpłatę", at: "", done: false },
+      ].filter(Boolean)
+    : [];
+  return (
+    <Drawer
+      open={!!p}
+      onClose={onClose}
+      title={p?.title ?? ""}
+      sub={p && <span className="flex flex-wrap items-center gap-2"><StatusBadge s={p.status} /> <span>{METHOD[p.method]}</span></span>}
+      footer={
+        p && (
+          <div className="flex flex-wrap items-center gap-2">
+            {open && (
+              <Btn size="sm" variant="primary" icon={ICONS.check} disabled={busy} onClick={() => act(() => setPaid(p.id), onClose)}>
+                Oznacz opłacone
               </Btn>
             )}
-            <Btn size="sm" variant="ghost" icon={ICONS.refresh} disabled={busy} onClick={() => act(() => checkStripe(p.id))}>
-              Sprawdź
-            </Btn>
-          </>
-        )}
-        {open && (
-          <Btn size="sm" variant="ghost" icon={ICONS.check} disabled={busy} onClick={() => act(() => setPaid(p.id))}>
-            Opłacone
-          </Btn>
-        )}
-        {open && (
-          <Btn size="sm" variant="ghost" icon={ICONS.close} disabled={busy} onClick={() => act(() => cancelPayment(p.id))}>
-            Anuluj
-          </Btn>
-        )}
-        <span className="ml-auto">
-          <ConfirmBtn onConfirm={() => act(() => deletePayment(p.id))} />
-        </span>
-      </div>
-    </motion.li>
+            {open && (
+              <Btn size="sm" variant="ghost" icon={ICONS.close} disabled={busy} onClick={() => act(() => cancelPayment(p.id), onClose)}>
+                Anuluj
+              </Btn>
+            )}
+            <span className="ml-auto">
+              <ConfirmBtn onConfirm={() => act(() => deletePayment(p.id), onClose)} />
+            </span>
+          </div>
+        )
+      }
+    >
+      {p && (
+        <div className={`transition-opacity ${busy ? "opacity-60" : ""}`}>
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+            <p className="text-[12.5px] text-dim">Kwota</p>
+            <p className="h-display mt-1.5 text-[38px] leading-none tabular-nums">{zl(p.amount)}</p>
+            <div className="mt-4 flex items-center gap-3 border-t border-white/[0.06] pt-4">
+              <Avatar name={p.client_name} />
+              <div className="min-w-0">
+                <p className="truncate text-[14px]">{p.client_name}</p>
+                {p.client_email ? (
+                  <a href={`mailto:${p.client_email}`} className="block truncate text-[12.5px] text-dim transition-colors hover:text-accent-2">
+                    {p.client_email}
+                  </a>
+                ) : (
+                  <p className="text-[12.5px] text-dim">bez e-maila</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {open && p.stripe_url && (
+            <div className="mt-4">
+              <p className="mb-2 text-[12.5px] text-dim">Link do płatności</p>
+              <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-black/20 p-1.5 pl-3">
+                <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-accent-2">{p.stripe_url.replace(/^https?:\/\//, "")}</span>
+                <button type="button" onClick={() => copy(p.stripe_url!, onMsg)} className="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/[0.07] hover:text-ink" aria-label="Kopiuj link">
+                  <Icon d={ICONS.copy} className="size-4" />
+                </button>
+                <a href={p.stripe_url} target="_blank" rel="noreferrer" className="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/[0.07] hover:text-ink" aria-label="Otwórz link">
+                  <Icon d={ICONS.site} className="size-4" />
+                </a>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {p.client_email && (
+                  <Btn size="sm" icon={ICONS.mail} disabled={busy} onClick={() => act(() => sendPaymentEmail(p.id))}>
+                    Wyślij mailem
+                  </Btn>
+                )}
+                {p.stripe_session && (
+                  <Btn size="sm" variant="ghost" icon={ICONS.refresh} disabled={busy} onClick={() => act(() => checkStripe(p.id))}>
+                    Sprawdź w Stripe
+                  </Btn>
+                )}
+              </div>
+            </div>
+          )}
+
+          <p className="mt-6 mb-3 text-[12.5px] text-dim">Historia</p>
+          <ol className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[5px] before:w-px before:bg-white/[0.08]">
+            {steps.map((s) => (
+              <li key={s!.label} className="relative flex gap-3.5 pl-0">
+                <span className={`relative mt-1 size-[11px] shrink-0 rounded-full ring-4 ring-[rgb(16_16_22)] ${"ok" in s! && s.ok ? "bg-emerald-400" : "late" in s! && s.late ? "bg-red-400" : s!.done ? "bg-accent" : "border border-dashed border-white/30 bg-transparent"}`} />
+                <div className="min-w-0">
+                  <p className={`text-[13.5px] ${s!.done ? "" : "text-muted"}`}>{s!.label}</p>
+                  {s!.at && <p className={`text-[12px] ${"late" in s! && s.late ? "text-red-300" : "text-dim"}`}>{s!.at}</p>}
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <dl className="mt-6 divide-y divide-white/[0.06] rounded-2xl border border-white/[0.07] text-[13px]">
+            {[
+              ["Metoda", METHOD[p.method]],
+              ["Usługa", p.service],
+              ["Notatka", p.notes],
+              ["Stripe", p.stripe_payment ?? p.stripe_session],
+              ["ID", p.id],
+            ]
+              .filter(([, v]) => v)
+              .map(([k, v]) => (
+                <div key={k} className="flex items-start justify-between gap-4 px-4 py-2.5">
+                  <dt className="shrink-0 text-dim">{k}</dt>
+                  <dd className={`min-w-0 text-right break-words ${k === "Stripe" || k === "ID" ? "font-mono text-[11.5px] text-muted" : ""}`}>{v}</dd>
+                </div>
+              ))}
+          </dl>
+        </div>
+      )}
+    </Drawer>
   );
 }
 
-/* ---------- okno: nowa płatność ---------- */
-function NewPaymentForm({ stripe, clients, services, onDone }: { stripe: boolean; clients: { id: string; name: string; email: string }[]; services: { id: string; name: string }[]; onDone: (m: { ok?: string; error?: string }) => void }) {
-  const router = useRouter();
-  const [d, setD] = useState<NewPayment>({ title: "", client_name: "", client_email: "", user_id: "", service: "", amount: "", due_date: "", method: stripe ? "stripe" : "transfer", notes: "", paid: false, send: false });
-  const [err, setErr] = useState("");
-  const [link, setLink] = useState("");
-  const [pending, start] = useTransition();
-  const up = (p: Partial<NewPayment>) => setD((x) => ({ ...x, ...p }));
+/* ---------- tabela płatności ---------- */
+type PF = "all" | "open" | "overdue" | "paid" | "closed";
+type Sort = { k: "default" | "amount" | "date"; dir: 1 | -1 };
+const PAGE = 15;
 
-  if (link)
-    return (
-      <div className="text-center">
-        <div className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-400/10 text-emerald-300">
-          <Icon d={ICONS.check} className="size-6" />
-        </div>
-        <p className="mt-4 text-[17px]">Link do płatności gotowy</p>
-        <div className="mt-5 flex items-center gap-2 rounded-xl border border-line-2 p-1.5 pl-3.5 text-left">
-          <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-accent-2">{link}</span>
-          <Btn size="sm" variant="primary" icon={ICONS.copy} onClick={() => navigator.clipboard.writeText(link)}>
-            Kopiuj
-          </Btn>
-        </div>
-        <Btn className="mt-5" onClick={() => onDone({})}>
-          Gotowe
-        </Btn>
-      </div>
+function SortTh({ label, k, sort, setSort, right, className = "" }: { label: string; k: Sort["k"]; sort: Sort; setSort: (s: Sort) => void; right?: boolean; className?: string }) {
+  const on = sort.k === k;
+  return (
+    <Th right={right} className={className}>
+      <button type="button" onClick={() => setSort(on && sort.dir === -1 ? { k, dir: 1 } : on ? { k: "default", dir: -1 } : { k, dir: -1 })} className={`inline-flex items-center gap-1 transition-colors hover:text-ink ${on ? "text-muted" : ""}`}>
+        {label}
+        <svg viewBox="0 0 10 10" className={`size-2.5 transition-transform ${on ? "opacity-100" : "opacity-40"} ${on && sort.dir === 1 ? "rotate-180" : ""}`} aria-hidden>
+          <path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        </svg>
+      </button>
+    </Th>
+  );
+}
+
+function Payments({ payments, act, onMsg, onNew, busy }: { payments: P[]; act: Act; onMsg: (m: Msg) => void; onNew: () => void; busy: boolean }) {
+  const [f, setF] = useState<PF>("all");
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<Sort>({ k: "default", dir: -1 });
+  const [limit, setLimit] = useState(PAGE);
+  const [sel, setSel] = useState<string | null>(null);
+  const counts = useMemo(
+    () => ({
+      all: payments.length,
+      open: payments.filter(isOpen).length,
+      overdue: payments.filter((p) => p.status === "overdue").length,
+      paid: payments.filter((p) => p.status === "paid").length,
+      closed: payments.filter((p) => p.status === "canceled" || p.status === "refunded").length,
+    }),
+    [payments],
+  );
+  const list = useMemo(() => {
+    const nq = norm(q.trim());
+    const r = payments.filter(
+      (p) =>
+        (f === "all" || (f === "open" ? isOpen(p) : f === "closed" ? p.status === "canceled" || p.status === "refunded" : p.status === f)) &&
+        (!nq || norm(`${p.title} ${p.client_name} ${p.client_email ?? ""} ${p.amount / 100}`).includes(nq)),
     );
+    if (sort.k === "amount") r.sort((a, b) => (a.amount - b.amount) * sort.dir);
+    if (sort.k === "date") {
+      const t = (p: P) => p.paid_at ?? (p.due_date ? new Date(`${p.due_date}T12:00:00`).getTime() : p.created_at);
+      r.sort((a, b) => (t(a) - t(b)) * sort.dir);
+    }
+    return r;
+  }, [payments, f, q, sort]);
+  const shown = list.slice(0, limit);
+  const sum = list.reduce((a, p) => a + (p.status === "canceled" ? 0 : p.amount), 0);
+  const current = payments.find((p) => p.id === sel) ?? null;
 
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        start(async () => {
-          setErr("");
-          const r = await createPayment(d);
-          if (r.error && !r.url) return setErr(r.error);
-          router.refresh();
-          if (r.url && !d.send) setLink(r.url);
-          else onDone(r);
-        });
-      }}
-    >
-      <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-line p-1.5">
-        {(["stripe", "transfer", "cash"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            disabled={m === "stripe" && !stripe}
-            onClick={() => up({ method: m, paid: m === "stripe" ? false : d.paid })}
-            className={`relative rounded-xl px-2 py-2.5 text-[13px] transition-colors disabled:opacity-40 ${d.method === m ? "text-ink" : "text-muted hover:text-ink"}`}
-          >
-            {d.method === m && <motion.span layoutId="pay-method" className="absolute inset-0 rounded-xl bg-white/[0.08]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-            <span className="relative">{m === "stripe" ? "Link Stripe" : METHOD[m]}</span>
-          </button>
-        ))}
-      </div>
-      {!stripe && (
-        <p className="text-[12.5px] text-dim">
-          Podłącz Stripe w{" "}
-          <Link href="/panel/admin/ustawienia" className="text-accent-2 underline-offset-4 hover:underline">
-            Ustawieniach
-          </Link>
-          , żeby generować linki do płatności kartą/BLIK.
-        </p>
-      )}
-
-      <Label label="Za co">
-        <input required className={`${field} h-11`} value={d.title} onChange={(e) => up({ title: e.target.value })} placeholder="np. Strona internetowa — zaliczka 50%" />
-      </Label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Label label="Kwota (zł)">
-          <input required inputMode="decimal" className={`${field} h-11 text-[16px] tabular-nums`} value={d.amount} onChange={(e) => up({ amount: e.target.value.replace(/[^\d,.]/g, "") })} placeholder="0,00" />
-        </Label>
-        <Label label="Usługa">
-          <select className={`${field} h-11 bg-surface`} value={d.service} onChange={(e) => up({ service: e.target.value })}>
-            <option value="">—</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </Label>
+    <>
+      <div className="flex flex-col gap-3 px-4 pb-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+        <Segmented
+          id="pay-f"
+          value={f}
+          onChange={(v) => {
+            setF(v);
+            setLimit(PAGE);
+          }}
+          items={[
+            { value: "all", label: "Wszystkie", count: counts.all },
+            { value: "open", label: "Do zapłaty", count: counts.open },
+            { value: "overdue", label: "Po terminie", count: counts.overdue, dot: counts.overdue ? "bg-red-400" : undefined },
+            { value: "paid", label: "Opłacone", count: counts.paid },
+            { value: "closed", label: "Anulowane", count: counts.closed },
+          ]}
+        />
+        <SearchField value={q} onChange={(v) => (setQ(v), setLimit(PAGE))} placeholder="Szukaj płatności…" className="w-full lg:w-72" />
       </div>
 
-      {clients.length > 0 && (
-        <Label label="Klient z kontem (opcjonalnie)">
-          <select
-            className={`${field} h-11 bg-surface`}
-            value={d.user_id}
-            onChange={(e) => {
-              const c = clients.find((x) => x.id === e.target.value);
-              up({ user_id: e.target.value, client_name: c?.name ?? d.client_name, client_email: c?.email ?? d.client_email });
-            }}
-          >
-            <option value="">— wpisz ręcznie —</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} · {c.email}
-              </option>
+      {list.length === 0 ? (
+        <div className="border-t border-white/[0.06]">
+          {payments.length ? (
+            <Empty icon={ICONS.search} title="Nic nie pasuje" text="Zmień filtr albo frazę." />
+          ) : (
+            <Empty icon={ICONS.wallet} title="Brak płatności">
+              <Btn variant="primary" size="sm" icon={ICONS.plus} onClick={onNew}>
+                Nowa płatność
+              </Btn>
+            </Empty>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* tabela — tablet/desktop */}
+          <table className="hidden w-full table-fixed border-t border-white/[0.06] text-[13.5px] md:table">
+            <thead className="bg-white/[0.015]">
+              <tr className="border-b border-white/[0.06]">
+                <Th>Płatność</Th>
+                <SortTh label="Kwota" k="amount" sort={sort} setSort={setSort} right className="w-[112px] lg:w-[130px]" />
+                <Th className="w-[128px] lg:w-[136px]">Status</Th>
+                <Th className="hidden w-[104px] xl:table-cell">Metoda</Th>
+                <SortTh label="Termin / wpłata" k="date" sort={sort} setSort={setSort} className="w-[128px] lg:w-[150px]" />
+                <Th className="w-[52px] lg:w-[60px]" />
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence initial={false}>
+                {shown.map((p, i) => (
+                  <motion.tr
+                    key={p.id}
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(i, 12) * 0.015, ease }}
+                    onClick={() => setSel(p.id)}
+                    className={`group h-[60px] cursor-pointer border-b border-white/[0.045] transition-colors last:border-0 hover:bg-white/[0.025] ${p.status === "canceled" ? "opacity-55" : ""}`}
+                  >
+                    <td className="py-2 pr-3 pl-5">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={p.client_name} />
+                        <div className="min-w-0">
+                          <p className="truncate text-ink">{p.title}</p>
+                          <p className="truncate text-[12.5px] text-dim">{p.client_name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-3 text-right text-[14px] tabular-nums ${p.status === "canceled" ? "text-dim line-through" : ""}`}>{zl(p.amount)}</td>
+                    <td className="px-3">
+                      <StatusBadge s={p.status} />
+                    </td>
+                    <td className="hidden px-3 text-muted xl:table-cell">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Icon d={p.method === "stripe" ? ICONS.card : p.method === "cash" ? ICONS.money : ICONS.wallet} className="size-3.5 text-dim" />
+                        {METHOD[p.method]}
+                      </span>
+                    </td>
+                    <td className="px-3 text-[13px]">
+                      <When p={p} />
+                    </td>
+                    <td className="pr-4 pl-1 text-right" onClick={(e) => e.stopPropagation()}>
+                      <span className="inline-block opacity-60 transition-opacity group-hover:opacity-100">
+                        <RowMenu items={paymentMenu(p, act, onMsg)} />
+                      </span>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+
+          {/* karty — telefon */}
+          <ul className="divide-y divide-white/[0.05] border-t border-white/[0.06] md:hidden">
+            {shown.map((p) => (
+              <li key={p.id} className={`flex items-center gap-1 pr-2 ${p.status === "canceled" ? "opacity-55" : ""}`}>
+                <button type="button" onClick={() => setSel(p.id)} className="flex min-w-0 flex-1 items-start gap-3 py-3.5 pl-4 text-left active:bg-white/[0.03]">
+                  <Avatar name={p.client_name} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="truncate text-[14px]">{p.title}</span>
+                      <span className="shrink-0 text-[14.5px] tabular-nums">{zl(p.amount)}</span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12.5px] text-dim">{p.client_name}</span>
+                    <span className="mt-2 flex items-center gap-2 text-[12px]">
+                      <StatusBadge s={p.status} />
+                      <span className={p.status === "overdue" ? "text-red-300" : "text-dim"}>{p.paid_at ? `opłacono ${day(p.paid_at)}` : p.due_date ? (isOpen(p) ? dueText(p.due_date) : isoDay(p.due_date)) : METHOD[p.method]}</span>
+                    </span>
+                  </span>
+                </button>
+                <RowMenu items={paymentMenu(p, act, onMsg)} />
+              </li>
             ))}
-          </select>
-        </Label>
+          </ul>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-3.5 text-[12.5px] text-dim">
+            <span>
+              {list.length} {list.length === 1 ? "pozycja" : list.length % 10 >= 2 && list.length % 10 <= 4 && (list.length % 100 < 10 || list.length % 100 >= 20) ? "pozycje" : "pozycji"} · suma <span className="text-muted tabular-nums">{zl(sum)}</span>
+            </span>
+            {list.length > limit && (
+              <button type="button" onClick={() => setLimit((l) => l + PAGE * 2)} className="rounded-full border border-white/[0.1] px-3.5 py-1.5 text-muted transition-colors hover:border-white/25 hover:text-ink">
+                Pokaż więcej · {list.length - limit}
+              </button>
+            )}
+          </div>
+        </>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Label label="Klient">
-          <input required className={`${field} h-11`} value={d.client_name} onChange={(e) => up({ client_name: e.target.value })} placeholder="Imię i nazwisko / firma" />
-        </Label>
-        <Label label="E-mail klienta">
-          <input type="email" className={`${field} h-11`} value={d.client_email} onChange={(e) => up({ client_email: e.target.value })} placeholder="opcjonalnie" />
-        </Label>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Label label="Termin płatności">
-          <input type="date" min={today()} className={`${field} h-11`} value={d.due_date} onChange={(e) => up({ due_date: e.target.value })} />
-        </Label>
-        <Label label="Notatka">
-          <input className={`${field} h-11`} value={d.notes} onChange={(e) => up({ notes: e.target.value })} placeholder="opcjonalnie" />
-        </Label>
-      </div>
-      <div className="space-y-3 rounded-2xl border border-line p-4">
-        {d.method === "stripe" ? (
-          <Toggle label="Wyślij link klientowi mailem" checked={d.send} onChange={(v) => up({ send: v })} />
-        ) : (
-          <Toggle label="Już opłacone (zapisz jako wpłatę)" checked={d.paid} onChange={(v) => up({ paid: v })} />
-        )}
-      </div>
-      <AnimatePresence>
-        {err && (
-          <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden text-[13.5px] text-red-300">
-            {err}
-          </motion.p>
-        )}
-      </AnimatePresence>
-      <Btn type="submit" variant="primary" icon={d.method === "stripe" ? ICONS.link : ICONS.check} disabled={pending} className="w-full">
-        {pending ? "Chwileczkę…" : d.method === "stripe" ? "Utwórz link do płatności" : d.paid ? "Zapisz wpłatę" : "Zapisz płatność"}
-      </Btn>
-    </form>
+      <PaymentDrawer p={current} onClose={() => setSel(null)} act={act} onMsg={onMsg} busy={busy} />
+    </>
   );
 }
 
-function NewExpenseForm({ onDone }: { onDone: (m: { ok?: string; error?: string }) => void }) {
-  const router = useRouter();
-  const [d, setD] = useState({ title: "", category: "tools", amount: "", date: today(), recurring: false, notes: "" });
-  const [err, setErr] = useState("");
-  const [pending, start] = useTransition();
+/* ---------- tabela kosztów ---------- */
+function Expenses({ expenses, act, onNew }: { expenses: Expense[]; act: Act; onNew: () => void }) {
+  const [f, setF] = useState<"all" | "rec" | "once">("all");
+  const [q, setQ] = useState("");
+  const list = useMemo(() => {
+    const nq = norm(q.trim());
+    return expenses.filter((e) => (f === "all" || (f === "rec" ? !!e.recurring : !e.recurring)) && (!nq || norm(`${e.title} ${cat(e.category).label} ${e.amount / 100}`).includes(nq)));
+  }, [expenses, f, q]);
+  const monthly = expenses.filter((e) => e.recurring).reduce((a, e) => a + e.amount, 0);
+  const menu = (e: Expense): MenuItem[] => [{ label: "Usuń koszt", icon: ICONS.trash, tone: "danger", onSelect: () => act(() => deleteExpense(e.id)) }];
+  const Recurring = () => (
+    <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[11.5px] text-accent-2">
+      <Icon d={ICONS.refresh} className="size-3" /> co miesiąc
+    </span>
+  );
+
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        start(async () => {
-          const r = await saveExpense(d);
-          if (r.error) return setErr(r.error);
-          router.refresh();
-          onDone(r);
-        });
-      }}
-    >
-      <Label label="Nazwa">
-        <input required className={`${field} h-11`} value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} placeholder="np. Figma, domena, hosting" />
-      </Label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Label label="Kwota (zł)">
-          <input required inputMode="decimal" className={`${field} h-11 tabular-nums`} value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value.replace(/[^\d,.]/g, "") })} placeholder="0,00" />
-        </Label>
-        <Label label="Data">
-          <input type="date" required className={`${field} h-11`} value={d.date} onChange={(e) => setD({ ...d, date: e.target.value })} />
-        </Label>
+    <>
+      <div className="flex flex-col gap-3 px-4 pb-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+        <Segmented
+          id="exp-f"
+          value={f}
+          onChange={setF}
+          items={[
+            { value: "all", label: "Wszystkie", count: expenses.length },
+            { value: "rec", label: "Stałe", count: expenses.filter((e) => e.recurring).length },
+            { value: "once", label: "Jednorazowe", count: expenses.filter((e) => !e.recurring).length },
+          ]}
+        />
+        <SearchField value={q} onChange={setQ} placeholder="Szukaj kosztu…" className="w-full lg:w-72" />
       </div>
-      <Label label="Kategoria">
-        <select className={`${field} h-11 bg-surface`} value={d.category} onChange={(e) => setD({ ...d, category: e.target.value })}>
-          {Object.entries(CATS).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </Label>
-      <Toggle label="Powtarza się co miesiąc (subskrypcja)" checked={d.recurring} onChange={(v) => setD({ ...d, recurring: v })} />
-      {err && <p className="text-[13.5px] text-red-300">{err}</p>}
-      <Btn type="submit" variant="primary" icon={ICONS.check} disabled={pending} className="w-full">
-        {pending ? "Zapisywanie…" : "Dodaj koszt"}
-      </Btn>
-    </form>
+      {list.length === 0 ? (
+        <div className="border-t border-white/[0.06]">
+          {expenses.length ? (
+            <Empty icon={ICONS.search} title="Nic nie pasuje" text="Zmień filtr albo frazę." />
+          ) : (
+            <Empty icon={ICONS.receipt} title="Brak kosztów">
+              <Btn size="sm" icon={ICONS.plus} onClick={onNew}>
+                Dodaj koszt
+              </Btn>
+            </Empty>
+          )}
+        </div>
+      ) : (
+        <>
+          <table className="hidden w-full table-fixed border-t border-white/[0.06] text-[13.5px] md:table">
+            <thead className="bg-white/[0.015]">
+              <tr className="border-b border-white/[0.06]">
+                <Th>Nazwa</Th>
+                <Th className="w-[200px]">Kategoria</Th>
+                <Th className="hidden w-[130px] lg:table-cell">Rodzaj</Th>
+                <Th className="w-[110px]">Data</Th>
+                <Th right className="w-[120px]">
+                  Kwota
+                </Th>
+                <Th className="w-[52px] lg:w-[60px]" />
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((e) => {
+                const c = cat(e.category);
+                return (
+                  <tr key={e.id} className="group h-[56px] border-b border-white/[0.045] transition-colors last:border-0 hover:bg-white/[0.025]">
+                    <td className="py-2 pr-3 pl-5">
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-white/[0.04] text-dim">
+                          <Icon d={ICONS.receipt} className="size-4" />
+                        </span>
+                        <span className="truncate">{e.title}</span>
+                        {!!e.recurring && (
+                          <span className="lg:hidden">
+                            <Recurring />
+                          </span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-3">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px] whitespace-nowrap ${c.chip}`}>
+                        <span className={`size-1.5 rounded-full ${c.dot}`} />
+                        {c.label}
+                      </span>
+                    </td>
+                    <td className="hidden px-3 lg:table-cell">{e.recurring ? <Recurring /> : <span className="text-[12.5px] text-dim">jednorazowo</span>}</td>
+                    <td className="px-3 text-muted">{isoDay(e.date)}</td>
+                    <td className="px-3 text-right tabular-nums">−{zl(e.amount)}</td>
+                    <td className="pr-4 pl-1 text-right">
+                      <span className="inline-block opacity-60 transition-opacity group-hover:opacity-100">
+                        <RowMenu items={menu(e)} />
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <ul className="divide-y divide-white/[0.05] border-t border-white/[0.06] md:hidden">
+            {list.map((e) => {
+              const c = cat(e.category);
+              return (
+                <li key={e.id} className="flex items-center gap-3 py-3.5 pr-2 pl-4">
+                  <span className={`size-2 shrink-0 rounded-full ${c.dot}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="truncate text-[14px]">{e.title}</span>
+                      <span className="shrink-0 tabular-nums">−{zl(e.amount)}</span>
+                    </span>
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-dim">
+                      {c.label} · {isoDay(e.date)}
+                      {!!e.recurring && <Recurring />}
+                    </span>
+                  </span>
+                  <RowMenu items={menu(e)} />
+                </li>
+              );
+            })}
+          </ul>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-3.5 text-[12.5px] text-dim">
+            <span>
+              Suma <span className="text-muted tabular-nums">{zl(list.reduce((a, e) => a + e.amount, 0))}</span>
+            </span>
+            <span>
+              Stałe koszty <span className="text-muted tabular-nums">{zl(monthly)}</span> / mies.
+            </span>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+/* ---------- struktura kosztów (12 mies.) ---------- */
+function CostMix({ expenses, months }: { expenses: Expense[]; months: string[] }) {
+  const totals = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const e of expenses) {
+      const start = e.date.slice(0, 7);
+      const n = e.recurring ? months.filter((m) => m >= start).length : months.includes(start) ? 1 : 0;
+      if (n) t[e.category in CATS ? e.category : "other"] = (t[e.category in CATS ? e.category : "other"] ?? 0) + e.amount * n;
+    }
+    return Object.entries(t).sort((a, b) => b[1] - a[1]);
+  }, [expenses, months]);
+  const sum = totals.reduce((a, [, v]) => a + v, 0);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-[13px] text-muted">Struktura kosztów</p>
+        <p className="text-[12px] text-dim">12 mies.</p>
+      </div>
+      {sum ? (
+        <>
+          <div className="mt-3 flex h-2 gap-[3px] overflow-hidden rounded-full">
+            {totals.map(([k, v], i) => (
+              <motion.span key={k} className="h-full rounded-full" style={{ background: cat(k).bar }} initial={{ width: 0 }} animate={{ width: `${(v / sum) * 100}%` }} transition={{ delay: 0.3 + i * 0.06, duration: 0.8, ease }} />
+            ))}
+          </div>
+          <ul className="mt-4 space-y-2 text-[13px]">
+            {totals.slice(0, 5).map(([k, v]) => (
+              <li key={k} className="flex items-center gap-2.5">
+                <span className={`size-2 shrink-0 rounded-full ${cat(k).dot}`} />
+                <span className="min-w-0 flex-1 truncate text-muted">{cat(k).label}</span>
+                <span className="text-dim tabular-nums">{Math.round((v / sum) * 100)}%</span>
+                <span className="w-[86px] text-right tabular-nums">{zl(v)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="py-6 text-center text-[13px] text-dim">Brak kosztów</p>
+      )}
+    </div>
   );
 }
 
 export default function Finance({ payments, expenses, summary, stripe, clients, services }: { payments: P[]; expenses: Expense[]; summary: Summary; stripe: boolean; clients: { id: string; name: string; email: string }[]; services: { id: string; name: string }[] }) {
   const router = useRouter();
-  const [tab, setTab] = useState<"payments" | "expenses">("payments");
-  const [filter, setFilter] = useState<"all" | "open" | "paid">("all");
   const params = useSearchParams();
+  const [tab, setTab] = useState<"payments" | "expenses">("payments");
   const [modal, setModal] = useState<"payment" | "expense" | null>(params.get("nowa") ? "payment" : null);
-  const [msg, setMsg] = useState<{ ok?: string; error?: string }>();
-  const [, start] = useTransition();
-  const show = (m: { ok?: string; error?: string }) => {
-    setMsg(m);
-    setTimeout(() => setMsg(undefined), 3500);
-  };
+  const [busy, start] = useTransition();
+  const { show, node: toastNode } = useToast();
+  const act: Act = useCallback(
+    (fn, after) =>
+      start(async () => {
+        const r = await fn();
+        show(r);
+        if (!r.error) after?.();
+        router.refresh();
+      }),
+    [router, show],
+  );
 
-  const list = useMemo(() => payments.filter((p) => (filter === "all" ? true : filter === "paid" ? p.status === "paid" : p.status === "pending" || p.status === "overdue")), [payments, filter]);
-  const cur = summary.chart[summary.chart.length - 1].m;
+  const chart = summary.chart;
+  const cur = chart[chart.length - 1].m;
+  const year = cur.slice(0, 4);
+  const overdueAmount = payments.filter((p) => p.status === "overdue").reduce((a, p) => a + p.amount, 0);
+  const profit = chart.map((d) => d.revenue - d.costs);
+  const yearProfit = summary.year.revenue - summary.year.costs;
+  const margin = summary.year.revenue ? Math.round((yearProfit / summary.year.revenue) * 100) : 0;
+  const pl = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Btn variant="primary" icon={ICONS.plus} onClick={() => setModal("payment")}>
-          Nowa płatność
-        </Btn>
-        <Btn icon={ICONS.receipt} onClick={() => setModal("expense")}>
+    <>
+      <PageHead title="Finanse">
+        <a href={`/panel/admin/finanse/eksport${tab === "expenses" ? "?co=koszty" : ""}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
+          <Icon d={ICONS.download} className="size-4" /> CSV
+        </a>
+        <Btn size="sm" icon={ICONS.receipt} onClick={() => setModal("expense")}>
           Dodaj koszt
         </Btn>
-        <a href={`/panel/admin/finanse/eksport${tab === "expenses" ? "?co=koszty" : ""}`} className="inline-flex h-11 items-center gap-2 rounded-full px-4 text-[14px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
-          <Icon d={ICONS.download} /> CSV
-        </a>
-      </div>
+        <Btn size="sm" variant="primary" icon={ICONS.plus} onClick={() => setModal("payment")}>
+          Nowa płatność
+        </Btn>
+      </PageHead>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Stat label={`Przychód · ${monthName(cur, "long")}`} value={Math.round(summary.month.revenue / 100)} suffix=" zł" prev={Math.round(summary.month.prevRevenue / 100)} icon={ICONS.trendUp} />
-        <Stat label="Do zapłaty" value={Math.round(summary.pending.amount / 100)} suffix=" zł" icon={ICONS.clock} delay={0.05} hint={`${summary.pending.count} ${summary.pending.count === 1 ? "płatność" : "płatności"}${summary.pending.overdue ? ` · ${summary.pending.overdue} po terminie` : ""}`} />
-        <Stat label="Koszty w miesiącu" value={Math.round(summary.month.costs / 100)} suffix=" zł" prev={Math.round(summary.month.prevCosts / 100)} invert icon={ICONS.receipt} delay={0.1} />
-        <Stat label="Zysk w miesiącu" value={Math.round(summary.month.profit / 100)} suffix=" zł" icon={ICONS.wallet} delay={0.15} />
+        <Kpi label="Przychód w miesiącu" value={Math.round(summary.month.revenue / 100)} suffix=" zł" prev={Math.round(summary.month.prevRevenue / 100)} spark={chart.map((d) => d.revenue)} icon={ICONS.trendUp} accent hint={<span className="first-letter:uppercase">{`${monthName(chart[chart.length - 2].m, "long")}: ${zl(summary.month.prevRevenue)}`}</span>} />
+        <Kpi label="Zysk w miesiącu" value={Math.round(summary.month.profit / 100)} suffix=" zł" prev={Math.round((summary.month.prevRevenue - summary.month.prevCosts) / 100)} spark={profit.map((v) => Math.max(0, v))} icon={ICONS.wallet} delay={0.04} tone={summary.month.profit < 0 ? "text-red-300" : ""} hint={`koszty ${zl(summary.month.costs)}`} />
+        <Kpi
+          label="Do zapłaty"
+          value={Math.round(summary.pending.amount / 100)}
+          suffix=" zł"
+          icon={ICONS.clock}
+          delay={0.08}
+          hint={
+            <div>
+              <span>
+                {summary.pending.count} {pl(summary.pending.count, "płatność", "płatności", "płatności")}
+                {summary.pending.overdue > 0 && <span className="text-red-300"> · {summary.pending.overdue} po terminie</span>}
+              </span>
+              {summary.pending.amount > 0 && (
+                <div className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-sky-400/25">
+                  <motion.span className="h-full bg-red-400/80" initial={{ width: 0 }} animate={{ width: `${(overdueAmount / summary.pending.amount) * 100}%` }} transition={{ delay: 0.4, duration: 0.9, ease }} />
+                </div>
+              )}
+            </div>
+          }
+        />
+        <Kpi label={`Przychód ${year}`} value={Math.round(summary.year.revenue / 100)} suffix=" zł" icon={ICONS.chart} delay={0.12} hint={`zysk ${zl(yearProfit)} · marża ${margin}%`} spark={chart.filter((d) => d.m.startsWith(year)).reduce<number[]>((a, d) => [...a, (a.at(-1) ?? 0) + d.revenue], [])} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card delay={0.1}>
-          <CardHead title="Ostatnie 12 miesięcy" sub="Przychody (opłacone) i koszty" />
-          <Chart data={summary.chart} />
+          <CardHead title="Przychody i koszty" sub="Ostatnie 12 miesięcy" />
+          <RevenueChart data={chart} />
         </Card>
-        <div className="grid gap-4">
-          <Card delay={0.15} glow>
-            <CardHead title={`Rok ${new Date().getFullYear()}`} />
-            <dl className="space-y-3 text-[14px]">
-              {[
-                ["Przychód", zl(summary.year.revenue)],
-                ["Koszty", zl(summary.year.costs)],
-                ["Zysk", zl(summary.year.revenue - summary.year.costs)],
-              ].map(([k, v], i) => (
-                <div key={k} className={`flex items-baseline justify-between gap-4 ${i === 2 ? "border-t border-line pt-3" : ""}`}>
-                  <dt className="text-dim">{k}</dt>
-                  <dd className={`tabular-nums ${i === 2 ? "text-[20px]" : ""}`}>{v}</dd>
-                </div>
-              ))}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1 xl:grid-rows-[auto_1fr]">
+          <Card delay={0.14} glow>
+            <div className="flex items-baseline justify-between">
+              <p className="text-[13px] text-muted">Rok {year}</p>
+              <span className={`rounded-full px-2 py-0.5 text-[11.5px] tabular-nums ${margin >= 0 ? "bg-emerald-400/10 text-emerald-300" : "bg-red-400/10 text-red-300"}`}>marża {margin}%</span>
+            </div>
+            <p className={`h-display mt-3 text-[30px] leading-none tabular-nums ${yearProfit < 0 ? "text-red-300" : ""}`}>{zl(yearProfit)}</p>
+            <p className="mt-1 text-[12px] text-dim">zysk od początku roku</p>
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2" initial={{ width: 0 }} animate={{ width: `${Math.max(0, Math.min(100, margin))}%` }} transition={{ delay: 0.4, duration: 1, ease }} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-[13px]">
+              <div>
+                <dt className="text-dim">Przychód</dt>
+                <dd className="mt-0.5 tabular-nums">{zl(summary.year.revenue)}</dd>
+              </div>
+              <div>
+                <dt className="text-dim">Koszty</dt>
+                <dd className="mt-0.5 tabular-nums">{zl(summary.year.costs)}</dd>
+              </div>
             </dl>
           </Card>
-          <Card delay={0.2}>
-            <div className="flex items-center gap-3.5">
-              <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${stripe ? "bg-emerald-400/10 text-emerald-300" : "bg-white/[0.05] text-dim"}`}>
-                <Icon d={ICONS.card} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[15px]">Stripe {stripe ? "podłączony" : "niepodłączony"}</p>
-                <p className="text-[12.5px] text-dim">{stripe ? "Karta · BLIK · Przelewy24" : "Brak klucza"}</p>
-              </div>
-              <Link href="/panel/admin/ustawienia" className="text-[13px] text-accent-2 hover:underline">
-                {stripe ? "Ustawienia" : "Podłącz"}
+          <Card delay={0.18}>
+            <div className="flex h-full flex-col">
+              <CostMix expenses={expenses} months={chart.map((d) => d.m)} />
+              <Link href="/panel/admin/ustawienia" className="group mt-auto flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 pt-3 transition-colors hover:border-white/[0.14] max-xl:mt-5 xl:mt-5">
+                <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${stripe ? "bg-emerald-400/10 text-emerald-300" : "bg-white/[0.05] text-dim"}`}>
+                  <Icon d={ICONS.card} className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 text-[13.5px]">
+                    Stripe
+                    <span className={`size-1.5 rounded-full ${stripe ? "bg-emerald-400" : "bg-white/30"}`} />
+                  </span>
+                  <span className="block truncate text-[12px] text-dim">{stripe ? "Karta · BLIK · Przelewy24" : "Niepodłączony"}</span>
+                </span>
+                <Icon d={ICONS.arrowUp} className="size-4 rotate-45 text-dim transition-colors group-hover:text-ink" />
               </Link>
             </div>
           </Card>
         </div>
       </div>
 
-      <Card delay={0.2}>
-        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <Tabs
-            id="fin"
+      <Card delay={0.2} pad={false} className="mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-4 sm:px-5 sm:pt-5">
+          <Segmented
+            id="fin-tab"
+            size="md"
             value={tab}
             onChange={setTab}
             items={[
@@ -433,82 +675,15 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
               { value: "expenses", label: "Koszty", count: expenses.length },
             ]}
           />
-          {tab === "payments" && (
-            <div className="flex gap-1 text-[13px]">
-              {(
-                [
-                  ["all", "Wszystkie"],
-                  ["open", "Do zapłaty"],
-                  ["paid", "Opłacone"],
-                ] as const
-              ).map(([k, l]) => (
-                <button key={k} type="button" onClick={() => setFilter(k)} className={`rounded-full px-3 py-1.5 transition-colors ${filter === k ? "bg-white/[0.08] text-ink" : "text-muted hover:text-ink"}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
-          )}
+          <span className={`flex items-center gap-2 text-[12px] text-dim transition-opacity ${busy ? "opacity-100" : "opacity-0"}`} aria-hidden={!busy}>
+            <span className="size-3 animate-spin rounded-full border border-white/20 border-t-accent-2" /> Zapisywanie…
+          </span>
         </div>
-
-        <AnimatePresence>
-          {msg && (msg.ok || msg.error) && (
-            <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className={`mb-4 overflow-hidden rounded-xl border px-3.5 py-2.5 text-[13px] ${msg.error ? "border-red-400/25 bg-red-400/10 text-red-200" : "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"}`}>
-              {msg.error ?? msg.ok}
-            </motion.p>
-          )}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease }}>
+            {tab === "payments" ? <Payments payments={payments} act={act} onMsg={show} onNew={() => setModal("payment")} busy={busy} /> : <Expenses expenses={expenses} act={act} onNew={() => setModal("expense")} />}
+          </motion.div>
         </AnimatePresence>
-
-        {tab === "payments" ? (
-          list.length ? (
-            <ul className="space-y-2.5">
-              <AnimatePresence initial={false}>
-                {list.map((p) => (
-                  <Row key={p.id} p={p} onMsg={show} />
-                ))}
-              </AnimatePresence>
-            </ul>
-          ) : (
-            <Empty icon={ICONS.wallet} title={filter === "all" ? "Brak płatności" : "Nic tu nie ma"} text="Utwórz link do płatności dla klienta albo zapisz wpłatę z przelewu.">
-              <Btn variant="primary" icon={ICONS.plus} onClick={() => setModal("payment")}>
-                Nowa płatność
-              </Btn>
-            </Empty>
-          )
-        ) : expenses.length ? (
-          <ul className="divide-y divide-line">
-            {expenses.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 py-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-muted">
-                  <Icon d={ICONS.receipt} className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px]">{e.title}</p>
-                  <p className="truncate text-[12.5px] text-dim">
-                    {CATS[e.category] ?? e.category} · {isoDay(e.date)}
-                    {e.recurring ? " · co miesiąc" : ""}
-                  </p>
-                </div>
-                <p className="text-[14.5px] tabular-nums">−{zl(e.amount)}</p>
-                <ConfirmBtn
-                  onConfirm={() =>
-                    start(async () => {
-                      show(await deleteExpense(e.id));
-                      router.refresh();
-                    })
-                  }
-                >
-                  {""}
-                </ConfirmBtn>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty icon={ICONS.receipt} title="Brak kosztów" text="Dodaj subskrypcje, hosting czy reklamę — panel policzy zysk.">
-            <Btn icon={ICONS.plus} onClick={() => setModal("expense")}>
-              Dodaj koszt
-            </Btn>
-          </Empty>
-        )}
       </Card>
 
       <Modal open={modal === "payment"} onClose={() => setModal(null)} title="Nowa płatność">
@@ -518,7 +693,7 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
           services={services}
           onDone={(m) => {
             setModal(null);
-            if (m.ok || m.error) show(m);
+            show(m);
           }}
         />
       </Modal>
@@ -530,6 +705,7 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
           }}
         />
       </Modal>
-    </div>
+      {toastNode}
+    </>
   );
 }

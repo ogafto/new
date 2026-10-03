@@ -1,60 +1,109 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { motion } from "motion/react";
 import { createInvite } from "@/app/panel/admin/actions";
-import Input from "../ui/Input";
-import { Alert, Submit } from "../account/ui";
+import { Alert } from "../account/ui";
+import { Btn, ease, field, Icon, ICONS, Label, Modal } from "./kit";
+import { Portal } from "./crm/ui";
 
 export function CodeResult({ code, email, mailed, dev }: { code: string; email: string; mailed?: boolean; dev?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="mt-5 flex flex-col gap-4 rounded-2xl border border-accent/25 bg-accent/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <p className="text-[13px] text-accent-2">
-          {mailed ? (dev ? `Tryb dev — mail wypisany w konsoli serwera (${email})` : `Wysłano na ${email}`) : `Nie udało się wysłać maila na ${email} — przekaż kod ręcznie`}
-        </p>
-        <p className="mt-1.5 font-mono text-[26px] tracking-[0.2em]">{code}</p>
+    <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.45, ease }} className="relative overflow-hidden rounded-2xl border border-accent/25 bg-accent/[0.06] p-5">
+      <div className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.22),transparent)]" aria-hidden />
+      <div className="relative flex items-center gap-2 text-[13px]">
+        <span className={`grid size-5 place-items-center rounded-full ${mailed ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-300/15 text-amber-200"}`}>
+          <Icon d={mailed ? ICONS.check : ICONS.mail} className="size-3" />
+        </span>
+        <span className={mailed ? "text-muted" : "text-amber-200"}>{mailed ? (dev ? `Tryb dev — mail w konsoli serwera` : `Wysłano na ${email}`) : `Mail nie wyszedł — przekaż kod ręcznie`}</span>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          navigator.clipboard?.writeText(code).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1600);
-          });
-        }}
-        className="self-start rounded-full border border-line-2 px-4 py-2 text-[13px] transition-colors hover:border-white/40 sm:self-auto"
-      >
-        {copied ? "Skopiowano ✓" : "Kopiuj kod"}
-      </button>
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="font-mono text-[28px] tracking-[0.22em] text-ink sm:text-[32px]">{code}</p>
+        <Btn
+          type="button"
+          size="sm"
+          icon={copied ? ICONS.check : ICONS.copy}
+          onClick={() =>
+            navigator.clipboard?.writeText(code).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1600);
+            })
+          }
+        >
+          {copied ? "Skopiowano" : "Kopiuj kod"}
+        </Btn>
+      </div>
     </motion.div>
   );
 }
 
-export default function InviteForm({ email = "", name = "" }: { email?: string; name?: string }) {
-  const [state, action] = useActionState(createInvite, undefined);
-  return (
-    <>
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-        <div>
-          <h2 className="text-[18px] font-medium tracking-[-0.01em]">Zaproś klienta</h2>
-          <p className="mt-1 text-[14px] text-muted">Kod dostępu trafi na e-mail klienta · ważny 7 dni</p>
+function Form({ email, name, onDone, onAgain }: { email: string; name: string; onDone: () => void; onAgain: () => void }) {
+  const [state, action, pending] = useActionState(createInvite, undefined);
+  if (state?.code)
+    return (
+      <div>
+        <CodeResult code={state.code} email={state.email!} mailed={state.mailed} dev={state.dev} />
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
+          <Btn type="button" variant="ghost" icon={ICONS.plus} onClick={onAgain}>
+            Kolejne zaproszenie
+          </Btn>
+          <Btn type="button" variant="primary" onClick={onDone}>
+            Gotowe
+          </Btn>
         </div>
       </div>
-      <form action={action} className="mt-6 grid gap-3 md:grid-cols-[1.2fr_1fr_auto]" key={state?.code ?? "new"}>
-        <Input name="email" label="E-mail klienta" type="email" required autoComplete="off" defaultValue={email} />
-        <Input name="name" label="Imię (opcjonalnie)" autoComplete="off" defaultValue={name} />
-        <Submit className="md:w-[220px]">Wyślij kod</Submit>
-      </form>
+    );
+  return (
+    <form action={action} className="space-y-4">
+      <Label label="E-mail klienta">
+        <input name="email" type="email" required autoComplete="off" autoFocus defaultValue={email} placeholder="klient@firma.pl" className={`${field} h-11`} />
+      </Label>
+      <Label label="Imię (opcjonalnie)">
+        <input name="name" autoComplete="off" defaultValue={name} placeholder="np. Anna" className={`${field} h-11`} />
+      </Label>
       <Alert>{state?.error}</Alert>
-      <AnimatePresence>{state?.code && <CodeResult key={state.code} code={state.code} email={state.email!} mailed={state.mailed} dev={state.dev} />}</AnimatePresence>
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <span className="flex items-center gap-1.5 text-[12.5px] text-dim">
+          <Icon d={ICONS.clock} className="size-3.5" />
+          Kod ważny 7 dni
+        </span>
+        <Btn type="submit" variant="primary" icon={pending ? undefined : ICONS.mail} disabled={pending}>
+          {pending ? "Wysyłanie…" : "Wyślij zaproszenie"}
+        </Btn>
+      </div>
+    </form>
+  );
+}
+
+// Przycisk w nagłówku + okno; ?zapros=1 (&email, &imie) otwiera je od razu
+export default function InviteButton() {
+  const sp = useSearchParams();
+  const path = usePathname();
+  const flag = sp.get("zapros");
+  const [seen, setSeen] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [round, setRound] = useState(0);
+  if (flag !== seen) {
+    setSeen(flag);
+    if (flag) setOpen(true);
+  }
+  const close = () => {
+    setOpen(false);
+    if (flag) window.history.replaceState(null, "", path);
+    setTimeout(() => setRound((r) => r + 1), 300);
+  };
+  return (
+    <>
+      <Btn variant="primary" icon={ICONS.plus} onClick={() => setOpen(true)}>
+        Zaproś klienta
+      </Btn>
+      <Portal>
+        <Modal open={open} onClose={close} title="Zaproś klienta">
+          <Form key={round} email={flag ? (sp.get("email") ?? "") : ""} name={flag ? (sp.get("imie") ?? "") : ""} onDone={close} onAgain={() => setRound((r) => r + 1)} />
+        </Modal>
+      </Portal>
     </>
   );
 }

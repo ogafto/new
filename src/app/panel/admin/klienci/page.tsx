@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import { all } from "@/lib/db";
 import type { Invite, User } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/session";
-import { fmtDate, fmtDateTime } from "@/lib/format";
-import { Badge, Card, CardHead, Empty, PageHead } from "@/components/panel/kit";
+import { STAGES } from "@/lib/format";
+import { Card, Count, Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
-import InviteForm from "@/components/panel/InviteForm";
-import { ClientRow, InviteActions } from "@/components/panel/AdminRows";
+import InviteButton from "@/components/panel/InviteForm";
+import { ClientsTable, InvitesTable, type InviteStatus } from "@/components/panel/AdminRows";
 
 export const metadata: Metadata = { title: "Klienci" };
 
-function status(i: Invite, now: number) {
-  if (i.used_at) return { label: "Konto założone", tone: "green" as const, active: false };
-  if (i.revoked_at) return { label: "Anulowane", tone: "default" as const, active: false };
-  if (i.expires_at < now) return { label: "Wygasło", tone: "amber" as const, active: false };
-  return { label: "Oczekuje", tone: "accent" as const, active: true };
+function status(i: Invite, now: number): InviteStatus {
+  if (i.used_at) return "used";
+  if (i.revoked_at) return "revoked";
+  if (Number(i.expires_at) < now) return "expired";
+  return "active";
 }
 
 async function load() {
@@ -23,94 +23,65 @@ async function load() {
     all<User>("SELECT * FROM users WHERE role = 'client' ORDER BY created_at DESC"),
     all<{ id: string; name: string; owner_id: string }>("SELECT id, name, owner_id FROM cms_sites WHERE owner_id IS NOT NULL"),
   ]);
-  const now = Date.now();
-  return { clients, sites, invites: invites.map((i) => ({ ...i, st: status(i, now) })) };
+  return { invites, clients, sites, now: Date.now() };
 }
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ email?: string; imie?: string }> }) {
+export default async function ClientsPage() {
   await requireAdmin();
-  const sp = await searchParams;
-  const { invites, clients, sites } = await load();
+  const { invites, clients, sites, now } = await load();
+  const last = STAGES.length - 1;
+  const inv = invites.map((i) => ({ id: i.id, email: i.email, name: i.name, created: Number(i.created_at), expires: Number(i.expires_at), sent: Number(i.sent_count), status: status(i, now) }));
+  const stats = [
+    { label: "Klienci", value: clients.length, icon: ICONS.users },
+    { label: "W trakcie", value: clients.filter((c) => Number(c.stage) < last).length, icon: ICONS.clock },
+    { label: "Opublikowane", value: clients.filter((c) => Number(c.stage) >= last).length, icon: ICONS.globe },
+    { label: "Aktywne zaproszenia", value: inv.filter((i) => i.status === "active").length, icon: ICONS.mail },
+  ];
+
   return (
     <>
-      <PageHead title="Klienci" />
+      <PageHead title="Klienci">
+        <InviteButton />
+      </PageHead>
 
-      <Card glow>
-        <InviteForm email={sp.email} name={sp.imie} />
+      <Card pad={false} className="mb-4">
+        <dl className="grid grid-cols-2 lg:grid-cols-4">
+          {stats.map((s, i) => (
+            <div key={s.label} className={`flex items-center justify-between gap-3 p-4 sm:p-5 ${i % 2 ? "border-l border-line" : ""} ${i > 1 ? "border-t border-line lg:border-t-0" : ""} ${i === 2 ? "lg:border-l" : ""}`}>
+              <div className="min-w-0">
+                <dt className="truncate text-[12.5px] text-dim">{s.label}</dt>
+                <dd className="mt-1.5">
+                  <Count value={s.value} className="h-display text-[28px] leading-none sm:text-[32px]" />
+                </dd>
+              </div>
+              <span className="hidden size-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-dim sm:grid">
+                <Icon d={s.icon} className="size-4" />
+              </span>
+            </div>
+          ))}
+        </dl>
       </Card>
 
-      <div className="mt-4">
-        <Card delay={0.08}>
-          <CardHead title="Klienci" sub="Projekt i etap widzi klient" />
-          {clients.length === 0 ? (
-            <Empty icon={ICONS.users} title="Nikt jeszcze nie założył konta" text="Wyślij zaproszenie powyżej — klient założy konto kodem z maila." />
-          ) : (
-            <ul className="divide-y divide-line">
-              {clients.map((c) => {
-                const site = sites.find((s) => s.owner_id === c.id);
-                return (
-                  <ClientRow
-                    key={c.id}
-                    c={{
-                      id: c.id,
-                      name: c.name,
-                      email: c.email,
-                      phone: c.phone,
-                      verified: !!c.verified_at,
-                      stage: Number(c.stage),
-                      project: c.project ?? "",
-                      since: fmtDate(Number(c.created_at)),
-                      last: c.last_login_at ? fmtDateTime(Number(c.last_login_at)) : "—",
-                      site: site ? { id: site.id, name: site.name } : null,
-                    }}
-                  />
-                );
-              })}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      <div className="mt-4">
-        <Card delay={0.12}>
-          <CardHead title="Zaproszenia" />
-          {invites.length === 0 ? (
-            <p className="py-6 text-center text-[13px] text-dim">Brak wysłanych zaproszeń.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-[14px]">
-                <thead className="text-[12px] text-dim">
-                  <tr className="border-b border-line">
-                    <th className="pb-3 font-normal">Adres</th>
-                    <th className="pb-3 font-normal">Status</th>
-                    <th className="pb-3 font-normal">Wysłano</th>
-                    <th className="pb-3 font-normal">Ważne do</th>
-                    <th className="pb-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {invites.map((i) => (
-                    <tr key={i.id} className="align-middle">
-                      <td className="py-3.5 pr-4">
-                        <span className="block">{i.email}</span>
-                        {i.name && <span className="text-[12px] text-dim">{i.name}</span>}
-                      </td>
-                      <td className="py-3.5 pr-4">
-                        <Badge tone={i.st.tone}>{i.st.label}</Badge>
-                      </td>
-                      <td className="py-3.5 pr-4 text-muted">
-                        {fmtDateTime(Number(i.created_at))}
-                        {Number(i.sent_count) > 1 && <span className="text-dim"> · ×{i.sent_count}</span>}
-                      </td>
-                      <td className="py-3.5 pr-4 text-muted">{fmtDate(Number(i.expires_at))}</td>
-                      <td className="py-3.5 text-right">{!i.used_at && <InviteActions id={i.id} canRevoke={i.st.active} />}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
+      <div className="space-y-4">
+        <ClientsTable
+          now={now}
+          rows={clients.map((c) => {
+            const site = sites.find((s) => s.owner_id === c.id);
+            return {
+              id: c.id,
+              name: c.name,
+              email: c.email,
+              phone: c.phone,
+              verified: !!c.verified_at,
+              stage: Number(c.stage),
+              project: c.project ?? "",
+              created: Number(c.created_at),
+              last: c.last_login_at ? Number(c.last_login_at) : null,
+              site: site ? { id: site.id, name: site.name } : null,
+            };
+          })}
+        />
+        <InvitesTable rows={inv} />
       </div>
     </>
   );

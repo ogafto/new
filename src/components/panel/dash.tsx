@@ -12,16 +12,18 @@ import { Count, ease, Icon, ICONS } from "./kit";
 
 export type Viz = { kind: "dots"; data: number[] } | { kind: "lollipop"; data: number[] } | { kind: "bars"; data: number[] } | { kind: "gauge"; value: number; label?: string };
 
-// gładka krzywa przez punkty
+// gładka krzywa przez punkty — monotoniczna (bez „przestrzeleń” ponad dane i sztucznych ząbków)
 function smooth(pts: [number, number][]) {
-  if (!pts.length) return "";
+  const n = pts.length;
+  if (!n) return "";
+  if (n < 3) return pts.map((p, i) => `${i ? "L" : "M"}${p[0]},${p[1]}`).join(" ");
+  const dx = pts.slice(1).map((p, i) => p[0] - pts[i][0]);
+  const m = pts.slice(1).map((p, i) => (p[1] - pts[i][1]) / (dx[i] || 1));
+  const t = pts.map((_, i) => (i === 0 ? m[0] : i === n - 1 ? m[n - 2] : m[i - 1] * m[i] <= 0 ? 0 : (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / m[i - 1] + (dx[i] + 2 * dx[i - 1]) / m[i])));
   let d = `M${pts[0][0]},${pts[0][1]}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C${pts[i][0] + h},${pts[i][1] + t[i] * h} ${pts[i + 1][0] - h},${pts[i + 1][1] - t[i + 1] * h} ${pts[i + 1][0]},${pts[i + 1][1]}`;
   }
   return d;
 }
@@ -181,6 +183,8 @@ export function GlowChart({ title, value, aside, data }: { title: string; value?
   const x = (i: number) => 20 + (i / Math.max(1, data.length - 1)) * (Wc - 40);
   const y = (v: number) => Hc - 14 - (v / max) * (Hc - 40);
   const pts = data.map((d, i) => [x(i), y(d.v)] as [number, number]);
+  // dzisiejszy dzień jeszcze trwa — linia ciągła do wczoraj, ostatni odcinek przerywany
+  const solid = pts.length > 2 ? pts.slice(0, -1) : pts;
   const peak = data.reduce((b, d, i) => (d.v > data[b].v ? i : b), 0);
   const focus = hover ?? peak;
   const ticks = data.length ? Array.from({ length: 7 }, (_, k) => Math.round((k / 6) * (data.length - 1))) : [];
@@ -210,12 +214,21 @@ export function GlowChart({ title, value, aside, data }: { title: string; value?
               <stop offset="0" stopColor="#8b6cff" stopOpacity="0.5" />
               <stop offset="1" stopColor="#8b6cff" stopOpacity="0" />
             </linearGradient>
+            <linearGradient id={`${gid}a`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#8b6cff" stopOpacity="0.22" />
+              <stop offset="1" stopColor="#8b6cff" stopOpacity="0" />
+            </linearGradient>
           </defs>
+          {[0.25, 0.5, 0.75].map((g) => (
+            <line key={g} x1="0" x2={Wc} y1={y(max * g)} y2={y(max * g)} stroke="rgba(255,255,255,0.05)" vectorEffect="non-scaling-stroke" />
+          ))}
           {ticks.map((i) => (
             <line key={i} x1={x(i)} x2={x(i)} y1="6" y2={Hc} stroke="rgba(255,255,255,0.1)" strokeDasharray="2 5" vectorEffect="non-scaling-stroke" />
           ))}
           {pts[focus] && <rect x={pts[focus][0] - 9} y={pts[focus][1]} width="18" height={Hc - pts[focus][1]} fill={`url(#${gid}c)`} rx="4" />}
-          <motion.path d={smooth(pts)} fill="none" stroke="#b4a2ff" strokeWidth="1.8" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.4, ease }} />
+          {pts.length > 1 && <motion.path d={`${smooth(solid)} L${solid[solid.length - 1][0]},${Hc} L${solid[0][0]},${Hc} Z`} fill={`url(#${gid}a)`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.9 }} />}
+          <motion.path d={smooth(solid)} fill="none" stroke="#c9bcff" strokeWidth="2" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.4, ease }} />
+          {pts.length > 1 && <motion.path d={`M${pts[pts.length - 2][0]},${pts[pts.length - 2][1]} L${pts[pts.length - 1][0]},${pts[pts.length - 1][1]}`} fill="none" stroke="#c9bcff" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="4 5" vectorEffect="non-scaling-stroke" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }} />}
         </svg>
         {pts[focus] && (
           <div className="pointer-events-none absolute" style={{ left: `${(pts[focus][0] / Wc) * 100}%`, top: `${(pts[focus][1] / Hc) * 100}%` }}>

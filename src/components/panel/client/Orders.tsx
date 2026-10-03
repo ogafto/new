@@ -1,5 +1,6 @@
 import { daysBetween, type Order } from "@/lib/orders";
-import { Badge } from "../kit";
+import Link from "next/link";
+import { Badge, Icon } from "../kit";
 
 /* Karta zlecenia w panelu klienta: status, termin, postęp w czasie, kwota */
 
@@ -19,7 +20,7 @@ export function OrderCard({ o, today }: { o: Order; today: string; compact?: boo
   const left = daysBetween(today, o.due_date);
   const st = STATUS[o.status];
   return (
-    <div className="rounded-2xl border border-line bg-white/[0.015] p-4 transition-colors hover:border-line-2 sm:p-5">
+    <Link href={`/panel/zamowienia/${o.id}`} className="group block rounded-2xl bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06] sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[15.5px] leading-snug">{o.title}</p>
@@ -28,7 +29,10 @@ export function OrderCard({ o, today }: { o: Order; today: string; compact?: boo
             {o.amount ? ` · ${Number(o.amount).toLocaleString("pl-PL")} zł` : ""}
           </p>
         </div>
-        <Badge tone={st.tone}>{st.label}</Badge>
+        <span className="flex items-center gap-2">
+          <Badge tone={st.tone}>{st.label}</Badge>
+          <Icon d="M9 6l6 6-6 6" className="size-4 text-dim transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
+        </span>
       </div>
       <div className="mt-4">
         <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -40,6 +44,6 @@ export function OrderCard({ o, today }: { o: Order; today: string; compact?: boo
           <span>{fmt(o.due_date)}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

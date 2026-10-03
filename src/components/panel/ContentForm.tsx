@@ -17,7 +17,7 @@ const SECTIONS: { value: Section; label: string; icon: string; keys: (keyof Cont
   { value: "hero", label: "Strona główna", icon: ICONS.home, keys: ["hero"] },
   { value: "notice", label: "Ogłoszenie i status", icon: ICONS.bell, keys: ["announcement", "availability"] },
   { value: "contact", label: "Kontakt", icon: ICONS.phone, keys: ["email", "phone", "socials"] },
-  { value: "services", label: "Usługi i ceny", icon: ICONS.money, keys: ["services"] },
+  { value: "services", label: "Usługi i ceny", icon: ICONS.money, keys: ["services", "customServices", "hiddenServices"] },
   { value: "process", label: "Proces", icon: ICONS.layers, keys: ["steps"] },
   { value: "seo", label: "SEO", icon: ICONS.search, keys: ["seo"] },
   { value: "legal", label: "Dane firmy", icon: ICONS.shield, keys: ["legal"] },
@@ -514,10 +514,16 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                 {services.map((s, i) => {
                   const v = c.services[s.id];
                   const upd = (p: Partial<typeof v>) => set("services", { ...c.services, [s.id]: { ...v, ...p } });
+                  const hidden = c.hiddenServices.includes(s.id);
                   return (
-                    <Card key={s.id} delay={i * 0.04}>
+                    <Card key={s.id} delay={i * 0.04} className={hidden ? "opacity-60" : ""}>
                       <div className="mb-5 flex items-start justify-between gap-3">
-                        <h2 className="text-[16px] font-medium">{s.name}</h2>
+                        <div>
+                          <h2 className="text-[16px] font-medium">{s.name}</h2>
+                          <div className="mt-2">
+                            <Toggle checked={!hidden} onChange={(on) => set("hiddenServices", on ? c.hiddenServices.filter((x) => x !== s.id) : [...c.hiddenServices, s.id])} label={hidden ? "Ukryta" : "Widoczna w formularzach"} />
+                          </div>
+                        </div>
                         <span className="shrink-0 text-right">
                           <span className="block text-[11px] text-dim">od</span>
                           <span className="h-display block text-[24px] leading-none tabular-nums">{Number(v.price || 0).toLocaleString("pl-PL")} zł</span>
@@ -537,6 +543,46 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     </Card>
                   );
                 })}
+                {c.customServices.map((v, i) => {
+                  const upd = (p: Partial<typeof v>) => set("customServices", c.customServices.map((x) => (x.id === v.id ? { ...x, ...p } : x)));
+                  return (
+                    <Card key={v.id} delay={(services.length + i) * 0.04} glow>
+                      <div className="mb-5 flex items-start justify-between gap-3">
+                        <div>
+                          <span className="inline-flex rounded-full bg-accent/15 px-2.5 py-0.5 text-[11.5px] text-accent-2">Własna usługa</span>
+                          <h2 className="mt-2 text-[16px] font-medium">{v.name || "Nowa usługa"}</h2>
+                        </div>
+                        <ConfirmBtn onConfirm={() => set("customServices", c.customServices.filter((x) => x.id !== v.id))}>Usuń</ConfirmBtn>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Label label="Nazwa" className="sm:col-span-2">
+                          <input className={input} value={v.name} maxLength={60} onChange={(e) => upd({ name: e.target.value })} placeholder="np. Kampania Google Ads" />
+                        </Label>
+                        <Label label="Cena od (zł)">
+                          <input type="number" min={0} inputMode="numeric" className={`${input} tabular-nums`} value={v.price} onChange={(e) => upd({ price: Number(e.target.value) })} />
+                        </Label>
+                        <Label label="Czas realizacji">
+                          <input className={input} value={v.time} onChange={(e) => upd({ time: e.target.value })} placeholder="od 3 dni" />
+                        </Label>
+                        <Label label="Krótki opis" className="sm:col-span-2">
+                          <textarea rows={2} className={area} value={v.description} onChange={(e) => upd({ description: e.target.value })} />
+                        </Label>
+                      </div>
+                    </Card>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => set("customServices", [...c.customServices, { id: `c-${Math.random().toString(36).slice(2, 8)}`, name: "", price: 0, time: "", description: "" }])}
+                  disabled={c.customServices.length >= 20}
+                  className="group flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-line-2 text-muted transition-colors hover:border-accent/50 hover:bg-accent/[0.04] hover:text-ink disabled:opacity-40"
+                >
+                  <span className="grid size-12 place-items-center rounded-full bg-accent text-white shadow-[0_0_24px_-6px_rgb(139_108_255/0.9)] transition-transform duration-500 group-hover:rotate-90">
+                    <Icon d={ICONS.plus} className="size-5" />
+                  </span>
+                  <span className="text-[15px]">Dodaj usługę</span>
+                  <span className="text-[12.5px] text-dim">Pojawi się w formularzu kontaktowym i w „Zamów usługę” u klientów</span>
+                </button>
               </div>
             )}
 

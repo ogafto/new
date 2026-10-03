@@ -376,6 +376,7 @@ function groupsFor(admin: boolean, counts: Props["counts"], sites: Props["sites"
       label: "Klienci",
       links: [
         { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
+        { href: "/panel/admin/zlecenia", label: "Zlecenia", icon: ICONS.receipt },
         { href: "/panel/admin/klienci", label: "Klienci", icon: ICONS.users },
         { href: "/panel/admin/kalendarz", label: "Kalendarz", icon: ICONS.calendar },
       ],
@@ -393,6 +394,7 @@ function groupsFor(admin: boolean, counts: Props["counts"], sites: Props["sites"
       label: "Strona",
       links: [
         { href: "/panel/admin/tresci", label: "Treści", icon: ICONS.doc },
+        { href: "/panel/admin/strony", label: "Strony klientów", icon: ICONS.layers },
         { href: "/panel/admin/portfolio", label: "Portfolio", icon: ICONS.grid },
         { href: "/panel/admin/marka", label: "Marka i logo", icon: ICONS.brand },
       ],
@@ -414,7 +416,7 @@ function NavItem({ l, on, big = false, rail = false, layout }: { l: NavLink; on:
     <Link
       href={l.href}
       title={rail ? l.label : undefined}
-      className={`group relative flex items-center gap-3 rounded-[14px] px-3 transition-colors duration-200 ${big ? "h-14 text-[17px]" : "h-11 text-[15px] [@media(max-height:820px)]:h-10"} ${rail ? "lg:max-xl:justify-center lg:max-xl:px-0" : ""} ${on ? "text-ink" : "text-muted hover:text-ink"}`}
+      className={`group relative flex items-center gap-3 rounded-[14px] px-3 transition-colors duration-200 ${big ? "h-14 text-[17px]" : "h-10 text-[15px] [@media(max-height:920px)]:h-9 [@media(max-height:920px)]:text-[14.5px]"} ${rail ? "lg:max-xl:justify-center lg:max-xl:px-0" : ""} ${on ? "text-ink" : "text-muted hover:text-ink"}`}
     >
       {on && <motion.span layoutId={layout} className="absolute inset-0 rounded-[14px] bg-white/[0.07] ring-1 ring-white/[0.05] ring-inset" transition={{ type: "spring", stiffness: 500, damping: 42 }} />}
       {!on && <span className="absolute inset-0 rounded-[14px] bg-white/[0.035] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />}
@@ -436,10 +438,10 @@ function NavItem({ l, on, big = false, rail = false, layout }: { l: NavLink; on:
 
 function Nav({ groups, current, big = false, rail = false, layout }: { groups: Group[]; current?: string; big?: boolean; rail?: boolean; layout: string }) {
   return (
-    <div className={big ? "space-y-6" : "space-y-5 [@media(max-height:820px)]:space-y-3"}>
+    <div className={big ? "space-y-6" : "space-y-4 [@media(max-height:920px)]:space-y-2"}>
       {groups.map((g, gi) => (
         <div key={g.id}>
-          {gi > 0 && <p className={`mb-1.5 px-3 text-[13.5px] text-dim ${rail ? "lg:max-xl:hidden" : ""}`}>{g.label}</p>}
+          {gi > 0 && <p className={`mb-1.5 px-3 text-[13.5px] text-dim [@media(max-height:920px)]:mb-0.5 [@media(max-height:920px)]:text-[12.5px] ${rail ? "lg:max-xl:hidden" : ""}`}>{g.label}</p>}
           {rail && gi > 0 && <span className="mx-auto mb-2 hidden h-px w-6 bg-line-2 lg:max-xl:block" />}
           <ul className="space-y-0.5">
             {g.links.map((l) => (
@@ -570,7 +572,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
           <Nav groups={groups} current={current?.href} rail layout="side-hl" />
         </nav>
 
-        <div className="hidden shrink-0 px-3 pb-3 xl:block [@media(max-height:1040px)]:hidden">
+        <div className="hidden shrink-0 px-3 pb-3 xl:block [@media(max-height:1100px)]:hidden">
           <SideCard admin={admin} soon={soon} />
         </div>
         <div className="shrink-0 border-t border-line p-4 lg:max-xl:px-2">
@@ -580,7 +582,7 @@ export default function PanelShell({ user, admin, notes, counts, sites, soon = f
 
       <div className="relative lg:pl-[92px] xl:pl-[280px]">
         {/* górny pasek: tytuł strony + wyszukiwarka i szybkie akcje */}
-        <header className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,border-color] duration-300 ${scrolled ? "border-b border-line bg-bg lg:bg-bg/80 lg:backdrop-blur-xl" : "border-b border-transparent bg-bg"}`}>
+        <header className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[border-color] duration-300 lg:static ${scrolled ? "border-b border-line bg-bg lg:border-transparent" : "border-b border-transparent bg-bg"}`}>
           <div className="mx-auto flex h-16 max-w-[1640px] items-center justify-between gap-3 px-4 sm:px-8 lg:h-[88px] lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <Link href={home} className="shrink-0 lg:hidden" aria-label="Panel — start">

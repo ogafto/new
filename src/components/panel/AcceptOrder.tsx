@@ -63,8 +63,8 @@ export default function AcceptOrder({ q, onDone, onClose }: { q: AcceptFor; onDo
           </div>
         )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <Link href="/panel/admin/kalendarz" className="flex h-10 items-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] transition-colors hover:border-white/35">
-            <Icon d={ICONS.calendar} className="size-4" /> Kalendarz
+          <Link href={`/panel/admin/zlecenia/${done.orderId}`} className="flex h-10 items-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] transition-colors hover:border-white/35">
+            <Icon d={ICONS.receipt} className="size-4" /> Otwórz zlecenie
           </Link>
           <button type="button" onClick={onClose} className="h-10 rounded-full bg-ink px-5 text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
             Gotowe

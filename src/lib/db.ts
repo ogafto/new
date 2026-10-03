@@ -234,6 +234,18 @@ const SCHEMA = [
     note TEXT,
     created_at INTEGER NOT NULL
   )`,
+  // pliki oddawane klientowi w zleceniu (do pobrania w panelu klienta)
+  `CREATE TABLE IF NOT EXISTS order_files (
+    id TEXT PRIMARY KEY,
+    order_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    size INTEGER NOT NULL DEFAULT 0,
+    mime TEXT,
+    url TEXT NOT NULL,
+    pathname TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS afto_ofiles_order ON order_files(order_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS afto_sessions_user ON sessions(user_id)`,
   `CREATE INDEX IF NOT EXISTS afto_invites_email ON invites(email)`,
   `CREATE INDEX IF NOT EXISTS afto_pv_ts ON pageviews(ts)`,
@@ -257,7 +269,7 @@ const SCHEMA = [
  * dokleja się automatycznie.
  */
 const PREFIX = "afto_";
-const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors"];
+const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors", "order_files"];
 // tylko odwołania do tabel (po FROM/JOIN/INTO/UPDATE/…), nie aliasy kolumn typu „COUNT(*) pageviews”
 const TABLE_RE = new RegExp(`\\b(FROM|JOIN|INTO|UPDATE|EXISTS|REFERENCES|ON|TABLE)(\\s+)(${TABLES.join("|")})\\b`, "gi");
 export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${sp}${PREFIX}${t}`);
@@ -267,6 +279,7 @@ const COLUMNS: Record<string, Record<string, string>> = {
   pageviews: { seen: "INTEGER" },
   projects: { seo_title: "TEXT", seo_description: "TEXT" },
   inquiries: { user_id: "TEXT", source: "TEXT", order_id: "TEXT" },
+  orders: { site_id: "TEXT", client_note: "TEXT", done_at: "INTEGER" },
 };
 
 async function migrate(client: Client) {
@@ -278,7 +291,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 9;
+const VERSION = 10;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

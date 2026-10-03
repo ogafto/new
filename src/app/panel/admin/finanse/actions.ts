@@ -20,7 +20,7 @@ const done = () => {
   revalidatePath("/panel");
 };
 
-export type NewPayment = { title: string; client_name: string; client_email: string; user_id: string; service: string; amount: string; due_date: string; method: "stripe" | "transfer" | "cash"; notes: string; paid: boolean; send: boolean };
+export type NewPayment = { title: string; client_name: string; client_email: string; user_id: string; service: string; amount: string; due_date: string; method: "stripe" | "transfer" | "cash"; notes: string; paid: boolean; send: boolean; order_id?: string };
 
 export async function createPayment(d: NewPayment): Promise<R> {
   const admin = await requireAdmin();
@@ -34,8 +34,8 @@ export async function createPayment(d: NewPayment): Promise<R> {
   const pid = id();
   const now = Date.now();
   await run(
-    "INSERT INTO payments (id, title, client_name, client_email, user_id, service, amount, status, method, due_date, paid_at, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [pid, d.title.trim().slice(0, 200), d.client_name.trim().slice(0, 120), d.client_email.trim() || null, d.user_id || null, d.service || null, amount, d.paid ? "paid" : "pending", d.method, d.due_date || null, d.paid ? now : null, d.notes.trim().slice(0, 1000) || null, now],
+    "INSERT INTO payments (id, title, client_name, client_email, user_id, service, amount, status, method, due_date, paid_at, notes, created_at, order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [pid, d.title.trim().slice(0, 200), d.client_name.trim().slice(0, 120), d.client_email.trim() || null, d.user_id || null, d.service || null, amount, d.paid ? "paid" : "pending", d.method, d.due_date || null, d.paid ? now : null, d.notes.trim().slice(0, 1000) || null, now, d.order_id || null],
   );
 
   let url: string | undefined;

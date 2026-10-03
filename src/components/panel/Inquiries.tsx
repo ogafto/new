@@ -113,8 +113,8 @@ function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onS
             </p>
           </div>
         </div>
-        <Link href="/panel/admin/kalendarz" className="flex h-9 items-center gap-1.5 rounded-full border border-emerald-400/30 px-3.5 text-[13px] text-emerald-100 transition-colors hover:bg-emerald-400/10">
-          <Icon d={ICONS.calendar} className="size-4" /> W kalendarzu
+        <Link href={q.order_id ? `/panel/admin/zlecenia/${q.order_id}` : "/panel/admin/kalendarz"} className="flex h-9 items-center gap-1.5 rounded-full border border-emerald-400/30 px-3.5 text-[13px] text-emerald-100 transition-colors hover:bg-emerald-400/10">
+          <Icon d={ICONS.receipt} className="size-4" /> Otwórz zlecenie
         </Link>
       </div>
     );

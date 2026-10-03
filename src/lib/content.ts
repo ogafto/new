@@ -1,4 +1,4 @@
-import { services, site, steps, type ServiceId } from "./site";
+import { BUILTIN_SERVICES, services, site, steps, type ServiceId } from "./site";
 import { offers } from "./offer";
 
 /*
@@ -12,6 +12,8 @@ export type ServiceContent = { price: number; time: string; description: string 
 export type StepContent = { title: string; lead: string; text: string; points: string[] };
 export type Announcement = { enabled: boolean; text: string; label: string; link: string };
 export type Availability = { open: boolean; text: string };
+export type CustomService = { id: string; name: string; price: number; time: string; description: string };
+
 export type Soon = { enabled: boolean; kicker: string; title: string; accent: string; text: string; button: string; link: string; date: string };
 
 export type Content = {
@@ -21,6 +23,8 @@ export type Content = {
   legal: { owner: string; form: string; street: string; city: string; updated: string };
   hero: { line1: string; line2: string; accent: string; text: string };
   services: Record<ServiceId, ServiceContent>;
+  customServices: CustomService[];
+  hiddenServices: string[];
   seo: { title: string; description: string };
   announcement: Announcement;
   availability: Availability;
@@ -60,12 +64,14 @@ export const DEFAULT_SOON: Soon = {
   date: "",
 };
 
-const baseServices = Object.fromEntries(services.map((s) => [s.id, { price: s.price, time: s.time, description: s.description }])) as Record<ServiceId, ServiceContent>;
+const baseServices = Object.fromEntries(BUILTIN_SERVICES.map((s) => [s.id, { price: s.price, time: s.time, description: s.description }])) as Record<ServiceId, ServiceContent>;
 
 export const defaultContent = (): Content => ({
   ...structuredClone(base),
   hero: { ...DEFAULT_HERO },
   services: structuredClone(baseServices),
+  customServices: [],
+  hiddenServices: [],
   seo: { ...DEFAULT_SEO },
   announcement: { ...DEFAULT_ANNOUNCEMENT },
   availability: { ...DEFAULT_AVAILABILITY },
@@ -88,6 +94,11 @@ export function mergeContent(saved: Partial<Content> | null | undefined): Conten
     legal: pick(d.legal, saved.legal),
     hero: pick(d.hero, saved.hero),
     services: Object.fromEntries(Object.entries(d.services).map(([id, s]) => [id, pick(s, saved.services?.[id as ServiceId])])) as Content["services"],
+    customServices: (Array.isArray(saved.customServices) ? saved.customServices : [])
+      .filter((x) => x && typeof x.id === "string" && typeof x.name === "string" && x.name.trim())
+      .slice(0, 20)
+      .map((x) => ({ id: x.id.slice(0, 40), name: x.name.slice(0, 60), price: Math.max(0, Number(x.price) || 0), time: String(x.time ?? "").slice(0, 40), description: String(x.description ?? "").slice(0, 300) })),
+    hiddenServices: (Array.isArray(saved.hiddenServices) ? saved.hiddenServices : []).filter((x) => BUILTIN_SERVICES.some((b) => b.id === x)),
     seo: pick(d.seo, saved.seo),
     announcement: { ...pick(d.announcement, saved.announcement), enabled: typeof saved.announcement?.enabled === "boolean" ? saved.announcement.enabled : d.announcement.enabled },
     availability: { ...pick(d.availability, saved.availability), open: typeof saved.availability?.open === "boolean" ? saved.availability.open : d.availability.open },
@@ -109,7 +120,10 @@ export function applyContent(c: Content) {
   site.phone = c.phone;
   site.socials = c.socials.map((s) => ({ ...s }));
   Object.assign(site.legal, c.legal);
-  for (const s of services) Object.assign(s, c.services[s.id]);
+  for (const s of BUILTIN_SERVICES) Object.assign(s, c.services[s.id as ServiceId]);
+  // widoczne wbudowane + własne (formularz kontaktowy, „Zamów usługę” w panelu)
+  const next = [...BUILTIN_SERVICES.filter((s) => !c.hiddenServices.includes(s.id)), ...c.customServices.map((x) => ({ ...x, plural: x.name, custom: true }))];
+  services.splice(0, services.length, ...next);
   c.steps.forEach((st, i) => steps[i] && Object.assign(steps[i], { ...st, points: [...st.points] }));
   for (const o of offers) {
     const s = o.service && c.services[o.service];

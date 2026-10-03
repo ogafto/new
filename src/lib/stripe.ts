@@ -58,7 +58,7 @@ export async function createPaymentLink(p: { id: string; title: string; amount: 
     line_items: { 0: { price: price.id, quantity: 1 } },
     metadata: { payment_id: p.id },
     payment_intent_data: { metadata: { payment_id: p.id }, description: p.title.slice(0, 250) },
-    after_completion: { type: "redirect", redirect: { url: `${p.baseUrl}/platnosc?status=ok` } },
+    after_completion: { type: "redirect", redirect: { url: `${p.baseUrl}/platnosc?p=${p.id}&session_id={CHECKOUT_SESSION_ID}` } },
     restrictions: { completed_sessions: { limit: 1 } },
   });
   return link;
@@ -72,6 +72,11 @@ export async function deactivateLink(linkId: string) {
 export async function findPaidSession(linkId: string) {
   const r = await call<{ data: { id: string; payment_status: string; payment_intent: string | null; created: number }[] }>("GET", "/checkout/sessions", { payment_link: linkId, limit: 10 });
   return r.data.find((s) => s.payment_status === "paid") ?? null;
+}
+
+/** Sesja Checkout po powrocie ze Stripe (adres przekierowania niesie jej id) */
+export async function getSession(sessionId: string) {
+  return call<{ id: string; payment_status: string; status: string; payment_link: string | null; payment_intent: string | null; amount_total: number | null; metadata?: Record<string, string> }>("GET", `/checkout/sessions/${encodeURIComponent(sessionId)}`);
 }
 
 /** Weryfikacja podpisu webhooka (nagłówek Stripe-Signature) */

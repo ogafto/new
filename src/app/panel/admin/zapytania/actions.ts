@@ -97,6 +97,7 @@ export async function acceptInquiry(d: AcceptInput): Promise<AcceptResult> {
       notes: "",
       paid: false,
       send: false,
+      order_id: oid,
     });
     if (r.error) warn = `Zlecenie przyjęte, ale zaliczki nie udało się utworzyć: ${r.error}`;
     payUrl = r.url;

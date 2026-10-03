@@ -3,7 +3,7 @@ import { all, one, run } from "./db";
 import { log } from "./logs";
 import { setting } from "./settings";
 import { site } from "./site";
-import { deactivateLink } from "./stripe";
+import { deactivateLink, findPaidSession, getSession } from "./stripe";
 
 /* Finanse: płatności od klientów (przychody) i koszty. Kwoty w groszach. */
 
@@ -60,7 +60,10 @@ export async function listExpenses() {
 }
 
 export async function paymentsForUser(userId: string, email: string) {
-  return all<Payment>("SELECT * FROM payments WHERE (user_id = ? OR lower(client_email) = lower(?)) AND status IN ('pending', 'paid') ORDER BY created_at DESC LIMIT 20", [userId, email]);
+  const q = () => all<Payment>("SELECT * FROM payments WHERE (user_id = ? OR lower(client_email) = lower(?)) AND status IN ('pending', 'paid') ORDER BY created_at DESC LIMIT 20", [userId, email]);
+  const rows = await q();
+  // opłacone w Stripe, a webhook jeszcze nie dotarł (albo nie jest ustawiony) — dociągnij stan od razu
+  return (await syncStripe(rows)) ? q() : rows;
 }
 
 /** Podsumowanie: bieżący miesiąc, rok, oczekujące i 12 miesięcy wstecz */
@@ -136,6 +139,41 @@ export async function markPaid(id: string, opts: { via: "webhook" | "check" | "m
   // ręczne oznaczenie robi sam admin — powiadomienia tylko dla wpłat ze Stripe
   if (opts.via !== "manual") await notifyPaid(p, "Stripe");
   return { ...p, status: "paid" as const, paid_at: now };
+}
+
+/*
+ * Potwierdzenie bez czekania na webhook: po powrocie ze Stripe (sesja z adresu)
+ * albo przy wejściu klienta do panelu (oczekujące linki Stripe, z limitem i odstępem między sprawdzeniami).
+ */
+export async function confirmSession(sessionId: string) {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return null;
+  const s = await getSession(sessionId).catch(() => null);
+  if (!s) return null;
+  const p =
+    (s.metadata?.payment_id && (await one<Payment>("SELECT * FROM payments WHERE id = ?", [s.metadata.payment_id]))) ||
+    (s.payment_link ? await one<Payment>("SELECT * FROM payments WHERE stripe_session = ?", [s.payment_link]) : null);
+  if (!p) return null;
+  if (s.payment_status === "paid") return (await markPaid(p.id, { via: "check", stripePayment: s.payment_intent })) ?? p;
+  return { ...p, processing: s.status === "complete" };
+}
+
+const checked = (globalThis as unknown as { __afto_paycheck?: Map<string, number> }).__afto_paycheck ?? new Map<string, number>();
+(globalThis as unknown as { __afto_paycheck?: Map<string, number> }).__afto_paycheck = checked;
+
+export async function syncStripe(rows: Pick<Payment, "id" | "status" | "method" | "stripe_session">[]) {
+  const now = Date.now();
+  const due = rows.filter((p) => p.status === "pending" && p.method === "stripe" && p.stripe_session && now - (checked.get(p.id) ?? 0) > 20_000).slice(0, 3);
+  if (!due.length) return false;
+  const res = await Promise.all(
+    due.map(async (p) => {
+      checked.set(p.id, now);
+      const s = await findPaidSession(p.stripe_session!).catch(() => null);
+      if (!s) return false;
+      await markPaid(p.id, { via: "check", stripePayment: s.payment_intent });
+      return true;
+    }),
+  );
+  return res.some(Boolean);
 }
 
 /** Oczekujące płatności z terminem w ciągu `days` dni (albo już po terminie) */

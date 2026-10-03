@@ -22,6 +22,9 @@ export type Order = {
   reminded_before: number | null;
   reminded_due: number | null;
   created_at: number;
+  site_id?: string | null;
+  client_note?: string | null;
+  done_at?: number | null;
 };
 
 export const STATUS: Record<Order["status"], { label: string; dot: string }> = {

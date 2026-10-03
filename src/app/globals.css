@@ -164,6 +164,10 @@ body {
   .btn:hover .dot svg + svg {
     transform: translate(0, 0);
   }
+  /* jedna ikona w kropce (panel): bez wylotu, tylko lekkie powiększenie */
+  .btn:hover .dot svg:only-child {
+    transform: scale(1.12);
+  }
 
   /* Tekst przewijany po najechaniu */
   .roll {

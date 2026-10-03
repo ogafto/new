@@ -35,7 +35,10 @@ export const nav = [
 
 export type ServiceId = "www" | "shop" | "brand" | "ui";
 
-export const services: { id: ServiceId; name: string; plural: string; price: number; time: string; description: string }[] = [
+// wbudowane usługi mają stałe id (podstrony /uslugi), własne usługi z panelu dostają id „c-…”
+export type Service = { id: string; name: string; plural: string; price: number; time: string; description: string; custom?: boolean };
+
+export const services: Service[] = [
   {
     id: "www",
     name: "Strona internetowa",
@@ -70,7 +73,10 @@ export const services: { id: ServiceId; name: string; plural: string; price: num
   },
 ];
 
-export const serviceName = (id: ServiceId) => services.find((s) => s.id === id)!.name;
+export const serviceName = (id: string) => services.find((s) => s.id === id)?.name ?? id;
+
+// lista wbudowanych (przed zmianami z panelu) — punkt odniesienia dla applyContent
+export const BUILTIN_SERVICES = services.slice();
 
 /* ---------- Prace ---------- */
 

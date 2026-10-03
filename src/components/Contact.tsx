@@ -31,9 +31,10 @@ const timelines = ["Jak najszybciej", "W ciągu miesiąca", "Bez pośpiechu"];
 const stepNames = ["Usługa", "Budżet", "Projekt", "Kontakt"];
 const questions = ["Czego potrzebujesz?", "Jaki masz budżet?", "Opowiedz o projekcie", "Gdzie mam odpisać?"];
 
-type Opt = ServiceId | "anim" | "other";
-const options: { id: Opt; name: string; meta: string }[] = [
-  ...services.map((s) => ({ id: s.id as Opt, name: s.name, meta: `od ${s.price} zł · ${s.time}` })),
+type Opt = string;
+// liczone przy renderze — lista usług może się zmienić z panelu (applyContent)
+const getOptions = (): { id: Opt; name: string; meta: string }[] => [
+  ...services.map((s) => ({ id: s.id, name: s.name, meta: `od ${s.price} zł · ${s.time}` })),
   { id: "anim", name: "Animacja", meta: "Logo w ruchu, intro, social media" },
   { id: "other", name: "Coś innego", meta: "Opiszesz w kolejnym kroku" },
 ];
@@ -311,7 +312,8 @@ export default function Contact() {
   }, []);
 
   const toggle = (id: Opt) => set("services")(d.services.includes(id) ? d.services.filter((x) => x !== id) : [...d.services, id]);
-  const names = d.services.map((id) => options.find((o) => o.id === id)!.name);
+  const options = getOptions();
+  const names = d.services.map((id) => options.find((o) => o.id === id)?.name ?? id);
   const serviceLabel = names.length > 2 ? `${names[0]} +${names.length - 1}` : names.join(", ");
   const topic = d.services
     .map((id) => {

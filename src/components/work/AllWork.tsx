@@ -51,7 +51,7 @@ export default function AllWork({ projects }: { projects: Project[] }) {
   const visible = all ? list : list.slice(0, PAGE);
   const filters: { id: Filter; label: string; count: number }[] = [
     { id: "all", label: "Wszystkie", count: projects.length },
-    ...services.map((s) => ({ id: s.id, label: s.plural, count: projects.filter((p) => p.category === s.id).length })).filter((f) => f.count > 0),
+    ...services.map((s) => ({ id: s.id as Filter, label: s.plural, count: projects.filter((p) => p.category === s.id).length })).filter((f) => f.count > 0),
   ];
 
   return (

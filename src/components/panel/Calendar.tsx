@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { deleteOrder, runReminders, saveOrder } from "@/app/panel/admin/kalendarz/actions";
 import type { Order } from "@/lib/orders";
@@ -480,6 +481,15 @@ export default function Calendar({ orders, clients, today, mail }: { orders: O[]
 
       <Portal>
         <Modal open={!!edit} onClose={close} title={edit?.id ? "Edytuj zlecenie" : "Nowe zlecenie"} wide>
+          {edit?.id && (
+            <Link href={`/panel/admin/zlecenia/${edit.id}`} className="mb-5 flex items-center justify-between gap-3 rounded-2xl bg-accent/[0.08] px-4 py-3 text-[13.5px] ring-1 ring-accent/20 transition-colors ring-inset hover:bg-accent/[0.14]">
+              <span>
+                <span className="block text-ink">Pliki, strona w CMS, wiadomość dla klienta</span>
+                <span className="block text-[12px] text-muted">Otwórz pełną kartę zlecenia</span>
+              </span>
+              <Icon d="M9 6l6 6-6 6" className="size-4" />
+            </Link>
+          )}
           {edit && <OrderForm key={edit.id ?? "new"} order={edit} clients={clients} onDone={close} />}
         </Modal>
       </Portal>

@@ -577,7 +577,7 @@ export default function Finance({ payments, expenses, summary, stripe, clients, 
 
   return (
     <>
-      <PageHead title="Finanse">
+      <PageHead kicker="Biznes" title="Finanse">
         <a href={`/panel/admin/finanse/eksport${tab === "expenses" ? "?co=koszty" : ""}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
           <Icon d={ICONS.download} className="size-4" /> CSV
         </a>

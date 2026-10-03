@@ -57,21 +57,48 @@ export default async function Cockpit() {
       return { id: `o${o.id}`, kind: "deadline" as const, title: o.title, sub: `${o.client_name} · ${when(d)}`, href: "/panel/admin/kalendarz", action: "Otwórz", urgent: d <= 0 };
     }),
   ].sort((a, b) => Number(b.urgent) - Number(a.urgent));
+  const nNew = inquiries.filter((q) => q.status === "new").length;
+  const nLate = pay.filter((p) => daysBetween(t, p.due_date!) < 0).length;
+  const nSoon = next.filter((o) => daysBetween(t, o.due_date) <= 7).length;
+  const summary = [
+    nNew ? `${nNew} ${nNew === 1 ? "nowe zapytanie" : "nowe zapytania"}` : "Brak nowych zapytań",
+    nLate ? `${nLate} ${nLate === 1 ? "płatność po terminie" : "płatności po terminie"}` : null,
+    nSoon ? `${nSoon} ${nSoon === 1 ? "termin" : "terminy"} w tym tygodniu` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ") + ".";
 
   return (
     <>
       <CockpitHero
         soon={soon}
-        live={nowOnline}
         greeting={`${greet()},`}
         name={`${admin.name.split(" ")[0]}.`}
+        accent={todo.length ? `${todo.length} ${todo.length === 1 ? "sprawa czeka." : todo.length < 5 ? "sprawy czekają." : "spraw czeka."}` : "Wszystko ogarnięte."}
         date={new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Warsaw" }).format(new Date())}
+        summary={summary}
         stats={[
-          { label: "dziś na głównej", value: home.today },
-          { label: "nowe zapytania", value: Number(newInq?.n ?? 0), href: "/panel/admin/zapytania" },
+          { label: "na stronie teraz", value: nowOnline, live: true, href: "/panel/admin/analityka" },
+          { label: "dziś na głównej", value: home.today, href: "/panel/admin/analityka" },
           { label: "przychód w miesiącu", value: Math.round(fin.month.revenue / 100), suffix: " zł", href: "/panel/admin/finanse" },
           { label: "do zapłaty", value: Math.round(fin.pending.amount / 100), suffix: " zł", href: "/panel/admin/finanse" },
         ]}
+        actions={
+          <>
+            <Link href={todo[0]?.href ?? "/panel/admin/zapytania"} className="group btn btn-primary !h-12 text-[14.5px]">
+              <span className="roll">
+                <span>{todo.length ? "Zacznij od pierwszej" : "Zobacz zapytania"}</span>
+                <span aria-hidden>{todo.length ? "Zacznij od pierwszej" : "Zobacz zapytania"}</span>
+              </span>
+              <span className="dot !size-9">
+                <Icon d={ICONS.arrowUp} className="size-4 rotate-45" />
+              </span>
+            </Link>
+            <Link href="/panel/admin/finanse?nowa=1" className="btn btn-outline !h-12 text-[14.5px]">
+              Nowa płatność
+            </Link>
+          </>
+        }
       />
 
       <div className="mb-4 grid gap-4 lg:grid-cols-[1.5fr_1fr]">

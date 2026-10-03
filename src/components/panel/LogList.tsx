@@ -172,7 +172,7 @@ export default function LogList({ rows, more, kinds, stats, filters }: { rows: L
 
   return (
     <>
-      <PageHead title="Logi">
+      <PageHead kicker="System" title="Logi">
         <Btn size="sm" variant="ghost" icon={ICONS.refresh} disabled={pending} onClick={() => start(() => router.refresh())}>
           Odśwież
         </Btn>

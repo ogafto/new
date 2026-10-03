@@ -10,14 +10,14 @@ export const ease = [0.16, 1, 0.3, 1] as const;
 
 export function PageHead({ kicker, title, text, children }: { kicker?: string; title: React.ReactNode; text?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col justify-between gap-4 sm:mb-8 sm:flex-row sm:items-end lg:mb-10">
+    <div className="mb-7 flex flex-col justify-between gap-5 sm:mb-9 sm:flex-row sm:items-end lg:mb-12">
       <div className="min-w-0">
         {kicker && (
-          <motion.p className="text-[13px] text-dim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+          <motion.p className="kicker mb-5" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}>
             {kicker}
           </motion.p>
         )}
-        <h1 className="h-display mt-2 overflow-hidden pb-[0.1em] text-[clamp(2rem,3.6vw,3rem)]">
+        <h1 className="h-display overflow-hidden pb-[0.1em] text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.95]">
           <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 0.7, ease }}>
             {title}
           </motion.span>
@@ -285,6 +285,19 @@ export { ICONS };
 
 type BtnProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" | "outline" | "danger"; size?: "sm" | "md"; icon?: string };
 export function Btn({ variant = "outline", size = "md", icon, className = "", children, ...rest }: BtnProps) {
+  // główny przycisk jak na stronie: biała pigułka, tekst „przewija się”, ikona w fioletowej kropce
+  if (variant === "primary" && icon && children)
+    return (
+      <button {...rest} className={`group inline-flex shrink-0 items-center justify-center gap-3 rounded-full bg-ink font-medium text-bg transition-colors duration-300 hover:bg-white disabled:pointer-events-none disabled:opacity-50 ${size === "sm" ? "h-9 pr-1 pl-4 text-[13px]" : "h-11 pr-1.5 pl-5 text-[14px]"} ${className}`}>
+        <span className="roll">
+          <span>{children}</span>
+          <span aria-hidden>{children}</span>
+        </span>
+        <span className={`grid place-items-center rounded-full bg-accent text-white transition-transform duration-700 ease-out-expo group-hover:rotate-[20deg] ${size === "sm" ? "size-7" : "size-8"}`}>
+          <Icon d={icon} className="size-4" />
+        </span>
+      </button>
+    );
   const v = {
     primary: "bg-ink text-bg hover:bg-white",
     outline: "border border-line-2 text-ink hover:border-white/35 hover:bg-white/[0.03]",

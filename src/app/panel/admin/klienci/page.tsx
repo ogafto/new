@@ -40,7 +40,7 @@ export default async function ClientsPage() {
 
   return (
     <>
-      <PageHead title="Klienci">
+      <PageHead kicker="Klienci" title="Klienci">
         <InviteButton />
       </PageHead>
 

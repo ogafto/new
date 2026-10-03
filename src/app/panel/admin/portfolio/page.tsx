@@ -15,7 +15,7 @@ export default async function PortfolioAdmin() {
   const views = Object.fromEntries(stats.map((s) => [s.slug, { views: Number(s.views), visitors: Number(s.visitors) }]));
   return (
     <>
-      <PageHead title="Portfolio">
+      <PageHead kicker="Strona" title="Portfolio">
         <a href="/portfolio" target="_blank" className="inline-flex h-10 items-center gap-2 rounded-full border border-line-2 px-4 text-[13.5px] text-muted transition-colors hover:border-white/30 hover:text-ink">
           <Icon d={ICONS.site} className="size-4" />
           Na stronie

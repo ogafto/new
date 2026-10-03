@@ -118,7 +118,7 @@ export default async function BrandPage() {
   const generated = hasItems ? fromManifest(manifest) : [...fromManifest(manifest), ...logoAnims, ...official];
   return (
     <>
-      <PageHead title="Marka i logo" />
+      <PageHead kicker="Strona" title="Marka i logo" />
       <BrandBoard generated={generated} own={own} palette={palette} colors={colors} blob={blob} />
     </>
   );

@@ -234,7 +234,7 @@ export default function Calendar({ orders, clients, today, mail }: { orders: O[]
 
   return (
     <>
-      <PageHead title="Kalendarz">
+      <PageHead kicker="Klienci" title="Kalendarz">
         <Segmented
           id="cal-view"
           value={view}

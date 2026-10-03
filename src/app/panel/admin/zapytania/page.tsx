@@ -17,7 +17,7 @@ export default async function InquiriesPage() {
   const fresh = rows.filter((r) => r.status === "new").length;
   return (
     <>
-      <PageHead title="Zapytania">
+      <PageHead kicker="Klienci" title="Zapytania">
         {fresh > 0 && (
           <Badge tone="accent">
             <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_rgb(139_108_255/0.9)]" />

@@ -15,44 +15,6 @@ import CommandPalette, { useCommandPalette } from "./CommandPalette";
 export type Note = { id: string; kind: "deadline" | "inquiry"; title: string; text: string; href: string; urgent: boolean };
 type Props = { user: { name: string; email: string }; admin: boolean; notes: Note[]; counts: { inquiries: number }; sites: { id: string; name: string }[]; children: React.ReactNode };
 
-function navFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]) {
-  if (admin)
-    return [
-      {
-        group: "Przegląd",
-        links: [
-          { href: "/panel/admin", label: "Kokpit", icon: ICONS.home },
-          { href: "/panel/admin/analityka", label: "Analityka", icon: ICONS.chart },
-          { href: "/panel/admin/kalendarz", label: "Kalendarz", icon: ICONS.calendar },
-        ],
-      },
-      {
-        group: "Klienci",
-        links: [
-          { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
-          { href: "/panel/admin/klienci", label: "Klienci", icon: ICONS.users },
-        ],
-      },
-      { group: "Biznes", links: [{ href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet }] },
-      {
-        group: "Treści",
-        links: [
-          { href: "/panel/admin/tresci", label: "Treści strony", icon: ICONS.doc },
-          { href: "/panel/admin/portfolio", label: "Portfolio", icon: ICONS.grid },
-          { href: "/panel/admin/marka", label: "Marka i logo", icon: ICONS.brand },
-        ],
-      },
-      {
-        group: "System",
-        links: [
-          { href: "/panel/admin/ustawienia", label: "Ustawienia", icon: ICONS.gear },
-          { href: "/panel/admin/logi", label: "Logi", icon: ICONS.logs },
-        ],
-      },
-    ];
-  return [{ group: "Twój panel", links: [{ href: "/panel", label: "Przegląd", icon: ICONS.home }, ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers }))] }];
-}
-
 // Puls panelu: licznik „na stronie” + powiadomienia o wpłatach i zapytaniach na żywo (bez przeładowania)
 function Live() {
   const router = useRouter();
@@ -227,7 +189,7 @@ const CREATE = [
   { href: "/panel/admin/tresci#notice", label: "Ogłoszenie", sub: "pasek na stronie", icon: ICONS.bell },
 ];
 
-function CreateMenu({ open, onClose, align = "left" }: { open: boolean; onClose: () => void; align?: "left" | "up" }) {
+function CreateMenu({ open, onClose, align = "left" }: { open: boolean; onClose: () => void; align?: "left" | "up" | "right" }) {
   const ref = useRef<HTMLDivElement>(null);
   // zamykanie kliknięciem obok i klawiszem Esc (bez nakładki — pasek boczny ma backdrop-filter)
   useEffect(() => {
@@ -250,7 +212,7 @@ function CreateMenu({ open, onClose, align = "left" }: { open: boolean; onClose:
         <>
           <motion.div
             ref={ref}
-            className={`edge absolute z-[76] w-[260px] overflow-hidden rounded-2xl bg-surface p-1.5 shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9),0_0_60px_-25px_rgb(139_108_255/0.5)] ${align === "up" ? "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2" : "top-[calc(100%+8px)] left-0"}`}
+            className={`edge absolute z-[76] w-[260px] overflow-hidden rounded-2xl bg-surface p-1.5 shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9),0_0_60px_-25px_rgb(139_108_255/0.5)] ${align === "up" ? "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2" : align === "right" ? "top-[calc(100%+10px)] right-0" : "top-[calc(100%+8px)] left-0"}`}
             initial={{ opacity: 0, y: align === "up" ? 10 : -6, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: align === "up" ? 10 : -6, scale: 0.97 }}
@@ -277,362 +239,319 @@ function CreateMenu({ open, onClose, align = "left" }: { open: boolean; onClose:
 }
 
 type NavLink = { href: string; label: string; icon: string; badge?: number };
+type Section = { id: string; label: string; icon: string; links: NavLink[] };
 
-const TITLES: [RegExp, string][] = [
-  [/^\/panel\/admin\/portfolio\/nowy/, "Nowy projekt"],
-  [/^\/panel\/admin\/portfolio\/./, "Edycja projektu"],
-  [/^\/panel\/admin\/strony/, "Strony klientów"],
-];
+// 4 główne sekcje (zamiast długiego menu) — podstrony jako zakładki pod tytułem
+function sectionsFor(admin: boolean, counts: Props["counts"], sites: Props["sites"]): Section[] {
+  if (!admin) return [{ id: "panel", label: "Panel", icon: ICONS.home, links: [{ href: "/panel", label: "Przegląd", icon: ICONS.home }, ...sites.map((s) => ({ href: `/panel/strona/${s.id}`, label: s.name, icon: ICONS.layers }))] }];
+  return [
+    { id: "kokpit", label: "Kokpit", icon: ICONS.home, links: [{ href: "/panel/admin", label: "Kokpit", icon: ICONS.home }] },
+    {
+      id: "klienci",
+      label: "Klienci",
+      icon: ICONS.users,
+      links: [
+        { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
+        { href: "/panel/admin/klienci", label: "Klienci", icon: ICONS.users },
+        { href: "/panel/admin/kalendarz", label: "Kalendarz", icon: ICONS.calendar },
+      ],
+    },
+    {
+      id: "biznes",
+      label: "Biznes",
+      icon: ICONS.wallet,
+      links: [
+        { href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet },
+        { href: "/panel/admin/analityka", label: "Analityka", icon: ICONS.chart },
+      ],
+    },
+    {
+      id: "strona",
+      label: "Strona",
+      icon: ICONS.globe,
+      links: [
+        { href: "/panel/admin/tresci", label: "Treści", icon: ICONS.doc },
+        { href: "/panel/admin/portfolio", label: "Portfolio", icon: ICONS.grid },
+        { href: "/panel/admin/marka", label: "Marka i logo", icon: ICONS.brand },
+      ],
+    },
+    {
+      id: "system",
+      label: "System",
+      icon: ICONS.gear,
+      links: [
+        { href: "/panel/admin/ustawienia", label: "Ustawienia", icon: ICONS.gear },
+        { href: "/panel/admin/logi", label: "Logi", icon: ICONS.logs },
+      ],
+    },
+  ];
+}
 
 export default function PanelShell({ user, admin, notes, counts, sites, soon = false, children }: Props & { soon?: boolean }) {
   const path = usePathname();
   const [menu, setMenu] = useState(false);
-  const [create, setCreate] = useState<"side" | "tab" | null>(null);
-  const [rail, setRail] = useState(false);
+  const [create, setCreate] = useState<"top" | "tab" | null>(null);
+  const closeCreate = useCallback(() => setCreate(null), []);
   const [userMenu, setUserMenu] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [cmdk, setCmdk] = useCommandPalette();
+
+  const sections = sectionsFor(admin, counts, sites);
+  const links = sections.flatMap((x) => x.links);
+  const active = (href: string) => (href === "/panel/admin" || href === "/panel" ? path === href : path.startsWith(href));
+  const current = links.filter((l) => active(l.href)).sort((a, b) => b.href.length - a.href.length)[0];
+  const section = sections.find((x) => x.links.some((l) => l.href === current?.href)) ?? sections[0];
+  const main = sections.filter((x) => x.id !== "system");
+  const inquiries = counts.inquiries;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setMenu(false);
+      setCreate(null);
+      setUserMenu(false);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [path]);
+
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 12);
+    on();
+    addEventListener("scroll", on, { passive: true });
+    return () => removeEventListener("scroll", on);
+  }, []);
+
   useEffect(() => {
     if (!userMenu) return;
     const down = (e: PointerEvent) => !userRef.current?.contains(e.target as Node) && setUserMenu(false);
     addEventListener("pointerdown", down);
     return () => removeEventListener("pointerdown", down);
   }, [userMenu]);
-  const closeCreate = useCallback(() => setCreate(null), []);
-  const [cmdk, setCmdk] = useCommandPalette();
-  const nav = navFor(admin, counts, sites);
-  const links = nav.flatMap((g) => g.links as NavLink[]);
-  const active = (href: string) => (href === "/panel/admin" || href === "/panel" ? path === href : path.startsWith(href));
-  const current = links.filter((l) => active(l.href)).sort((a, b) => b.href.length - a.href.length)[0];
-  const title = TITLES.find(([r]) => r.test(path))?.[1] ?? current?.label ?? "Panel";
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setMenu(false);
-      setCreate(null);
-    }, 0);
-    return () => clearTimeout(t);
-  }, [path]);
-
-  // zwinięte menu boczne — zapamiętane w przeglądarce
-  useEffect(() => {
-    let v = false;
-    try {
-      v = localStorage.getItem("afto:rail") === "1";
-    } catch {}
-    const t = setTimeout(() => setRail(v), 0);
-    return () => clearTimeout(t);
-  }, []);
-  const toggleRail = () =>
-    setRail((r) => {
-      try {
-        localStorage.setItem("afto:rail", r ? "0" : "1");
-      } catch {}
-      return !r;
-    });
 
   // podpowiedź roli dla proxy (sesje sprzed tej zmiany) — raz po wejściu
   useEffect(() => {
     syncRole().catch(() => {});
   }, []);
 
-  const navList = (compact: boolean) => (
-    <nav className="space-y-4" aria-label="Panel">
-      {nav.map((g, gi) => (
-        <motion.div key={g.group} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + gi * 0.06, duration: 0.6, ease }}>
-          {compact ? <div className="mx-auto mb-2 h-px w-6 bg-line" /> : <p className="mb-1 px-3 text-[12px] text-dim">{g.group}</p>}
-          <ul className="space-y-0.5">
-            {(g.links as NavLink[]).map((l) => {
-              const on = active(l.href) && current?.href === l.href;
-              const badge = l.badge ?? 0;
-              return (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    title={compact ? l.label : undefined}
-                    className={`group relative flex items-center rounded-[10px] py-[7px] text-[14px] transition-colors ${compact ? "justify-center px-0 py-2.5" : "gap-3 px-3"} ${on ? "text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
-                  >
-                    {on && (
-                      <motion.span
-                        layoutId={compact ? "panel-nav-rail" : "panel-nav"}
-                        className="absolute inset-0 rounded-[12px] bg-[linear-gradient(100deg,rgb(139_108_255/0.28),rgb(139_108_255/0.08)_60%,rgb(255_255_255/0.02))] shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_8px_24px_-12px_rgb(139_108_255/0.7)] ring-1 ring-accent/30"
-                        transition={{ type: "spring", stiffness: 420, damping: 36 }}
-                      >
-                        <span className="absolute top-1/2 -left-[13px] h-6 w-[3px] -translate-y-1/2 rounded-full bg-accent-2 shadow-[0_0_16px_#b4a2ff]" />
-                      </motion.span>
-                    )}
-                    <span className={`relative transition-[color,filter] ${on ? "text-white drop-shadow-[0_0_8px_rgb(180_162_255/0.9)]" : "group-hover:text-accent-2"}`}>
-                      <Icon d={l.icon} />
-                      {compact && badge > 0 && <span className="absolute -top-1.5 -right-2 grid min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[9.5px] font-medium text-white">{badge}</span>}
-                    </span>
-                    {!compact && <span className="relative flex-1 truncate">{l.label}</span>}
-                    {!compact && badge > 0 && <span className="relative grid min-w-[20px] place-items-center rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">{badge}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </motion.div>
-      ))}
-    </nav>
-  );
-
-  const status = admin && (
-    <Link
-      href="/panel/admin/tresci#soon"
-      title={soon ? "Tryb zapowiedzi — strona ukryta" : "Strona online"}
-      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] transition-colors ${rail ? "justify-center" : ""} ${soon ? "bg-amber-300/[0.07] text-amber-100 hover:bg-amber-300/10" : "text-muted hover:bg-white/[0.04] hover:text-ink"}`}
-    >
-      <span className="relative flex size-2 shrink-0">
-        <span className={`absolute inset-0 animate-ping rounded-full ${soon ? "bg-amber-300/70" : "bg-emerald-400/70"}`} />
-        <span className={`relative size-2 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400"}`} />
-      </span>
-      {!rail && <span className="truncate">{soon ? "Tryb zapowiedzi" : "Strona online"}</span>}
-    </Link>
-  );
-
-  const userCard = (compact: boolean) => (
-    <div className="relative" ref={userRef}>
-      <AnimatePresence>
-        {userMenu && (
-          <motion.div
-            className="edge absolute bottom-[calc(100%+8px)] left-0 z-[80] w-[232px] overflow-hidden rounded-2xl bg-surface p-1.5 shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)]"
-            initial={{ opacity: 0, y: 8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.2, ease }}
-          >
-            <div className="border-b border-line px-3 pt-2 pb-2.5">
-              <p className="truncate text-[13.5px]">{user.name}</p>
-              <p className="truncate text-[12px] text-dim">{user.email}</p>
-            </div>
-            {admin && (
-              <Link href="/panel/admin/ustawienia" className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
-                <Icon d={ICONS.gear} className="size-4" /> Ustawienia
-              </Link>
-            )}
-            <a href="/" target="_blank" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
-              <Icon d={ICONS.site} className="size-4" /> Otwórz stronę
-            </a>
-            <form action={logout}>
-              <button type="submit" className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted transition-colors hover:bg-red-400/10 hover:text-red-200">
-                <Icon d={ICONS.logout} className="size-4" /> Wyloguj
-              </button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button
-        type="button"
-        onClick={() => setUserMenu((o) => !o)}
-        className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/[0.04] ${compact ? "justify-center" : ""} ${userMenu ? "bg-white/[0.05]" : ""}`}
-        aria-label="Konto"
-      >
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[13px] font-medium text-white shadow-[0_0_18px_-4px_rgb(139_108_255/0.8)]">{user.name.charAt(0).toUpperCase()}</span>
-        {!compact && (
-          <>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px]">{user.name}</span>
-              <span className="block truncate text-[11.5px] text-dim">{admin ? "Administrator" : user.email}</span>
-            </span>
-            <svg viewBox="0 0 24 24" className="size-4 text-dim" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-              <path d="M8 10l4-4 4 4M8 14l4 4 4-4" />
-            </svg>
-          </>
-        )}
-      </button>
-    </div>
-  );
-
-  // dolny pasek na telefonie (admin)
-  const tabs: (NavLink | null)[] = admin
-    ? [
-        { href: "/panel/admin", label: "Kokpit", icon: ICONS.home },
-        { href: "/panel/admin/zapytania", label: "Zapytania", icon: ICONS.inbox, badge: counts.inquiries },
-        null,
-        { href: "/panel/admin/finanse", label: "Finanse", icon: ICONS.wallet },
-      ]
-    : [];
+  const circle = "grid size-11 place-items-center rounded-full border border-line-2 text-muted transition-colors duration-500 hover:border-white/30 hover:text-ink";
 
   return (
-    <div className={`min-h-[100svh] lg:grid ${rail ? "lg:grid-cols-[96px_1fr]" : "lg:grid-cols-[284px_1fr]"} transition-[grid-template-columns] duration-500 ease-out-expo`}>
-      {/* tło panelu: powoli płynąca zorza + siatka kropek */}
-      <div className="panel-aurora pointer-events-none fixed inset-0 -z-0 overflow-hidden bg-[#06060a]" aria-hidden>
-        <div className="absolute -top-[30%] right-[-15%] size-[80vmax] rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent_70%)] [animation:panel-drift-a_26s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[-35%] left-[-10%] size-[70vmax] rounded-full bg-[radial-gradient(closest-side,rgb(92_70_220/0.12),transparent_70%)] [animation:panel-drift-b_32s_ease-in-out_infinite]" />
-        <div className="absolute top-[30%] left-[35%] size-[40vmax] rounded-full bg-[radial-gradient(closest-side,rgb(180_162_255/0.06),transparent_70%)] [animation:panel-drift-a_40s_ease-in-out_infinite_reverse]" />
-        <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.045)_1px,transparent_1px)] bg-[size:26px_26px] [mask-image:radial-gradient(90%_70%_at_60%_10%,black,transparent)]" />
+    <div className="relative min-h-[100svh]">
+      {/* tło jak na stronie głównej: pionowe linie, poświata i przesuwająca się wiązka światła */}
+      <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" aria-hidden>
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgb(255_255_255/0.035)_0_1px,transparent_1px_120px)] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
+        <div className="absolute -top-[25%] left-1/2 h-[70vh] w-[110vw] -translate-x-1/2 bg-[radial-gradient(closest-side,rgb(139_108_255/0.16),transparent)]" />
+        <div className="absolute top-0 bottom-0 w-[18vw] bg-[linear-gradient(90deg,transparent,rgb(180_162_255/0.07),transparent)] blur-2xl [animation:panel-beam_14s_ease-in-out_infinite]" />
       </div>
 
-      {/* menu boczne (komputer) */}
-      <motion.aside
-        className={`sticky top-3 z-30 m-3 mr-0 hidden h-[calc(100svh-24px)] flex-col rounded-[28px] border border-white/[0.07] bg-[linear-gradient(180deg,rgb(22_22_32/0.7),rgb(10_10_15/0.78))] py-5 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-2xl lg:flex ${rail ? "px-3" : "px-4"}`}
-        initial={{ opacity: 0, x: -24 }}
-        animate={{ opacity: 1, x: 0 }}
+      {/* górny pasek — jak navbar strony */}
+      <motion.header
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease }}
+        className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-500 ${scrolled ? "bg-bg lg:bg-bg/75 lg:backdrop-blur-xl" : "bg-bg lg:bg-transparent"}`}
       >
-        <div className={`flex items-center ${rail ? "flex-col gap-3" : "justify-between pl-2"}`}>
-          <Link href={admin ? "/panel/admin" : "/panel"} className="flex items-center gap-3" aria-label="Panel — start">
-            <Mark className="size-8" />
-            {!rail && <Wordmark className="h-[19px] w-auto" />}
+        <div className={`mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-8 lg:h-20 lg:px-10 ${scrolled ? "border-b border-line lg:border-transparent" : ""}`}>
+          <Link href={admin ? "/panel/admin" : "/panel"} className="group flex shrink-0 items-center gap-3" aria-label="Panel — start">
+            <Mark className="size-8 transition-transform duration-700 ease-out-expo group-hover:-rotate-12" />
+            <Wordmark className="hidden h-[20px] w-auto sm:block" />
           </Link>
-          <button type="button" onClick={toggleRail} className="grid size-8 place-items-center rounded-lg text-dim transition-colors hover:bg-white/[0.05] hover:text-ink" aria-label={rail ? "Rozwiń menu" : "Zwiń menu"} title={rail ? "Rozwiń menu" : "Zwiń menu"}>
-            <svg viewBox="0 0 24 24" className={`size-[18px] transition-transform duration-500 ${rail ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M4 5h16v14H4zM9 5v14M15.5 10l-2 2 2 2" />
-            </svg>
-          </button>
-        </div>
 
-        {admin && (
-          <div className={`relative mt-5 flex gap-2 ${rail ? "flex-col" : ""}`}>
-            <button
-              type="button"
-              onClick={() => setCmdk(true)}
-              className={`flex h-10 items-center gap-2.5 rounded-xl border border-line-2 bg-white/[0.025] text-[13.5px] text-dim transition-colors hover:border-white/25 hover:text-ink ${rail ? "justify-center" : "flex-1 px-3"}`}
-              aria-label="Szukaj (⌘K)"
-              title="Szukaj (⌘K)"
-            >
-              <Icon d={ICONS.search} className="size-4" />
-              {!rail && (
-                <>
-                  <span className="flex-1 text-left">Szukaj…</span>
-                  <kbd className="rounded-md border border-line-2 px-1.5 text-[11px]">⌘K</kbd>
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              data-create-trigger
-              onClick={() => setCreate(create === "side" ? null : "side")}
-              className="grid h-10 w-full shrink-0 place-items-center rounded-xl bg-ink text-bg shadow-[0_8px_24px_-10px_rgb(255_255_255/0.5)] transition-colors hover:bg-white data-[rail=false]:w-10"
-              data-rail={rail}
-              aria-label="Nowe"
-              title="Nowe"
-            >
-              <Icon d={ICONS.plus} className={`size-[18px] transition-transform duration-300 ${create === "side" ? "rotate-45" : ""}`} />
-            </button>
-            <div className="absolute top-full left-0">
-              <CreateMenu open={create === "side"} onClose={closeCreate} />
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5 -mr-2 flex-1 overflow-y-auto pr-2 pb-3 [scrollbar-width:none]" data-lenis-prevent>
-          {navList(rail)}
-        </div>
-
-        <div className="space-y-1.5 border-t border-line pt-3">
-          {status}
-          {userCard(rail)}
-        </div>
-      </motion.aside>
-
-      {/* menu pełnoekranowe (telefon/tablet) */}
-      <AnimatePresence>
-        {menu && (
-          <motion.div className="fixed inset-0 z-[70] bg-bg lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-            <motion.div
-              className="absolute inset-0 flex flex-col overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+24px)]"
-              initial={{ y: 16 }}
-              animate={{ y: 0 }}
-              exit={{ y: 16 }}
-              transition={{ duration: 0.45, ease }}
-              data-lenis-prevent
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-3">
-                  <Mark className="size-8" />
-                  <Wordmark className="h-[19px] w-auto" />
-                </span>
-                <button type="button" onClick={() => setMenu(false)} className="grid size-10 place-items-center rounded-full border border-line-2" aria-label="Zamknij menu">
-                  <Icon d={ICONS.close} className="size-4" />
-                </button>
-              </div>
-              <div className="mt-8 flex-1">{navList(false)}</div>
-              <div className="mt-8 space-y-2.5">
-                {status}
-                {userCard(false)}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="relative min-w-0">
-        <motion.header
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.7, ease }}
-          className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-bg px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2.5 sm:px-8 lg:top-3 lg:mx-3 lg:mt-3 lg:rounded-[20px] lg:border lg:border-white/[0.07] lg:bg-[rgb(14_14_20/0.6)] lg:px-5 lg:py-2.5 lg:shadow-[0_20px_50px_-30px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.05)] lg:backdrop-blur-2xl"
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            {!admin && (
-              <button type="button" onClick={() => setMenu(true)} className="grid size-10 shrink-0 place-items-center rounded-full border border-line-2 lg:hidden" aria-label="Menu">
-                <Icon d={ICONS.menu} className="size-[18px]" />
-              </button>
-            )}
-            <Link href={admin ? "/panel/admin" : "/panel"} className="shrink-0 lg:hidden" aria-label="Panel — start">
-              <Mark className="size-8" />
-            </Link>
-            <nav aria-label="Ścieżka" className="flex min-w-0 items-center gap-2 text-[13.5px]">
-              <span className="hidden text-dim sm:inline">Panel</span>
-              <span className="hidden text-dim/60 sm:inline">/</span>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span key={title} className="truncate font-medium" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
-                  {title}
-                </motion.span>
-              </AnimatePresence>
+          {/* sekcje */}
+          {admin && (
+            <nav className="hidden items-center gap-1 lg:flex" aria-label="Sekcje">
+              {main.map((x) => {
+                const on = section.id === x.id;
+                const badge = x.id === "klienci" ? inquiries : 0;
+                return (
+                  <Link key={x.id} href={x.links[0].href} className={`group relative rounded-full px-5 py-2.5 text-[15px] transition-colors ${on ? "text-ink" : "text-muted hover:text-ink"}`}>
+                    {on && <motion.span layoutId="top-sec" className="absolute inset-0 rounded-full border border-line-2 bg-white/[0.05]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
+                    <span className="roll relative">
+                      <span>{x.label}</span>
+                      <span aria-hidden>{x.label}</span>
+                    </span>
+                    {badge > 0 && <span className="absolute top-1 right-1.5 size-2 rounded-full bg-accent shadow-[0_0_10px_#8b6cff]" />}
+                  </Link>
+                );
+              })}
             </nav>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
+          )}
+
+          <div className="flex items-center gap-2">
+            {admin && soon && (
+              <Link href="/panel/admin/tresci#soon" className="hidden items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/[0.07] px-3 py-1.5 text-[12px] text-amber-100 xl:flex">
+                <span className="size-1.5 rounded-full bg-amber-300" /> Tryb zapowiedzi
+              </Link>
+            )}
             {admin && (
-              <button type="button" onClick={() => setCmdk(true)} className="grid size-10 place-items-center rounded-full border border-line-2 text-muted lg:hidden" aria-label="Szukaj">
+              <button type="button" onClick={() => setCmdk(true)} className={circle} aria-label="Szukaj (⌘K)" title="Szukaj (⌘K)">
                 <Icon d={ICONS.search} className="size-[18px]" />
               </button>
             )}
             {admin && <Live />}
             {admin && <Bell notes={notes} />}
+            {admin && (
+              <Link href="/panel/admin/ustawienia" className={`${circle} hidden lg:grid ${section.id === "system" ? "border-accent/50 text-ink" : ""}`} aria-label="Ustawienia" title="Ustawienia">
+                <Icon d={ICONS.gear} className="size-[18px]" />
+              </Link>
+            )}
+            {admin && (
+              <div className="relative hidden lg:block">
+                <button type="button" data-create-trigger onClick={() => setCreate(create === "top" ? null : "top")} className="group btn btn-primary !h-11 !pl-5 text-[14px]">
+                  <span className="roll">
+                    <span>Nowe</span>
+                    <span aria-hidden>Nowe</span>
+                  </span>
+                  <span className="dot !size-8">
+                    <Icon d={ICONS.plus} className={`size-4 transition-transform duration-300 ${create === "top" ? "rotate-45" : ""}`} />
+                  </span>
+                </button>
+                <div className="absolute top-full right-0">
+                  <CreateMenu open={create === "top"} onClose={closeCreate} align="right" />
+                </div>
+              </div>
+            )}
+            <div className="relative hidden lg:block" ref={userRef}>
+              <button type="button" onClick={() => setUserMenu((o) => !o)} className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white shadow-[0_0_24px_-6px_rgb(139_108_255/0.9)]" aria-label="Konto">
+                {user.name.charAt(0).toUpperCase()}
+              </button>
+              <AnimatePresence>
+                {userMenu && (
+                  <motion.div
+                    className="edge absolute top-[calc(100%+10px)] right-0 z-[80] w-[240px] overflow-hidden rounded-2xl bg-surface p-1.5 shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)]"
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.2, ease }}
+                  >
+                    <div className="border-b border-line px-3 pt-2 pb-2.5">
+                      <p className="truncate text-[13.5px]">{user.name}</p>
+                      <p className="truncate text-[12px] text-dim">{user.email}</p>
+                    </div>
+                    {admin && (
+                      <Link href="/panel/admin/logi" className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted hover:bg-white/[0.05] hover:text-ink">
+                        <Icon d={ICONS.logs} className="size-4" /> Logi
+                      </Link>
+                    )}
+                    <a href="/" target="_blank" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted hover:bg-white/[0.05] hover:text-ink">
+                      <Icon d={ICONS.site} className="size-4" /> Otwórz stronę
+                    </a>
+                    <form action={logout}>
+                      <button type="submit" className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] text-muted hover:bg-red-400/10 hover:text-red-200">
+                        <Icon d={ICONS.logout} className="size-4" /> Wyloguj
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button type="button" onClick={() => setMenu((o) => !o)} className="relative grid size-11 place-items-center rounded-full border border-line-2 lg:hidden" aria-label={menu ? "Zamknij menu" : "Menu"}>
+              <span className={`absolute h-px w-4 bg-ink transition-transform duration-500 ease-out-expo ${menu ? "rotate-45" : "-translate-y-[3px]"}`} />
+              <span className={`absolute h-px w-4 bg-ink transition-transform duration-500 ease-out-expo ${menu ? "-rotate-45" : "translate-y-[3px]"}`} />
+            </button>
           </div>
-        </motion.header>
-        <main className={`relative mx-auto max-w-[1320px] px-4 py-6 sm:px-8 lg:px-6 lg:py-8 ${admin ? "pb-[calc(env(safe-area-inset-bottom)+112px)] lg:pb-10" : ""}`}>{children}</main>
-      </div>
+        </div>
+      </motion.header>
 
-      {/* dolny pasek nawigacji (telefon/tablet, admin) */}
-      {admin && (
-        <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-[60] rounded-[26px] border border-white/[0.08] bg-[rgb(16_16_22/0.86)] px-1.5 py-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.95),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-2xl lg:hidden" aria-label="Szybka nawigacja">
-          <ul className="mx-auto grid max-w-[520px] grid-cols-5 items-center">
-            {tabs.map((t, i) =>
-              t ? (
-                <li key={t.href}>
-                  <Link href={t.href} className={`relative flex flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] transition-colors ${active(t.href) && current?.href === t.href ? "text-ink" : "text-dim"}`}>
-                    {active(t.href) && current?.href === t.href && <motion.span layoutId="tab-hl" className="absolute inset-0 rounded-[20px] bg-[linear-gradient(180deg,rgb(139_108_255/0.22),rgb(139_108_255/0.06))] ring-1 ring-accent/25" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+      {/* menu pełnoekranowe (telefon/tablet) — jak na stronie */}
+      <AnimatePresence>
+        {menu && (
+          <motion.div className="fixed inset-0 z-40 bg-bg lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { delay: 0.1 } }}>
+            <div className="flex h-full flex-col overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+96px)] pb-[calc(env(safe-area-inset-bottom)+28px)]" data-lenis-prevent>
+              <ul>
+                {sections.map((x, i) => (
+                  <li key={x.id} className="border-b border-line py-3">
+                    <div className="overflow-hidden">
+                      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ delay: 0.04 + i * 0.05, duration: 0.7, ease }}>
+                        <Link href={x.links[0].href} className="h-display flex items-baseline justify-between text-[2.4rem]">
+                          {x.label}
+                          <span className="text-[13px] tracking-normal text-dim">0{i + 1}</span>
+                        </Link>
+                      </motion.div>
+                    </div>
+                    {x.links.length > 1 && (
+                      <motion.div className="mt-2 flex flex-wrap gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 + i * 0.05 }}>
+                        {x.links.map((l) => (
+                          <Link key={l.href} href={l.href} className={`rounded-full border px-3 py-1.5 text-[13px] ${current?.href === l.href ? "border-accent/40 bg-accent/10 text-ink" : "border-line-2 text-muted"}`}>
+                            {l.label}
+                            {(l.badge ?? 0) > 0 && <span className="ml-1.5 text-accent-2">{l.badge}</span>}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto space-y-3 pt-8">
+                <div className="edge flex items-center gap-3 rounded-2xl bg-white/[0.02] p-3">
+                  <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-[14px] font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px]">{user.name}</span>
+                    <span className="block truncate text-[12px] text-dim">{user.email}</span>
+                  </span>
+                  <form action={logout}>
+                    <button type="submit" className="grid size-9 place-items-center rounded-full text-dim hover:text-ink" aria-label="Wyloguj">
+                      <Icon d={ICONS.logout} className="size-4" />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className={`relative mx-auto max-w-[1400px] px-4 pt-4 pb-16 sm:px-8 lg:px-10 lg:pt-6 ${admin ? "pb-[calc(env(safe-area-inset-bottom)+112px)] lg:pb-20" : ""}`}>
+        {/* zakładki podstron sekcji */}
+        {section.links.length > 1 && (
+          <motion.nav initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="-mx-4 mb-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0" aria-label={section.label} data-lenis-prevent>
+            <div className="inline-flex gap-1 rounded-full border border-line p-1">
+              {section.links.map((l) => {
+                const on = current?.href === l.href;
+                return (
+                  <Link key={l.href} href={l.href} className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[14px] whitespace-nowrap transition-colors ${on ? "text-bg" : "text-muted hover:text-ink"}`}>
+                    {on && <motion.span layoutId="sub-tab" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
                     <span className="relative">
-                      <Icon d={t.icon} className="size-[21px]" />
-                      {(t.badge ?? 0) > 0 && <span className="absolute -top-1.5 -right-2.5 grid min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[9.5px] font-medium text-white">{t.badge}</span>}
+                      <Icon d={l.icon} className="size-4" />
                     </span>
-                    {t.label}
+                    <span className="relative">{l.label}</span>
+                    {(l.badge ?? 0) > 0 && <span className={`relative grid min-w-[18px] place-items-center rounded-full px-1 text-[10.5px] font-medium ${on ? "bg-accent text-white" : "bg-accent/80 text-white"}`}>{l.badge}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.nav>
+        )}
+        {children}
+      </main>
+
+      {/* dok na telefonie (admin) */}
+      {admin && !menu && (
+        <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-[60] rounded-[26px] border border-white/[0.08] bg-[rgb(14_14_19/0.92)] p-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.95)] backdrop-blur-2xl lg:hidden" aria-label="Szybka nawigacja">
+          <ul className="grid grid-cols-5 items-center">
+            {[main[0], main[1], null, main[2], main[3]].map((x, i) =>
+              x ? (
+                <li key={x.id}>
+                  <Link href={x.links[0].href} className={`relative flex flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] transition-colors ${section.id === x.id ? "text-ink" : "text-dim"}`}>
+                    {section.id === x.id && <motion.span layoutId="dock-hl" className="absolute inset-0 rounded-[20px] bg-white/[0.07] ring-1 ring-line-2" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                    <span className="relative">
+                      <Icon d={x.icon} className="size-[21px]" />
+                      {x.id === "klienci" && inquiries > 0 && <span className="absolute -top-1.5 -right-2.5 grid min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[9.5px] font-medium text-white">{inquiries}</span>}
+                    </span>
+                    <span className="relative">{x.label}</span>
                   </Link>
                 </li>
               ) : (
                 <li key={`c${i}`} className="relative flex justify-center">
-                  <button
-                    type="button"
-                    data-create-trigger
-                    onClick={() => setCreate(create === "tab" ? null : "tab")}
-                    className="grid size-[52px] place-items-center rounded-[20px] bg-gradient-to-br from-[#a18bff] via-accent to-[#5b3df5] text-white shadow-[0_10px_30px_-6px_rgb(139_108_255/0.9),inset_0_1px_0_rgb(255_255_255/0.35)] transition-transform active:scale-95"
-                    aria-label="Nowe"
-                  >
-                    <Icon d={ICONS.plus} className={`size-6 transition-transform duration-300 ${create === "tab" ? "rotate-45" : ""}`} />
+                  <button type="button" data-create-trigger onClick={() => setCreate(create === "tab" ? null : "tab")} className="grid size-[52px] place-items-center rounded-full bg-ink text-bg transition-transform active:scale-95" aria-label="Nowe">
+                    <span className="grid size-9 place-items-center rounded-full bg-accent text-white">
+                      <Icon d={ICONS.plus} className={`size-5 transition-transform duration-300 ${create === "tab" ? "rotate-45" : ""}`} />
+                    </span>
                   </button>
                   <CreateMenu open={create === "tab"} onClose={closeCreate} align="up" />
                 </li>
               ),
             )}
-            <li>
-              <button type="button" onClick={() => setMenu(true)} className="flex w-full flex-col items-center gap-0.5 rounded-[20px] py-2 text-[10.5px] text-dim" aria-label="Menu">
-                <Icon d={ICONS.menu} className="size-[21px]" />
-                Menu
-              </button>
-            </li>
           </ul>
         </nav>
       )}

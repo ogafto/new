@@ -428,3 +428,14 @@ html:has(body [data-panel]) .soon-preview {
     animation: none !important;
   }
 }
+
+/* panel: wiązka światła przesuwająca się po tle (jak w hero strony) */
+@keyframes panel-beam {
+  0%,
+  100% {
+    transform: translate3d(-20vw, 0, 0);
+  }
+  50% {
+    transform: translate3d(100vw, 0, 0);
+  }
+}

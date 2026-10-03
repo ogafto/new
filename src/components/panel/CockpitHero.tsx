@@ -1,130 +1,108 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, useInView } from "motion/react";
 import { Card, CardHead, Count, ease, Icon, ICONS } from "./kit";
 
 /* Nagłówek kokpitu: powitanie na tle „zorzy”, liczby dnia i szybkie akcje */
 
 type S = { label: string; value: number; suffix?: string; href?: string; live?: boolean };
 
-// „Kula na żywo”: liczba osób na stronie w obracającym się, świecącym pierścieniu
-function LiveOrb({ value }: { value: number }) {
+const LogoScene = dynamic(() => import("../hero/LogoScene"), { ssr: false });
+
+function Line({ i, children }: { i: number; children: React.ReactNode }) {
   return (
-    <Link href="/panel/admin/analityka" className="group relative grid size-[176px] shrink-0 place-items-center sm:size-[200px]" aria-label={`${value} osób na stronie teraz`}>
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="absolute inset-[18%] rounded-full border border-accent/40"
-          initial={{ scale: 1, opacity: 0.6 }}
-          animate={{ scale: 1.9, opacity: 0 }}
-          transition={{ duration: 3.6, delay: i * 1.2, repeat: Infinity, ease: "easeOut" }}
-        />
-      ))}
-      <span className="absolute inset-[10%] rounded-full bg-[conic-gradient(from_0deg,rgb(139_108_255/0),rgb(139_108_255/0.9),rgb(180_162_255/0.2),rgb(52_211_153/0.6),rgb(139_108_255/0))] [animation:orb-spin_6s_linear_infinite] [mask:radial-gradient(farthest-side,transparent_calc(100%-2px),black_calc(100%-1px))]" />
-      <span className="absolute inset-[14%] rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(180_162_255/0.35),rgb(40_30_90/0.55)_45%,rgb(10_10_16/0.9)_75%)] shadow-[inset_0_1px_0_rgb(255_255_255/0.15),0_20px_60px_-10px_rgb(139_108_255/0.55)] transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]" />
-      <span className="relative flex flex-col items-center">
-        <Count value={value} className="h-display text-[52px] leading-none sm:text-[60px]" />
-        <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted">
-          <span className="relative flex size-1.5">
-            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
-            <span className="relative size-1.5 rounded-full bg-emerald-400" />
-          </span>
-          na stronie teraz
-        </span>
-      </span>
-    </Link>
+    <span className="block overflow-hidden pb-[0.08em]">
+      <motion.span className="block origin-[0%_100%]" initial={{ y: "105%", rotate: 4 }} animate={{ y: 0, rotate: 0 }} transition={{ delay: 0.1 + i * 0.09, duration: 1.1, ease }}>
+        {children}
+      </motion.span>
+    </span>
   );
 }
 
-export default function CockpitHero({ greeting, name, date, stats, soon, live, children }: { greeting: string; name?: string; date: string; stats: S[]; soon?: boolean; live?: number; children?: React.ReactNode }) {
+/* Kokpit jak hero strony głównej: szklany znak 3D, ogromne powitanie, pas liczb pod linią */
+export default function CockpitHero({ greeting, name, accent, date, summary, stats, soon, actions }: { greeting: string; name: string; accent: string; date: string; summary: string; stats: S[]; soon?: boolean; actions?: React.ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { margin: "-10% 0px" });
+  const [scene, setScene] = useState(false);
+  useEffect(() => {
+    // 3D tylko na większych ekranach, po pierwszym malowaniu
+    if (window.innerWidth < 1024) return;
+    const t = setTimeout(() => setScene(true), 300);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <motion.section
-      className="edge relative mb-4 overflow-hidden rounded-[28px] bg-surface/70 p-6 sm:p-8 lg:mb-5 lg:p-10"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, ease }}
-    >
-      {/* zorza */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-1/2 -left-1/4 size-[140%] animate-[aurora_18s_ease-in-out_infinite] bg-[radial-gradient(35%_45%_at_30%_40%,rgb(139_108_255/0.28),transparent_70%),radial-gradient(30%_40%_at_75%_30%,rgb(180_162_255/0.16),transparent_70%),radial-gradient(40%_40%_at_60%_80%,rgb(52_211_153/0.07),transparent_70%)] blur-2xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(70%_80%_at_70%_20%,black,transparent)]" />
-      </div>
+    <section ref={ref} className="relative -mx-4 mb-10 overflow-hidden px-4 sm:-mx-8 sm:px-8 lg:-mx-10 lg:mb-14 lg:px-10">
+      {scene && (
+        <motion.div
+          className="pointer-events-none absolute inset-y-[-15%] right-[-14%] w-[66%] [mask-image:radial-gradient(60%_58%_at_55%_48%,black_35%,transparent_78%)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.6 }}
+          aria-hidden
+        >
+          <LogoScene ready active={inView} />
+        </motion.div>
+      )}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--color-bg)_30%,transparent_75%),linear-gradient(to_top,var(--color-bg),transparent_40%)]" aria-hidden />
 
-      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <motion.div className="flex flex-wrap items-center gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.8 }}>
-            <p className="text-[13px] text-dim first-letter:uppercase">{date}</p>
-            <Link
-              href="/panel/admin/tresci#soon"
-              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-[12px] transition-colors ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200 hover:bg-emerald-400/15"}`}
-            >
-              <span className="relative flex size-1.5">
-                <span className={`absolute inset-0 animate-ping rounded-full ${soon ? "bg-amber-300/80" : "bg-emerald-400/80"}`} />
-                <span className={`relative size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400"}`} />
-              </span>
-              {soon ? "Tryb zapowiedzi — strona ukryta" : "Strona online"}
-            </Link>
+      <div className="relative pt-4 lg:pt-10">
+        <motion.div className="flex flex-wrap items-center gap-2.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
+          <p className="kicker first-letter:uppercase">{date}</p>
+          <Link
+            href="/panel/admin/tresci#soon"
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] ${soon ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200"}`}
+          >
+            <span className={`size-1.5 rounded-full ${soon ? "bg-amber-300" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
+            {soon ? "Tryb zapowiedzi" : "Strona online"}
+          </Link>
+        </motion.div>
+
+        <h1 className="h-display mt-7 text-[clamp(3rem,8vw,8rem)] leading-[0.92]">
+          <Line i={0}>{greeting}</Line>
+          <Line i={1}>{name}</Line>
+          <Line i={2}>
+            <span className="text-accent-2">{accent}</span>
+          </Line>
+        </h1>
+
+        <div className="mt-10 flex flex-col gap-8 border-t border-line pt-7 lg:flex-row lg:items-end lg:justify-between">
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.9, ease }}>
+            <p className="max-w-[440px] text-[16.5px] leading-relaxed text-muted">{summary}</p>
+            {actions && <div className="mt-6 flex flex-wrap gap-2.5">{actions}</div>}
           </motion.div>
-          <h1 className="h-display mt-3 overflow-hidden pb-[0.08em] text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.98]">
-            <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ delay: 0.1, duration: 1, ease }}>
-              {greeting}
-              {name && (
+          <motion.dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4 lg:gap-x-10" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.9, ease }}>
+            {stats.map((s) => {
+              const inner = (
                 <>
-                  <br />
-                  <span className="bg-[linear-gradient(90deg,#efedf5,#b4a2ff,#8b6cff,#efedf5)] bg-[length:200%_100%] bg-clip-text text-transparent [animation:text-shine_8s_linear_infinite]">{name}</span>
+                  <dt className="flex items-center gap-2 text-[12.5px] text-dim">
+                    {s.live && (
+                      <span className="relative flex size-1.5">
+                        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
+                        <span className="relative size-1.5 rounded-full bg-emerald-400" />
+                      </span>
+                    )}
+                    {s.label}
+                  </dt>
+                  <dd className="mt-1.5">
+                    <Count value={s.value} suffix={s.suffix} className="h-display text-[34px] leading-none sm:text-[40px]" />
+                  </dd>
                 </>
-              )}
-            </motion.span>
-          </h1>
-        </div>
-        {children && (
-          <motion.div className="min-w-0" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease }}>
-            {children}
-          </motion.div>
-        )}
-        {live !== undefined && (
-          <motion.div className="hidden self-center sm:block lg:-my-6 lg:mr-4" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25, duration: 1, ease }}>
-            <LiveOrb value={live} />
-          </motion.div>
-        )}
-      </div>
-
-      <div className="relative mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
-        {stats.map((s, i) => {
-          const inner = (
-            <>
-              <span className="flex items-center gap-2 text-[12.5px] text-dim">
-                {s.live && (
-                  <span className="relative flex size-1.5">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/80" />
-                    <span className="relative size-1.5 rounded-full bg-emerald-400" />
-                  </span>
-                )}
-                {s.label}
-              </span>
-              <span className="mt-1.5 flex items-end justify-between gap-2">
-                <Count value={s.value} suffix={s.suffix} className="h-display text-[28px] leading-none sm:text-[34px]" />
-                {s.href && <Icon d={ICONS.arrowUp} className="size-4 rotate-45 text-dim opacity-0 transition-opacity group-hover:opacity-100" />}
-              </span>
-            </>
-          );
-          const cls = "group block bg-bg/60 p-4 backdrop-blur-sm transition-colors sm:p-5";
-          return (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.06, duration: 0.7, ease }}>
-              {s.href ? (
-                <Link href={s.href} className={`${cls} hover:bg-bg/30`}>
+              );
+              return s.href ? (
+                <Link key={s.label} href={s.href} className="group block transition-opacity hover:opacity-80">
                   {inner}
                 </Link>
               ) : (
-                <div className={cls}>{inner}</div>
-              )}
-            </motion.div>
-          );
-        })}
+                <div key={s.label}>{inner}</div>
+              );
+            })}
+          </motion.dl>
+        </div>
       </div>
-    </motion.section>
+    </section>
   );
 }
 

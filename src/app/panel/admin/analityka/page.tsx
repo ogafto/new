@@ -62,7 +62,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <AutoRefresh every={20000} />
-      <PageHead title="Analityka">
+      <PageHead kicker="Biznes" title="Analityka">
         <a href={`/panel/admin/analityka/eksport?zakres=${days}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
           <Icon d={ICONS.download} className="size-4" /> CSV
         </a>

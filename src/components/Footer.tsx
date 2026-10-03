@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
-import { motion, useAnimationFrame, useMotionValue, useScroll, useVelocity } from "motion/react";
+import { useEffect, useRef } from "react";
+import { useInView, useScroll, useVelocity } from "motion/react";
 import { useLenis } from "lenis/react";
 import { nav, site } from "@/lib/site";
 import { Mark } from "./brand/Logo";
@@ -10,27 +10,86 @@ import { openCookieSettings } from "./CookieConsent";
 import { TLink } from "./Transition";
 import { offers } from "@/lib/offer";
 
-// Pasek przewijany w JS: prędkość zmienia się płynnie (bez skoków przy najechaniu)
+// Pasek przewijany: ruch liczy GPU (Web Animations API), JS tylko płynnie zmienia prędkość (najechanie, przewijanie strony).
+// Poza ekranem animacja stoi; gdy prędkość się ustali, nie ma żadnej pracy na głównym wątku (wcześniej pętla co klatkę cały czas).
 function Marquee({ href }: { href: string }) {
   const track = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
+  const anim = useRef<Animation | null>(null);
   const speed = useRef(1);
   const target = useRef(1);
+  const kick = useRef(() => {});
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
+  const visible = useInView(track, { margin: "100px 0px" });
+  const shown = useRef(false);
 
-  useAnimationFrame((_, delta) => {
+  // pętla: przesunięcie o połowę paska (treść jest zdublowana), 70 px/s przy prędkości 1
+  useEffect(() => {
     const el = track.current;
-    if (!el) return;
-    const dt = Math.min(delta, 50) / 1000;
-    // przewijanie strony lekko przyspiesza pasek
-    const boost = Math.min(2.5, Math.abs(velocity.get()) / 1200);
-    speed.current += (target.current + boost - speed.current) * Math.min(1, dt * 3);
-    const half = el.scrollWidth / 2;
-    let next = x.get() - 70 * speed.current * dt;
-    if (next <= -half) next += half;
-    x.set(next);
-  });
+    if (!el || typeof el.animate !== "function") return;
+    let width = 0;
+    const make = () => {
+      const half = el.scrollWidth / 2;
+      if (!half || half === width) return;
+      width = half;
+      const prev = anim.current;
+      const duration = (half / 70) * 1000;
+      const timing = prev?.effect?.getComputedTiming();
+      const progress = timing?.progress ?? 0;
+      prev?.cancel();
+      const a = el.animate([{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${-half}px,0,0)` }], { duration, iterations: Infinity });
+      a.currentTime = progress * duration;
+      a.playbackRate = speed.current;
+      if (!shown.current) a.pause();
+      anim.current = a;
+    };
+    make();
+    const ro = new ResizeObserver(make);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      anim.current?.cancel();
+      anim.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    shown.current = visible;
+    const a = anim.current;
+    if (!a) return;
+    if (visible) a.play();
+    else a.pause();
+  }, [visible]);
+
+  // płynna zmiana prędkości — rAF działa tylko, dopóki prędkość nie dojdzie do celu
+  useEffect(() => {
+    if (!visible) return;
+    let id = 0;
+    let last = 0;
+    const step = (now: number) => {
+      const dt = last ? Math.min(now - last, 50) / 1000 : 0;
+      last = now;
+      // przewijanie strony lekko przyspiesza pasek
+      const goal = target.current + Math.min(2.5, Math.abs(velocity.get()) / 1200);
+      speed.current += (goal - speed.current) * Math.min(1, dt * 3);
+      const done = Math.abs(goal - speed.current) < 0.004;
+      if (done) speed.current = goal;
+      if (anim.current) anim.current.playbackRate = speed.current;
+      id = done ? 0 : requestAnimationFrame(step);
+    };
+    kick.current = () => {
+      if (id) return;
+      last = 0;
+      id = requestAnimationFrame(step);
+    };
+    const off = velocity.on("change", () => kick.current());
+    kick.current();
+    return () => {
+      off();
+      cancelAnimationFrame(id);
+      kick.current = () => {};
+    };
+  }, [visible, velocity]);
 
   const item = (k: number) => (
     <span key={k} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
@@ -45,12 +104,18 @@ function Marquee({ href }: { href: string }) {
       label="Kontakt"
       className="group block overflow-hidden border-y border-line py-8 sm:py-12"
       aria-label="Zacznijmy projekt — przejdź do kontaktu"
-      onPointerEnter={() => (target.current = 0.25)}
-      onPointerLeave={() => (target.current = 1)}
+      onPointerEnter={() => {
+        target.current = 0.25;
+        kick.current();
+      }}
+      onPointerLeave={() => {
+        target.current = 1;
+        kick.current();
+      }}
     >
-      <motion.div ref={track} style={{ x }} className="h-display flex w-max text-[clamp(3.5rem,10vw,9.5rem)] text-ink transition-colors duration-700 group-hover:text-accent-2">
+      <div ref={track} className="h-display flex w-max text-[clamp(3.5rem,10vw,9.5rem)] text-ink transition-colors duration-700 group-hover:text-accent-2">
         {[0, 1, 2, 3, 4, 5].map(item)}
-      </motion.div>
+      </div>
     </TLink>
   );
 }

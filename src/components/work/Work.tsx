@@ -73,7 +73,7 @@ function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progre
     <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: clip, zIndex: i }}>
       {/* ekran poziomy: zdjęcie na cały kadr */}
       <motion.div className="absolute inset-0 hidden landscape:block" style={{ y, scale }}>
-        <Image src={p.image} alt={alt} fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
+        <Image src={p.image} alt={alt} fill sizes="100vw" className="object-cover object-top" loading={i === 0 ? "eager" : "lazy"} />
       </motion.div>
 
       {/* ekran pionowy (telefon, tablet): cały projekt jako karta na tle w kolorach marki */}
@@ -84,7 +84,7 @@ function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progre
             className="relative aspect-[4/3] w-[min(100cqw,133.33cqh)] overflow-hidden rounded-[18px] ring-1 ring-white/15"
             style={{ y: cardY, rotateX: cardTilt, scale: cardScale, transformOrigin: "50% 100%", boxShadow: `0 40px 90px -30px ${bg.glow}, 0 20px 40px -20px rgb(0 0 0 / 0.8)` }}
           >
-            <Image src={p.image} alt="" fill sizes="100vw" className="object-cover object-top" priority={i === 0} />
+            <Image src={p.image} alt="" fill sizes="100vw" className="object-cover object-top" loading={i === 0 ? "eager" : "lazy"} />
             <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-[linear-gradient(160deg,rgb(255_255_255/0.14),transparent_35%)]" />
           </motion.div>
         </div>

@@ -3,8 +3,8 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { checkSite, createSite, deleteCollection, deleteSite, regenerateKey, regenerateSecret, saveCollection, updateSite } from "@/app/panel/cms/actions";
-import { cmsPrompt } from "@/lib/cms-prompt";
+import { checkSite, createSite, deleteCollection, deleteSite, regenerateKey, regenerateSecret, resetSiteContent, saveCollection, updateSite } from "@/app/panel/cms/actions";
+import { cmsFixPrompt, cmsPrompt } from "@/lib/cms-prompt";
 import { FIELD_TYPES, PRESETS, siteHref, type Collection, type Field, type Site } from "@/lib/cms-schema";
 import { Alert } from "../account/ui";
 import CmsEditor, { type ColWithEntries } from "./CmsEditor";
@@ -247,16 +247,57 @@ function Connection({ site }: { site: Site }) {
   );
 }
 
-function Integration({ site, origin, collections }: { site: Site; origin: string; collections: Collection[] }) {
+function Integration({ site, origin, collections }: { site: Site; origin: string; collections: ColWithEntries[] }) {
   const [, start] = useTransition();
   const [show, setShow] = useState(false);
   const [brief, setBrief] = useState("");
   const api = `${origin}/api/cms/${site.public_key}`;
   const secret = site.secret_key ?? "";
   const prompt = cmsPrompt({ site: site.name, domain: site.domain, api, publicKey: site.public_key, secretKey: secret, origin, collections, brief });
+  const filled = (c: ColWithEntries) => c.entries.some((e) => Object.values(e.data ?? {}).some((v) => v !== null && v !== "" && v !== false));
+  const empty = collections.filter((c) => !filled(c));
+  const checks = [
+    { ok: !!site.last_seen, label: "Strona pobiera treści z panelu", bad: "Strona jeszcze nie pobrała treści — kod strony nie czyta API." },
+    { ok: !!site.schema_at, label: "Strona zgłosiła swoje sekcje i pola", bad: "Strona nie wysłała schematu (PUT /schema) — w panelu są tylko sekcje z szablonu." },
+    { ok: collections.length > 0 && empty.length === 0, label: collections.length ? `Sekcje mają treść (${collections.length - empty.length}/${collections.length})` : "Sekcje mają treść", bad: empty.length ? `Puste sekcje: ${empty.map((c) => c.name).join(", ")} — strona nie przysłała swojej obecnej treści (defaults).` : "Brak sekcji." },
+    { ok: !!site.webhook_url, label: "Zmiany na stronie od razu (webhook)", bad: "Brak adresu odświeżania — zmiany pojawią się po odświeżeniu cache strony." },
+  ];
+  const problems = checks.filter((c) => !c.ok).map((c) => c.bad);
+  const fix = cmsFixPrompt({ api, secretKey: secret, problems });
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_1.15fr]">
       <div className="space-y-4">
+        <Card glow={problems.length > 0}>
+          <CardHead title="Stan integracji" sub={problems.length ? `${problems.length} do poprawy` : "Wszystko działa"} />
+          <ul className="space-y-2">
+            {checks.map((c) => (
+              <li key={c.label} className={`flex gap-3 rounded-2xl p-3 ${c.ok ? "bg-emerald-400/[0.05]" : "bg-amber-300/[0.06]"}`}>
+                <span className={`grid size-7 shrink-0 place-items-center rounded-full ${c.ok ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-300/15 text-amber-200"}`}>{c.ok ? <Icon d={ICONS.check} className="size-4" /> : "!"}</span>
+                <span className="min-w-0">
+                  <span className="block text-[14px]">{c.label}</span>
+                  {!c.ok && <span className="block text-[12.5px] leading-relaxed text-muted">{c.bad}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {problems.length > 0 && (
+            <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="block text-[14px]">Prompt naprawczy</span>
+                  <span className="block text-[12.5px] text-dim">Wklej AI na kodzie strony — dośle obecną treść i sprawdzi wynik.</span>
+                </span>
+                <Copy text={fix} />
+              </div>
+            </div>
+          )}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-dim">
+            <span>Treść w panelu się rozjechała? Wyczyść — strona wgra ją od nowa przy następnym zgłoszeniu.</span>
+            <ConfirmBtn onConfirm={() => start(() => resetSiteContent(site.id))} label="Wyczyścić treści w panelu?">
+              Wgraj od nowa
+            </ConfirmBtn>
+          </div>
+        </Card>
         <Card>
           <CardHead title="Połączenie" sub="Czy strona klienta pobiera treści z panelu" />
           <Connection site={site} />

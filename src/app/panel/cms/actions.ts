@@ -3,10 +3,10 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { one, run } from "@/lib/db";
+import { all, one, run } from "@/lib/db";
 import { id } from "@/lib/auth/crypto";
 import { isAdmin, requireAdmin, requireUser } from "@/lib/auth/session";
-import { cleanEntry, getCollection, getSite, PRESETS, slugKey, type Field, type FieldType } from "@/lib/cms";
+import { apiKey, cleanEntry, getCollection, getSite, PRESETS, slugKey, type Field, type FieldType } from "@/lib/cms";
 import { saveImage } from "@/lib/storage";
 
 export type CmsState = { error?: string; ok?: boolean; id?: string } | undefined;
@@ -107,6 +107,16 @@ export async function checkSite(siteId: string): Promise<{ ok: boolean; status?:
   }
 }
 
+/** Treść startowa od nowa: czyści sekcje w panelu, żeby strona przy następnym zgłoszeniu (PUT /schema) wgrała swoją obecną treść */
+export async function resetSiteContent(siteId: string) {
+  await requireAdmin();
+  await run("DELETE FROM cms_entries WHERE collection_id IN (SELECT id FROM cms_collections WHERE site_id = ?)", [siteId]);
+  await run("UPDATE cms_collections SET seeded = NULL WHERE site_id = ?", [siteId]);
+  const singles = await all<{ id: string }>("SELECT id FROM cms_collections WHERE site_id = ? AND kind = 'single'", [siteId]);
+  for (const c of singles) await run("INSERT INTO cms_entries (id, collection_id, data, sort, updated_at) VALUES (?, ?, '{}', 0, ?)", [id(), c.id, Date.now()]);
+  refresh(siteId);
+}
+
 export async function deleteSite(siteId: string) {
   await requireAdmin();
   await run("DELETE FROM cms_sites WHERE id = ?", [siteId]);
@@ -118,12 +128,12 @@ export async function deleteSite(siteId: string) {
 export async function saveCollection(siteId: string, input: { id?: string; name: string; key?: string; kind: "single" | "list"; fields: Field[] }): Promise<CmsState> {
   await requireAdmin();
   const name = input.name.trim().slice(0, 60);
-  const key = slugKey(input.key || name);
+  const key = input.key ? apiKey(input.key) || slugKey(name) : slugKey(name);
   if (name.length < 2 || !key) return { error: "Podaj nazwę sekcji." };
   const seen = new Set<string>();
   const fields: Field[] = [];
   for (const f of input.fields) {
-    const k = slugKey(f.key || f.label);
+    const k = f.key ? apiKey(f.key) || slugKey(f.label) : slugKey(f.label);
     if (!k || !f.label.trim() || seen.has(k) || !TYPES.includes(f.type)) return { error: `Sprawdź pole „${f.label || "bez nazwy"}” (unikalny klucz i typ).` };
     seen.add(k);
     fields.push({ key: k, label: f.label.trim().slice(0, 60), type: f.type, required: !!f.required, help: f.help?.trim().slice(0, 140) || undefined });

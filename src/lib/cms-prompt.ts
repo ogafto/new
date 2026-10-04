@@ -79,7 +79,9 @@ ${current}
 3. Integracje i płatności klienta: klucze, tokeny, hasła, ID kont (np. klucz Stripe/PayPal/Przelewy24 klienta, webhook Discorda, hasło RCON, IP i port serwera gry, klucze API dostawców) → osobna sekcja "integrations" (single, name „Ustawienia i integracje”) z polami type "secret" (i "text"/"url" dla rzeczy niewrażliwych). Czytaj je tylko na serwerze przez ?private=1.
 4. Przygotuj "defaults" = DOKŁADNIE obecna treść strony: wszystkie teksty dosłownie, każdy element każdej listy (np. wszystkie pytania FAQ), obrazy jako pełne publiczne URL-e (zdjęcia z repo opublikuj pod stałym adresem strony). Po wgraniu klient ma zobaczyć w panelu 1:1 to, co jest na stronie.
 5. Odświeżanie od razu: zrób endpoint revalidate (np. Next.js: app/api/revalidate/route.ts z sekretnym tokenem → revalidatePath("/") / revalidateTag("afto-cms"); inne technologie: wyczyść cache / przebuduj) i podaj jego pełny adres https w polu "webhook" przy PUT /schema. Dodatkowo cache treści na serwerze max 10 s (fetch { next: { revalidate: 10, tags: ["afto-cms"] } }), żeby zmiany były widoczne nawet bez webhooka.
-6. Napisz skrypt (np. scripts/afto-schema.(ts|js|php)), który wysyła schemat + defaults przez PUT /schema, i uruchom go raz. Schemat trzymaj w repo jako jedno źródło prawdy (ponowne uruchomienie jest bezpieczne — defaults nie nadpisują zmian klienta).
+6. Napisz skrypt (np. scripts/afto-schema.(ts|js|php)), który wysyła schemat + defaults przez PUT /schema, i uruchom go. Schemat trzymaj w repo jako jedno źródło prawdy (ponowne uruchomienie jest bezpieczne — defaults nie nadpisują zmian klienta).
+   Klucze sekcji i pól są zapisywane 1:1 (np. heroTitle) — używaj w kodzie strony DOKŁADNIE tych samych kluczy przy odczycie.
+   WERYFIKACJA (obowiązkowa): odpowiedź PUT ma mieć puste "warnings" i "seeded" > 0 dla sekcji z treścią; potem GET /schema (Bearer) → "entries" > 0 w każdej sekcji; GET ${p.api} → "content" zawiera obecną treść strony. Jeśli nie — popraw i wyślij ponownie, zanim skończysz.
 7. Napisz małego klienta CMS (jedna funkcja/moduł) z twardymi zasadami renderowania:
    - po wgraniu treści CMS jest JEDYNYM źródłem prawdy: strona pokazuje dokładnie to, co zwraca API,
    - pusta lista → ta część strony się nie wyświetla (klient usunął wszystkie FAQ = brak sekcji FAQ), puste pole → element ukryty,
@@ -91,4 +93,25 @@ ${current}
 11. Na koniec wypisz: listę części strony i pól (co klient może edytować), jakie zmienne środowiskowe ustawić na produkcji, adres webhooka, co przetestowałeś (w tym: zmiana w panelu → widoczna na stronie, usunięcie elementu listy → znika ze strony).
 
 Pisz czysty, produkcyjny kod w stylu istniejącego projektu.`;
+}
+
+/*
+ * Prompt naprawczy — gdy strona jest już podpięta, ale w panelu brakuje treści (puste sekcje):
+ * AI zbiera obecną treść ze strony i wysyła ją jako defaults, z kluczami identycznymi jak w kodzie, i sprawdza wynik.
+ */
+export function cmsFixPrompt(p: { api: string; secretKey: string; problems: string[] }) {
+  return `Ta strona jest już podłączona do CMS-a afto.works, ale w panelu klienta brakuje treści — klient nie widzi, co jest na stronie, więc nie może tego edytować. Napraw to.
+
+Problemy wykryte przez panel:
+${p.problems.map((x) => `- ${x}`).join("\n") || "- brak treści w sekcjach"}
+
+Dane: AFTO_CMS_URL=${p.api}  AFTO_CMS_SECRET=${p.secretKey}  (nagłówek: Authorization: Bearer $AFTO_CMS_SECRET)
+
+1. Znajdź w kodzie istniejący schemat / skrypt CMS (jeśli jest) i moduł, który czyta treści z CMS-a. Klucze sekcji i pól w schemacie MUSZĄ być identyczne z tymi, których strona używa przy odczycie (np. content.hero.title).
+2. Dla KAŻDEJ edytowalnej sekcji dodaj "defaults" = dokładna, obecna treść widoczna na stronie (wszystkie teksty dosłownie, każdy element list: usługi, FAQ, opinie, cennik…; obrazy jako pełne publiczne URL-e). Single → obiekt { pole: wartość }, list → tablica takich obiektów. Klucze w defaults = klucze pól.
+3. Każda sekcja ma mieć ludzkie "name", "hint" (gdzie to jest na stronie) i dla list "item" (np. "usługę", "pytanie").
+4. Wyślij: PUT ${p.api}/schema  body { "webhook": "<https adres endpointu revalidate, jeśli jest>", "collections": [ … z defaults … ] }.
+5. Sprawdź odpowiedź: pole "warnings" musi być puste, a "collections[].seeded" > 0 dla sekcji z treścią. Potem GET ${p.api}/schema (z Bearer) — "entries" > 0 dla każdej sekcji. Jeśli nie — popraw klucze i wyślij ponownie.
+6. Sprawdź GET ${p.api} — "content" ma zawierać tę samą treść co strona. Upewnij się, że strona renderuje dokładnie to (pusta lista = ukryta sekcja, treści awaryjne tylko przy błędzie API).
+7. Wypisz, co zostało wysłane (sekcje i liczba elementów) i co przetestowałeś.`;
 }

@@ -55,6 +55,17 @@ export default async function ClientSite({ params }: { params: Promise<{ id: str
           ))}
         </ol>
       </section>
+      {!collections.some((c) => c.entries.some((e) => Object.values(e.data ?? {}).some((v) => v !== null && v !== "" && v !== false))) && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl bg-accent/[0.08] p-4 ring-1 ring-accent/20 ring-inset">
+          <span className="relative mt-0.5 flex size-2.5 shrink-0">
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent-2/70" />
+            <span className="relative size-2.5 rounded-full bg-accent-2" />
+          </span>
+          <p className="text-[14px] leading-relaxed text-muted">
+            <span className="text-ink">Strona jest właśnie podłączana do panelu.</span> Za chwilę zobaczysz tu wszystkie jej treści gotowe do edycji — nic nie musisz robić.
+          </p>
+        </div>
+      )}
       <CmsEditor siteId={site.id} collections={collections} />
     </>
   );

@@ -4,7 +4,7 @@ export type FieldType = "text" | "textarea" | "image" | "url" | "number" | "togg
 export type Field = { key: string; label: string; type: FieldType; required?: boolean; help?: string };
 export type Collection = { id: string; site_id: string; key: string; name: string; kind: "single" | "list"; fields: Field[]; sort: number; item?: string | null; hint?: string | null };
 export type Entry = { id: string; collection_id: string; data: Record<string, unknown>; sort: number; updated_at: number; updated_by: string | null };
-export type Site = { id: string; name: string; domain: string | null; owner_id: string | null; public_key: string; webhook_url: string | null; created_at: number; updated_at: number; secret_key?: string | null; last_seen?: number | null; last_origin?: string | null };
+export type Site = { id: string; name: string; domain: string | null; owner_id: string | null; public_key: string; webhook_url: string | null; created_at: number; updated_at: number; secret_key?: string | null; last_seen?: number | null; last_origin?: string | null; schema_at?: number | null };
 
 // adres strony: domena (https) albo pełny adres http://IP:port
 export const siteHref = (domain: string | null | undefined) => (!domain ? null : /^https?:\/\//.test(domain) ? domain : `https://${domain}`);

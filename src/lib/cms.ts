@@ -81,6 +81,28 @@ export const secretOk = (site: Pick<Site, "secret_key">, header: string | null) 
   return !!t && !!site.secret_key && safeEq(t, site.secret_key);
 };
 
+// klucz podany przez stronę / AI: zostaje 1:1 (np. heroTitle) — tylko bez znaków spoza [A-Za-z0-9_]
+export const apiKey = (v: string) =>
+  String(v ?? "")
+    .trim()
+    .replace(/[^A-Za-z0-9_]+/g, "_")
+    .replace(/^[^A-Za-z]+/, "")
+    .replace(/_+$/, "")
+    .slice(0, 40);
+
+// dopasowanie kluczy treści do pól mimo innej pisowni (heroTitle / hero_title / herotitle)
+const loose = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, "");
+export function alignKeys(fields: Field[], data: unknown): Record<string, unknown> {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  const src = data as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    const hit = f.key in src ? f.key : Object.keys(src).find((k) => loose(k) === loose(f.key));
+    if (hit !== undefined) out[f.key] = src[hit];
+  }
+  return out;
+}
+
 export function slugKey(v: string) {
   return v
     .toLowerCase()

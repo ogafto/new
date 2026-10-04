@@ -9,8 +9,14 @@ import { getCollection, getSite, PRESETS, slugKey, type Field, type FieldType } 
 import { saveImage } from "@/lib/storage";
 
 export type CmsState = { error?: string; ok?: boolean; id?: string } | undefined;
-const TYPES: FieldType[] = ["text", "textarea", "image", "url", "number", "toggle", "color", "date"];
+const TYPES: FieldType[] = ["text", "textarea", "image", "url", "number", "toggle", "color", "date", "secret"];
 const newKey = () => `pk_${randomBytes(12).toString("base64url")}`;
+const newSecret = () => `sk_${randomBytes(24).toString("base64url")}`;
+// adres strony: domena (https domyślnie) albo pełny http://IP:port
+const addr = (v: FormDataEntryValue | null) => {
+  const x = String(v ?? "").trim().replace(/\/$/, "").slice(0, 160);
+  return (x.startsWith("http://") ? x : x.replace(/^https:\/\//, "")) || null;
+};
 
 // klient może edytować tylko swoje strony; admin wszystkie
 async function canEdit(siteId: string) {
@@ -40,13 +46,13 @@ async function ping(webhook: string | null) {
 export async function createSite(_: CmsState, form: FormData): Promise<CmsState> {
   await requireAdmin();
   const name = String(form.get("name") ?? "").trim().slice(0, 80);
-  const domain = String(form.get("domain") ?? "").trim().replace(/^https?:\/\//, "").replace(/\/$/, "").slice(0, 120) || null;
+  const domain = addr(form.get("domain"));
   const owner = String(form.get("owner") ?? "") || null;
   const preset = PRESETS[String(form.get("preset") ?? "firma")] ?? PRESETS.firma;
   if (name.length < 2) return { error: "Podaj nazwę strony." };
   const sid = id();
   const now = Date.now();
-  await run("INSERT INTO cms_sites (id, name, domain, owner_id, public_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", [sid, name, domain, owner, newKey(), now, now]);
+  await run("INSERT INTO cms_sites (id, name, domain, owner_id, public_key, secret_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [sid, name, domain, owner, newKey(), newSecret(), now, now]);
   for (const [i, c] of preset.collections.entries()) {
     const cid = id();
     await run("INSERT INTO cms_collections (id, site_id, key, name, kind, fields, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", [cid, sid, c.key, c.name, c.kind, JSON.stringify(c.fields), i]);
@@ -59,7 +65,7 @@ export async function createSite(_: CmsState, form: FormData): Promise<CmsState>
 export async function updateSite(siteId: string, form: FormData) {
   await requireAdmin();
   const name = String(form.get("name") ?? "").trim().slice(0, 80);
-  const domain = String(form.get("domain") ?? "").trim().replace(/^https?:\/\//, "").replace(/\/$/, "").slice(0, 120) || null;
+  const domain = addr(form.get("domain"));
   const owner = String(form.get("owner") ?? "") || null;
   const webhook = String(form.get("webhook") ?? "").trim().slice(0, 400) || null;
   if (webhook && !/^https:\/\//.test(webhook)) return { error: "Webhook musi zaczynać się od https://" };
@@ -73,6 +79,30 @@ export async function regenerateKey(siteId: string) {
   await requireAdmin();
   await run("UPDATE cms_sites SET public_key = ? WHERE id = ?", [newKey(), siteId]);
   refresh(siteId);
+}
+
+/** Klucz sekretny dla serwera strony (pola „sekret”, zgłaszanie schematu) — nowy unieważnia stary */
+export async function regenerateSecret(siteId: string) {
+  await requireAdmin();
+  await run("UPDATE cms_sites SET secret_key = ? WHERE id = ?", [newSecret(), siteId]);
+  refresh(siteId);
+}
+
+/** Czy strona odpowiada (podgląd w panelu) */
+export async function checkSite(siteId: string): Promise<{ ok: boolean; status?: number; ms?: number; frame?: boolean }> {
+  await requireAdmin();
+  const site = await getSite(siteId);
+  const href = site?.domain ? (site.domain.startsWith("http://") ? site.domain : `https://${site.domain}`) : null;
+  if (!href) return { ok: false };
+  const t = Date.now();
+  try {
+    const r = await fetch(href, { method: "GET", redirect: "follow", signal: AbortSignal.timeout(5000), cache: "no-store" });
+    const xfo = r.headers.get("x-frame-options");
+    const csp = r.headers.get("content-security-policy") ?? "";
+    return { ok: r.ok, status: r.status, ms: Date.now() - t, frame: !xfo && !/frame-ancestors/i.test(csp) };
+  } catch {
+    return { ok: false, ms: Date.now() - t };
+  }
 }
 
 export async function deleteSite(siteId: string) {

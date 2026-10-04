@@ -6,7 +6,9 @@ import { clientOrders, clientRequests, REQUEST_STATUS } from "@/lib/client";
 import { today } from "@/lib/orders";
 import { Badge, Card, CardHead, Empty, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
-import { OrderCard } from "@/components/panel/client/Orders";
+import { OfferCard, OrderCard } from "@/components/panel/client/Orders";
+import { clientOffers } from "@/lib/offers";
+import { paymentsForUser } from "@/lib/finance";
 
 export const metadata: Metadata = { title: "Moje zamówienia" };
 
@@ -16,14 +18,24 @@ const fmt = (ms: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", m
 export default async function OrdersPage() {
   const user = await requireUser();
   if (isAdmin(user)) redirect("/panel/admin");
-  const [orders, requests] = await Promise.all([clientOrders(user.id, user.email), clientRequests(user.id, user.email)]);
+  // najpierw dociągnij wpłaty ze Stripe — opłacona wycena od razu staje się zleceniem
+  await paymentsForUser(user.id, user.email);
+  const [orders, requests, offers] = await Promise.all([clientOrders(user.id, user.email), clientRequests(user.id, user.email), clientOffers(user.id, user.email)]);
   const t = today();
   const active = orders.filter((o) => o.status !== "done");
   const finished = orders.filter((o) => o.status === "done");
 
   return (
     <>
-      <PageHead title="Moje zamówienia" text="Zlecenia w realizacji z terminami i status Twoich zgłoszeń." />
+      <PageHead title="Moje zamówienia" text="Wyceny do opłacenia, zlecenia w realizacji z terminami i status Twoich zgłoszeń." />
+
+      {offers.length > 0 && (
+        <div className="mb-4 space-y-4 lg:mb-5">
+          {offers.map((o) => (
+            <OfferCard key={o.id} o={o} today={t} />
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-5">
         <div className="space-y-4 lg:space-y-5">

@@ -3,8 +3,9 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { createSite, deleteCollection, deleteSite, regenerateKey, saveCollection, updateSite } from "@/app/panel/cms/actions";
-import { FIELD_TYPES, PRESETS, type Collection, type Field, type Site } from "@/lib/cms-schema";
+import { checkSite, createSite, deleteCollection, deleteSite, regenerateKey, regenerateSecret, saveCollection, updateSite } from "@/app/panel/cms/actions";
+import { cmsPrompt } from "@/lib/cms-prompt";
+import { FIELD_TYPES, PRESETS, siteHref, type Collection, type Field, type Site } from "@/lib/cms-schema";
 import { Alert } from "../account/ui";
 import CmsEditor, { type ColWithEntries } from "./CmsEditor";
 import { Badge, Btn, Card, CardHead, ConfirmBtn, ease, Empty, field, ICONS, Icon, Label, Modal, Tabs } from "./kit";
@@ -219,49 +220,181 @@ function Copy({ text }: { text: string }) {
   );
 }
 
+const agoText = (ms: number) => {
+  const m = Math.round((Date.now() - ms) / 60000);
+  return m < 1 ? "przed chwilą" : m < 60 ? `${m} min temu` : m < 1440 ? `${Math.round(m / 60)} h temu` : `${Math.round(m / 1440)} dni temu`;
+};
+
+function Connection({ site }: { site: Site }) {
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setNow(Date.now()), 0);
+    return () => clearTimeout(t);
+  }, []);
+  const seen = Number(site.last_seen ?? 0);
+  const live = seen && now && now - seen < 7 * 86_400_000;
+  return (
+    <div className={`flex items-center gap-3 rounded-2xl p-4 ring-1 ring-inset ${live ? "bg-emerald-400/[0.06] ring-emerald-400/20" : "bg-amber-300/[0.05] ring-amber-300/20"}`}>
+      <span className={`relative grid size-10 shrink-0 place-items-center rounded-xl ${live ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-300/15 text-amber-200"}`}>
+        {live && <span className="absolute inset-0 animate-ping rounded-xl ring-1 ring-emerald-400/40" />}
+        <Icon d={live ? ICONS.check : ICONS.globe} className="size-5" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[14.5px]">{live ? "Strona połączona z API" : "Strona jeszcze nie pobiera treści"}</span>
+        <span className="block truncate text-[12.5px] text-dim">{seen && now ? `ostatnio ${agoText(seen)}${site.last_origin ? ` · ${site.last_origin}` : ""}` : "Wklej prompt poniżej w AI pracującym na kodzie strony — po pierwszym pobraniu zobaczysz tu ✓"}</span>
+      </span>
+    </div>
+  );
+}
+
 function Integration({ site, origin, collections }: { site: Site; origin: string; collections: Collection[] }) {
   const [, start] = useTransition();
+  const [show, setShow] = useState(false);
+  const [brief, setBrief] = useState("");
   const api = `${origin}/api/cms/${site.public_key}`;
-  const snippet = `// Next.js (strona klienta) — treści z panelu afto.works
-const res = await fetch("${api}", { next: { revalidate: 60 } });
-const { content } = await res.json();
-
-// np. content.${collections[0]?.key ?? "hero"}${collections[0]?.kind === "list" ? "[0]" : ""}`;
+  const secret = site.secret_key ?? "";
+  const prompt = cmsPrompt({ site: site.name, domain: site.domain, api, publicKey: site.public_key, secretKey: secret, origin, collections, brief });
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHead title="API treści" sub="Publiczne, tylko do odczytu (CORS włączony)" />
-        <ul className="space-y-2 font-mono text-[12.5px]">
-          {[api, ...collections.map((c) => `${api}/${c.key}`)].map((u) => (
-            <li key={u} className="flex items-center gap-2 rounded-xl bg-white/[0.03] py-1.5 pr-1.5 pl-3">
-              <span className="min-w-0 flex-1 truncate text-muted">{u.replace(origin, "")}</span>
-              <a href={u} target="_blank" className="grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label="Otwórz">
-                <Icon d={ICONS.site} className="size-4" />
-              </a>
-              <Copy text={u} />
-            </li>
-          ))}
-        </ul>
-        <div className="mt-4 flex items-center justify-between gap-3 text-[12.5px] text-dim">
-          <span>Klucz zmienisz, jeśli wyciekł — stary przestanie działać.</span>
-          <ConfirmBtn onConfirm={() => start(() => regenerateKey(site.id))} label="Nowy klucz?">
-            Nowy klucz
-          </ConfirmBtn>
-        </div>
-      </Card>
-      <Card delay={0.05}>
-        <CardHead title="Jak podpiąć stronę" sub="Przykład dla Next.js — działa z każdą technologią (zwykły JSON)" />
-        <div className="relative">
-          <pre className="overflow-x-auto rounded-2xl bg-[#060608] p-4 text-[12.5px] leading-relaxed text-accent-2" data-lenis-prevent>
-            {snippet}
+    <div className="grid gap-4 xl:grid-cols-[1fr_1.15fr]">
+      <div className="space-y-4">
+        <Card>
+          <CardHead title="Połączenie" sub="Czy strona klienta pobiera treści z panelu" />
+          <Connection site={site} />
+          <div className="mt-5 space-y-3">
+            <div>
+              <p className="mb-1.5 text-[12.5px] text-dim">Adres API (publiczny — bez sekretów)</p>
+              <div className="flex items-center gap-2 rounded-xl bg-white/[0.03] py-1.5 pr-1.5 pl-3 font-mono text-[12.5px]">
+                <span className="min-w-0 flex-1 truncate text-accent-2">{api}</span>
+                <a href={api} target="_blank" className="grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label="Otwórz">
+                  <Icon d={ICONS.site} className="size-4" />
+                </a>
+                <Copy text={api} />
+              </div>
+            </div>
+            <div>
+              <p className="mb-1.5 text-[12.5px] text-dim">Klucz sekretny — tylko na serwerze strony (pola „sekret”, zgłaszanie pól)</p>
+              <div className="flex items-center gap-2 rounded-xl bg-white/[0.03] py-1.5 pr-1.5 pl-3 font-mono text-[12.5px]">
+                <span className="min-w-0 flex-1 truncate text-muted">{show ? secret : `${secret.slice(0, 6)}${"•".repeat(22)}`}</span>
+                <button type="button" onClick={() => setShow((x) => !x)} className="grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label={show ? "Ukryj" : "Pokaż"}>
+                  <Icon d={ICONS.eye} className="size-4" />
+                </button>
+                <Copy text={secret} />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[12.5px] text-dim">
+              <span>Wyciekł klucz? Nowy unieważnia stary.</span>
+              <span className="flex gap-1">
+                <ConfirmBtn onConfirm={() => start(() => regenerateKey(site.id))} label="Nowy publiczny?">
+                  Publiczny
+                </ConfirmBtn>
+                <ConfirmBtn onConfirm={() => start(() => regenerateSecret(site.id))} label="Nowy sekretny?">
+                  Sekretny
+                </ConfirmBtn>
+              </span>
+            </div>
+          </div>
+        </Card>
+        <Card delay={0.04}>
+          <CardHead title="Jak to działa" />
+          <ol className="space-y-3 text-[13.5px] leading-relaxed text-muted">
+            {[
+              ["Opisz potrzeby klienta", "np. sklep pod serwer Minecraft: rangi, ceny, płatności przez jego Stripe, komendy RCON po zakupie."],
+              ["Skopiuj prompt do AI", "wklej w Claude Code / Cursor otwartym na kodzie strony klienta — klucze są już w środku."],
+              ["AI zgłasza pola do edycji", "sekcje pojawią się tu i w panelu klienta same (PUT /schema)."],
+              ["Klient edytuje", "teksty, zdjęcia, ofertę i swoje klucze (pola „sekret” nigdy nie trafiają do przeglądarki)."],
+            ].map(([t, d], i) => (
+              <li key={t} className="flex gap-3">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent/20 text-[12px] text-accent-2">{i + 1}</span>
+                <span>
+                  <span className="text-ink">{t}</span> — {d}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      </div>
+      <Card delay={0.08} glow>
+        <CardHead title="Prompt dla AI" sub="Podpina dowolną stronę: Next.js, PHP, WordPress, sklep, panel gry…">
+          <Copy text={prompt} />
+        </CardHead>
+        <Label label="Czego potrzebuje klient (trafi do promptu)">
+          <textarea
+            rows={3}
+            value={brief}
+            onChange={(e) => setBrief(e.target.value)}
+            placeholder="Np. Sklep internetowy pod serwer Minecraft: rangi i przedmioty z cenami, płatności przez Stripe klienta, po zakupie komenda przez RCON, ogłoszenia i regulamin do edycji."
+            className={`${field} resize-none py-3 leading-relaxed`}
+          />
+        </Label>
+        <div className="relative mt-4">
+          <pre className="max-h-[460px] overflow-auto rounded-2xl bg-[#060608] p-4 text-[12px] leading-relaxed whitespace-pre-wrap text-muted" data-lenis-prevent>
+            {prompt}
           </pre>
-          <span className="absolute top-2 right-2">
-            <Copy text={snippet} />
+          <span className="absolute top-2 right-2 rounded-full bg-[#060608]">
+            <Copy text={prompt} />
           </span>
         </div>
-        <p className="mt-4 text-[13px] text-dim">
-          Webhook (Ustawienia) wywołuje się po każdej zmianie treści — np. Vercel Deploy Hook, żeby strona klienta przebudowała się sama.
-        </p>
+        <p className="mt-3 text-[12.5px] text-dim">Prompt zawiera klucz sekretny — wklejaj go tylko w swoje narzędzia, nie wysyłaj klientowi.</p>
+      </Card>
+    </div>
+  );
+}
+
+function Preview({ site }: { site: Site }) {
+  const href = siteHref(site.domain);
+  const [state, setState] = useState<{ ok: boolean; status?: number; ms?: number; frame?: boolean } | null>(null);
+  const [pending, start] = useTransition();
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!href) return;
+    start(async () => setState(await checkSite(site.id)));
+  }, [href, site.id, n]);
+  if (!href)
+    return (
+      <Card>
+        <Empty icon={ICONS.globe} title="Brak adresu strony" text="Dodaj domenę albo adres IP (np. http://51.68.10.20:3000) w Ustawieniach, żeby zobaczyć tu podgląd." />
+      </Card>
+    );
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-[22px] bg-surface p-4 ring-1 ring-white/[0.04] ring-inset">
+          <p className="text-[12.5px] text-dim">Strona</p>
+          <p className="mt-1 flex items-center gap-2 text-[16px]">
+            <span className={`size-2 rounded-full ${!state ? "bg-white/30" : state.ok ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-red-400"}`} />
+            {!state || pending ? "Sprawdzam…" : state.ok ? "Online" : `Nie odpowiada${state.status ? ` (${state.status})` : ""}`}
+          </p>
+          <p className="text-[12px] text-dim">{state?.ms ? `${state.ms} ms` : " "}</p>
+        </div>
+        <div className="rounded-[22px] bg-surface p-4 ring-1 ring-white/[0.04] ring-inset sm:col-span-2">
+          <Connection site={site} />
+        </div>
+      </div>
+      <Card pad={false}>
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+          <span className="flex gap-1.5">
+            <span className="size-2.5 rounded-full bg-white/10" />
+            <span className="size-2.5 rounded-full bg-white/10" />
+            <span className="size-2.5 rounded-full bg-white/10" />
+          </span>
+          <span className="min-w-0 flex-1 truncate rounded-full bg-white/[0.04] px-3 py-1 text-center text-[12.5px] text-muted">{href.replace(/^https?:\/\//, "")}</span>
+          <button type="button" onClick={() => setN((x) => x + 1)} className="grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label="Odśwież">
+            <Icon d={ICONS.refresh} className="size-4" />
+          </button>
+          <a href={href} target="_blank" rel="noopener noreferrer" className="grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label="Otwórz">
+            <Icon d={ICONS.site} className="size-4" />
+          </a>
+        </div>
+        {state && state.frame === false ? (
+          <div className="grid h-[420px] place-items-center p-6 text-center">
+            <div>
+              <p className="text-[15px]">Strona nie pozwala się osadzić w podglądzie</p>
+              <p className="mt-1 text-[13px] text-dim">Ma nagłówek X-Frame-Options / CSP frame-ancestors — otwórz ją w nowej karcie.</p>
+            </div>
+          </div>
+        ) : (
+          <iframe key={n} src={href} title={`Podgląd: ${site.name}`} className="h-[min(70vh,720px)] w-full bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" loading="lazy" />
+        )}
       </Card>
     </div>
   );
@@ -284,8 +417,8 @@ function Settings({ site, clients }: { site: Site; clients: Client[] }) {
         <Label label="Nazwa">
           <input name="name" defaultValue={site.name} className={`${field} h-11`} />
         </Label>
-        <Label label="Domena">
-          <input name="domain" defaultValue={site.domain ?? ""} className={`${field} h-11`} />
+        <Label label="Adres strony — domena albo IP" hint="np. sklep-klienta.pl albo http://51.68.10.20:3000 (bez https podaj z http://)">
+          <input name="domain" defaultValue={site.domain ?? ""} placeholder="sklep-klienta.pl" className={`${field} h-11`} />
         </Label>
         <Label label="Klient (może edytować treści)">
           <select name="owner" defaultValue={site.owner_id ?? ""} className={`${field} h-11 bg-surface`}>
@@ -316,7 +449,7 @@ function Settings({ site, clients }: { site: Site; clients: Client[] }) {
 }
 
 export default function SiteAdmin({ site, collections, clients, origin }: { site: Site; collections: ColWithEntries[]; clients: Client[]; origin: string }) {
-  const [tab, setTab] = useState<"content" | "structure" | "api" | "settings">("content");
+  const [tab, setTab] = useState<"preview" | "content" | "structure" | "api" | "settings">(site.last_seen ? "preview" : "api");
   return (
     <>
       <div className="mb-5">
@@ -325,15 +458,17 @@ export default function SiteAdmin({ site, collections, clients, origin }: { site
           value={tab}
           onChange={setTab}
           items={[
+            { value: "preview", label: "Podgląd" },
             { value: "content", label: "Treści" },
             { value: "structure", label: "Sekcje i pola" },
-            { value: "api", label: "Integracja" },
+            { value: "api", label: "Integracja i prompt AI" },
             { value: "settings", label: "Ustawienia" },
           ]}
         />
       </div>
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease }}>
+          {tab === "preview" && <Preview site={site} />}
           {tab === "content" && <CmsEditor key={JSON.stringify(collections.map((c) => [c.id, c.fields.length]))} siteId={site.id} collections={collections} />}
           {tab === "structure" && <Structure siteId={site.id} collections={collections} />}
           {tab === "api" && <Integration site={site} origin={origin} collections={collections} />}

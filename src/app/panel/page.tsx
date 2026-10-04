@@ -10,7 +10,8 @@ import { Badge, Empty, Icon, PageHead } from "@/components/panel/kit";
 import { Metric, Panel, Row } from "@/components/panel/dash";
 import { ICONS } from "@/components/panel/icons";
 import ProjectProgress from "@/components/panel/ProjectProgress";
-import { OrderCard } from "@/components/panel/client/Orders";
+import { OfferCard, OrderCard } from "@/components/panel/client/Orders";
+import { clientOffers } from "@/lib/offers";
 
 const DISCORD = "M8.5 15.5c-.6.9-1.5 1.8-1.5 1.8-2.6-.1-3.5-1.8-3.5-1.8 0-3.8 1.7-6.9 1.7-6.9 1.7-1.3 3.3-1.2 3.3-1.2l.2.3M15.5 15.5c.6.9 1.5 1.8 1.5 1.8 2.6-.1 3.5-1.8 3.5-1.8 0-3.8-1.7-6.9-1.7-6.9-1.7-1.3-3.3-1.2-3.3-1.2l-.2.3M7.5 8.5a12 12 0 019 0M7.5 16a12 12 0 009 0M9.5 13h.01M14.5 13h.01";
 const longDate = (d: string) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long" }).format(new Date(`${d}T12:00:00`));
@@ -19,7 +20,9 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
   await loadContent();
   const user = await requireUser();
   if (isAdmin(user)) redirect("/panel/admin");
-  const [{ witaj }, payments, orders, requests] = await Promise.all([searchParams, paymentsForUser(user.id, user.email), clientOrders(user.id, user.email), clientRequests(user.id, user.email)]);
+  // płatności najpierw (synchronizacja ze Stripe może uruchomić zlecenie z opłaconej wyceny)
+  const payments = await paymentsForUser(user.id, user.email);
+  const [{ witaj }, orders, requests, offers] = await Promise.all([searchParams, clientOrders(user.id, user.email), clientRequests(user.id, user.email), clientOffers(user.id, user.email)]);
   const t = today();
   const first = user.name.split(" ")[0];
   const stage = Number(user.stage);
@@ -55,6 +58,14 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHead title="Kokpit" text={`${witaj ? "Witaj w afto" : "Cześć"}, ${first}. ${accent} ${summary}.`} />
+
+      {offers.length > 0 && (
+        <div className="mb-4 space-y-4">
+          {offers.map((o) => (
+            <OfferCard key={o.id} o={o} today={t} />
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Metric i={0} label="Zlecenia w toku" value={active.length} viz={{ kind: "lollipop", data: active.length ? active.map(prog) : [0.08, 0.08, 0.08] }} foot={active.length ? "postęp każdego zlecenia" : "brak aktywnych zleceń"} href="/panel/zamowienia" />

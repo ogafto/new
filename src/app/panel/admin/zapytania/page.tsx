@@ -8,7 +8,14 @@ export const metadata: Metadata = { title: "Zapytania" };
 
 async function load() {
   const rows = await all<Inquiry>(
-    "SELECT i.*, o.due_date AS order_due, o.title AS order_title FROM inquiries i LEFT JOIN orders o ON o.id = i.order_id ORDER BY i.created_at DESC LIMIT 300",
+    `SELECT i.*, o.due_date AS order_due, o.title AS order_title,
+      f.id AS offer_id, f.status AS offer_status, f.amount AS offer_amount, f.deposit AS offer_deposit, f.pay_by AS offer_pay_by, f.work_days AS offer_days,
+      (SELECT stripe_url FROM payments WHERE offer_id = f.id AND kind = 'full' AND status = 'pending') AS offer_full_url,
+      (SELECT stripe_url FROM payments WHERE offer_id = f.id AND kind = 'deposit' AND status = 'pending') AS offer_dep_url
+    FROM inquiries i
+    LEFT JOIN orders o ON o.id = i.order_id
+    LEFT JOIN offers f ON f.id = (SELECT id FROM offers WHERE inquiry_id = i.id AND status != 'cancelled' ORDER BY created_at DESC LIMIT 1)
+    ORDER BY i.created_at DESC LIMIT 300`,
   );
   return { rows, now: Date.now() };
 }

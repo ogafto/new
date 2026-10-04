@@ -15,7 +15,7 @@ export default async function SitesPage() {
   const [sites, clients] = await Promise.all([listSites(), all<{ id: string; name: string; email: string }>("SELECT id, name, email FROM users WHERE role = 'client' AND verified_at IS NOT NULL ORDER BY name")]);
   return (
     <>
-      <PageHead title="Strony klientów">
+      <PageHead title="Strony klientów" text="Strony Twoich klientów podpięte pod CMS — klient edytuje treści i swoje klucze z panelu, a strona pobiera je z API.">
         <NewSite clients={clients} />
       </PageHead>
       {sites.length === 0 ? (
@@ -36,7 +36,10 @@ export default async function SitesPage() {
                 <p className="mt-5 text-[18px] tracking-[-0.01em]">{s.name}</p>
                 <p className="mt-0.5 truncate text-[13px] text-dim">{s.domain ?? "domena nieustawiona"}</p>
                 <div className="mt-5 flex items-center justify-between border-t border-line pt-4 text-[12.5px] text-dim">
-                  <span>{Number(s.entries)} treści</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`size-1.5 rounded-full ${s.last_seen ? "bg-emerald-400" : "bg-amber-300"}`} />
+                    {s.last_seen ? "połączona" : "niepołączona"} · {Number(s.entries)} treści
+                  </span>
                   <span>zmiana {fmtDateTime(Number(s.updated_at))}</span>
                 </div>
               </Link>

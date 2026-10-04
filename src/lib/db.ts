@@ -245,6 +245,26 @@ const SCHEMA = [
     pathname TEXT,
     created_at INTEGER NOT NULL
   )`,
+  // wyceny wysłane klientom: kwota, czas realizacji (dni od wpłaty), termin płatności, opcjonalna zaliczka
+  `CREATE TABLE IF NOT EXISTS offers (
+    id TEXT PRIMARY KEY,
+    inquiry_id TEXT,
+    user_id TEXT,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
+    title TEXT NOT NULL,
+    service TEXT,
+    message TEXT,
+    amount INTEGER NOT NULL,
+    deposit INTEGER,
+    work_days INTEGER NOT NULL,
+    pay_by TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'sent',
+    order_id TEXT,
+    paid_at INTEGER,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS afto_offers_inq ON offers(inquiry_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS afto_ofiles_order ON order_files(order_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS afto_sessions_user ON sessions(user_id)`,
   `CREATE INDEX IF NOT EXISTS afto_invites_email ON invites(email)`,
@@ -269,7 +289,7 @@ const SCHEMA = [
  * dokleja się automatycznie.
  */
 const PREFIX = "afto_";
-const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors", "order_files"];
+const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors", "order_files", "offers"];
 // tylko odwołania do tabel (po FROM/JOIN/INTO/UPDATE/…), nie aliasy kolumn typu „COUNT(*) pageviews”
 const TABLE_RE = new RegExp(`\\b(FROM|JOIN|INTO|UPDATE|EXISTS|REFERENCES|ON|TABLE)(\\s+)(${TABLES.join("|")})\\b`, "gi");
 export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${sp}${PREFIX}${t}`);
@@ -280,6 +300,8 @@ const COLUMNS: Record<string, Record<string, string>> = {
   projects: { seo_title: "TEXT", seo_description: "TEXT" },
   inquiries: { user_id: "TEXT", source: "TEXT", order_id: "TEXT" },
   orders: { site_id: "TEXT", client_note: "TEXT", done_at: "INTEGER" },
+  payments: { offer_id: "TEXT", kind: "TEXT" },
+  cms_sites: { secret_key: "TEXT", last_seen: "INTEGER", last_origin: "TEXT" },
 };
 
 async function migrate(client: Client) {
@@ -291,7 +313,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 10;
+const VERSION = 12;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

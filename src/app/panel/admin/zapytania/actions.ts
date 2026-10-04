@@ -129,3 +129,45 @@ export async function acceptInquiry(d: AcceptInput): Promise<AcceptResult> {
   revalidatePath("/panel/admin/kalendarz");
   return { ok: true, orderId: oid, mailed, payUrl, warn };
 }
+
+/* ---------- wycena z płatnością ---------- */
+
+export type OfferInput = { iid: string; title: string; message: string; amount: string; deposit: string; workDays: number; payDays: number; mail: boolean };
+export type OfferResult = { error?: string; ok?: boolean; payBy?: string; fullUrl?: string | null; depositUrl?: string | null; mailed?: boolean };
+
+// Wycena: dokładna kwota, czas realizacji (od wpłaty), termin płatności, opcjonalnie zaliczka → mail do klienta z linkami
+export async function sendOffer(d: OfferInput): Promise<OfferResult> {
+  const admin = await requireAdmin();
+  const { createOffer, latestOffer } = await import("@/lib/offers");
+  const q = await one<{ id: string; name: string; email: string; company: string | null; topic: string | null; user_id: string | null; order_id: string | null }>("SELECT id, name, email, company, topic, user_id, order_id FROM inquiries WHERE id = ?", [d.iid]);
+  if (!q) return { error: "Nie ma już tego zapytania." };
+  if (q.order_id) return { error: "To zamówienie jest już przyjęte." };
+  if ((await latestOffer(q.id))?.status === "sent") return { error: "Wycena już czeka na płatność — anuluj ją, żeby wysłać nową." };
+  const title = d.title.trim().slice(0, 120);
+  if (title.length < 2) return { error: "Podaj nazwę zlecenia." };
+  const amount = Math.round(num(d.amount) * 100);
+  if (!Number.isFinite(amount) || amount < 200) return { error: "Kwota musi wynosić co najmniej 2 zł." };
+  const deposit = d.deposit.trim() ? Math.round(num(d.deposit) * 100) : null;
+  if (deposit !== null && (!Number.isFinite(deposit) || deposit < 200 || deposit >= amount)) return { error: "Zaliczka musi być mniejsza od kwoty (min. 2 zł)." };
+  if (!(d.workDays >= 1 && d.workDays <= 365)) return { error: "Czas realizacji: od 1 do 365 dni." };
+  if (!(d.payDays >= 1 && d.payDays <= 60)) return { error: "Termin płatności: od 1 do 60 dni." };
+  const userId = q.user_id ?? (await one<{ id: string }>("SELECT id FROM users WHERE lower(email) = lower(?)", [q.email]))?.id ?? null;
+  try {
+    const r = await createOffer({ inquiryId: q.id, userId, clientName: q.company || q.name, clientEmail: q.email, title, service: q.topic, message: d.message.trim().slice(0, 1500), amount, deposit, workDays: d.workDays, payDays: d.payDays, mail: d.mail, actor: admin.email });
+    await run("UPDATE inquiries SET status = 'contacted' WHERE id = ? AND status = 'new'", [q.id]);
+    refresh();
+    revalidatePath("/panel/admin/finanse");
+    return { ok: true, payBy: r.payBy, fullUrl: r.fullUrl, depositUrl: r.depositUrl, mailed: r.mailed };
+  } catch (e) {
+    return { error: `Nie udało się utworzyć płatności: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+export async function cancelOfferAction(offerId: string) {
+  const admin = await requireAdmin();
+  const { cancelOffer } = await import("@/lib/offers");
+  const o = await cancelOffer(offerId);
+  if (o) await log("payment", `Anulowano wycenę: ${o.title} (${o.client_name})`, { actor: admin.email });
+  refresh();
+  return { ok: true };
+}

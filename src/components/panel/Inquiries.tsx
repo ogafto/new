@@ -5,7 +5,8 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { deleteInquiry, setInquiryNote, setInquiryStatus } from "@/app/panel/admin/zapytania/actions";
 import { Card, ConfirmBtn, ease, Empty, ICONS, Icon, Modal } from "./kit";
-import AcceptOrder from "./AcceptOrder";
+import AcceptOrder, { OfferForm } from "./AcceptOrder";
+import { cancelOfferAction } from "@/app/panel/admin/zapytania/actions";
 import { ago, Avatar, CopyBtn, fold, Kbd, Portal, Search, Segmented, useNow } from "./crm/ui";
 
 export type Inquiry = {
@@ -25,6 +26,14 @@ export type Inquiry = {
   order_id?: string | null;
   order_due?: string | null;
   order_title?: string | null;
+  offer_id?: string | null;
+  offer_status?: string | null;
+  offer_amount?: number | null;
+  offer_deposit?: number | null;
+  offer_pay_by?: string | null;
+  offer_days?: number | null;
+  offer_full_url?: string | null;
+  offer_dep_url?: string | null;
 };
 type Status = Inquiry["status"];
 type Filter = "all" | Status;
@@ -97,7 +106,7 @@ const dayMs = 86_400_000;
 const longDay = (d: string) => new Intl.DateTimeFormat("pl-PL", { weekday: "short", day: "numeric", month: "long" }).format(new Date(`${d}T12:00:00`));
 
 // Co dalej z tym zapytaniem — jedna wyraźna decyzja zamiast szukania statusów
-function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onStatus: (s: Status) => void; onAccept: () => void }) {
+function NextStep({ q, now, onStatus, onAccept, onCancelOffer }: { q: Inquiry; now: number; onStatus: (s: Status) => void; onAccept: () => void; onCancelOffer: () => void }) {
   if (q.status === "won" && q.order_due) {
     const left = Math.round((Date.parse(`${q.order_due}T12:00:00`) - now) / dayMs);
     return (
@@ -117,6 +126,39 @@ function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onS
           <Icon d={ICONS.receipt} className="size-4" /> Otwórz zlecenie
         </Link>
       </div>
+    );
+  }
+  if (q.offer_status === "sent" && q.offer_amount) {
+    const zl = (gr: number) => `${(gr / 100).toLocaleString("pl-PL", { maximumFractionDigits: 2 })} zł`;
+    const late = q.offer_pay_by ? Date.parse(`${q.offer_pay_by}T23:59:59`) < now : false;
+    return (
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }} className="relative mt-5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,rgb(139_108_255/0.16),rgb(139_108_255/0.03))] p-4 ring-1 ring-accent/30 ring-inset sm:p-5">
+        <div className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-[radial-gradient(closest-side,rgb(139_108_255/0.35),transparent)]" aria-hidden />
+        <div className="relative flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-[15px]">
+              <span className="relative flex size-2">
+                <span className="absolute inset-0 animate-ping rounded-full bg-accent-2/80" />
+                <span className="relative size-2 rounded-full bg-accent-2" />
+              </span>
+              Wycena wysłana — czeka na wpłatę
+            </p>
+            <p className="mt-1 text-[13px] text-muted">
+              <span className="text-ink tabular-nums">{zl(Number(q.offer_amount))}</span>
+              {q.offer_deposit ? ` · zaliczka ${zl(Number(q.offer_deposit))}` : ""} · realizacja {q.offer_days} dni od wpłaty ·{" "}
+              <span className={late ? "text-red-300" : ""}>płatność do {q.offer_pay_by ? longDay(q.offer_pay_by) : "—"}</span>
+            </p>
+            <p className="mt-1 text-[12px] text-dim">Po wpłacie zlecenie wystartuje samo, a Ty dostaniesz maila.</p>
+          </div>
+          <button type="button" onClick={onCancelOffer} className="h-9 rounded-full px-3 text-[13px] text-dim transition-colors hover:bg-red-400/10 hover:text-red-200">
+            Anuluj wycenę
+          </button>
+        </div>
+        <div className="relative mt-3 flex flex-wrap gap-2">
+          {q.offer_full_url && <CopyBtn text={q.offer_full_url} label="Kopiuj link — całość" />}
+          {q.offer_dep_url && <CopyBtn text={q.offer_dep_url} label="Kopiuj link — zaliczka" />}
+        </div>
+      </motion.div>
     );
   }
   if (q.status === "lost")
@@ -147,7 +189,7 @@ function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onS
             {fresh ? "Czeka na Twoją decyzję" : q.status === "won" ? "Oznaczone jako zlecenie — ustaw termin" : "Zajmujesz się tym"}
           </p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
-            {fresh ? "Weź je na siebie albo od razu przyjmij z terminem." : "Gdy ustalicie szczegóły — przyjmij i ustaw termin. Klient zobaczy go w panelu."}
+            {fresh ? "Weź je na siebie albo wyślij wycenę — po wpłacie zlecenie wystartuje samo." : "Gdy ustalicie szczegóły — wyślij wycenę z terminem płatności (albo przyjmij bez płatności)."}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -158,7 +200,7 @@ function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onS
             </button>
           )}
           <button type="button" onClick={onAccept} className="group flex h-9 items-center gap-2 rounded-full bg-ink pr-1 pl-4 text-[13px] font-medium text-bg transition-colors hover:bg-white">
-            Przyjmij
+            Wyślij wycenę
             <span className="grid size-7 place-items-center rounded-full bg-accent text-white transition-transform duration-500 group-hover:rotate-45">
               <Icon d={ICONS.arrowUp} className="size-3.5 rotate-45" />
             </span>
@@ -174,7 +216,7 @@ function NextStep({ q, now, onStatus, onAccept }: { q: Inquiry; now: number; onS
   );
 }
 
-function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove, onAccept }: { q: Inquiry; now: number; pos: [number, number] | null; onStatus: (s: Status) => void; onNote: (n: string) => void; onDelete: () => void; onMove?: (d: 1 | -1) => void; onAccept: () => void }) {
+function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove, onAccept, onCancelOffer }: { q: Inquiry; now: number; pos: [number, number] | null; onStatus: (s: Status) => void; onNote: (n: string) => void; onDelete: () => void; onMove?: (d: 1 | -1) => void; onAccept: () => void; onCancelOffer: () => void }) {
   const first = q.name.split(" ")[0];
   const [note, setNote] = useState(q.note ?? "");
   const latest = useRef(q.note ?? "");
@@ -255,7 +297,7 @@ function Detail({ q, now, pos, onStatus, onNote, onDelete, onMove, onAccept }: {
         )}
       </div>
 
-      <NextStep q={q} now={now} onStatus={onStatus} onAccept={onAccept} />
+      <NextStep q={q} now={now} onStatus={onStatus} onAccept={onAccept} onCancelOffer={onCancelOffer} />
 
       {/* akcje */}
       <div className="mt-5 flex flex-wrap items-center gap-2 border-y border-line py-3">
@@ -348,6 +390,7 @@ export default function Inquiries({ rows: initial, now: serverNow, focus, accept
   const [query, setQuery] = useState("");
   const [sel, setSel] = useState<string | null>(() => (initial.find((r) => r.id === focus) ?? initial.find((r) => r.status === "new") ?? initial[0])?.id ?? null);
   const [sheet, setSheet] = useState(false);
+  const [mode, setMode] = useState<"offer" | "direct">("offer");
   const [accepting, setAccepting] = useState<{ id: string; n: number } | null>(() => (accept && focus && initial.some((r) => r.id === focus) ? { id: focus, n: 0 } : null));
   // wejście z powiadomienia (?id=…) na telefonie — od razu otwórz szczegóły
   useEffect(() => {
@@ -449,6 +492,10 @@ export default function Inquiries({ rows: initial, now: serverNow, focus, accept
       onNote={(n) => setNote(q.id, n)}
       onDelete={() => remove(q.id)}
       onAccept={() => setAccepting((a) => ({ id: q.id, n: (a?.n ?? 0) + 1 }))}
+      onCancelOffer={() => {
+        setPatch((p) => ({ ...p, [q.id]: { ...p[q.id], offer_status: "cancelled" } }));
+        start(() => cancelOfferAction(q.offer_id!).then(() => {}));
+      }}
     />
   );
   const acceptRow = accepting ? rows.find((r) => r.id === accepting.id) : undefined;
@@ -538,17 +585,43 @@ export default function Inquiries({ rows: initial, now: serverNow, focus, accept
         </div>
       </Card>
 
-      <Modal open={!!accepting && !!acceptRow} onClose={() => setAccepting(null)} title={`Przyjmij zlecenie · ${acceptRow?.name ?? ""}`}>
+      <Modal open={!!accepting && !!acceptRow} onClose={() => setAccepting(null)} title={`${mode === "offer" ? "Wycena" : "Przyjmij zlecenie"} · ${acceptRow?.name ?? ""}`}>
         {acceptRow && (
-          <AcceptOrder
-            key={`${acceptRow.id}-${accepting?.n}`}
-            q={acceptRow}
-            onClose={() => setAccepting(null)}
-            onDone={(r) => {
-              setSticky(acceptRow.id);
-              setPatch((p) => ({ ...p, [acceptRow.id]: { ...p[acceptRow.id], status: "won", order_id: r.orderId, order_due: r.due, order_title: r.title } }));
-            }}
-          />
+          <>
+            <div className="mb-5">
+              <Segmented
+                id="acc-mode"
+                size="sm"
+                value={mode}
+                onChange={setMode}
+                items={[
+                  { value: "offer", label: "Wycena z płatnością" },
+                  { value: "direct", label: "Przyjmij bez płatności" },
+                ]}
+              />
+            </div>
+            {mode === "offer" ? (
+              <OfferForm
+                key={`o-${acceptRow.id}-${accepting?.n}`}
+                q={acceptRow}
+                onClose={() => setAccepting(null)}
+                onSent={(r) => {
+                  setSticky(acceptRow.id);
+                  setPatch((p) => ({ ...p, [acceptRow.id]: { ...p[acceptRow.id], status: acceptRow.status === "new" ? "contacted" : acceptRow.status, offer_status: "sent", offer_amount: r.amount, offer_deposit: r.deposit, offer_pay_by: r.payBy, offer_days: r.days, offer_full_url: r.fullUrl, offer_dep_url: r.depositUrl } }));
+                }}
+              />
+            ) : (
+              <AcceptOrder
+                key={`${acceptRow.id}-${accepting?.n}`}
+                q={acceptRow}
+                onClose={() => setAccepting(null)}
+                onDone={(r) => {
+                  setSticky(acceptRow.id);
+                  setPatch((p) => ({ ...p, [acceptRow.id]: { ...p[acceptRow.id], status: "won", order_id: r.orderId, order_due: r.due, order_title: r.title } }));
+                }}
+              />
+            )}
+          </>
         )}
       </Modal>
 

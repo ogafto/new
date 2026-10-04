@@ -29,6 +29,8 @@ export type Payment = {
   stripe_payment: string | null;
   notes: string | null;
   created_at: number;
+  offer_id?: string | null;
+  kind?: "full" | "deposit" | "rest" | null;
 };
 
 export type Expense = { id: string; title: string; category: string; amount: number; date: string; recurring: number; notes: string | null; created_at: number };
@@ -61,9 +63,11 @@ export async function listExpenses() {
 
 export async function paymentsForUser(userId: string, email: string) {
   const q = () => all<Payment>("SELECT * FROM payments WHERE (user_id = ? OR lower(client_email) = lower(?)) AND status IN ('pending', 'paid') ORDER BY created_at DESC LIMIT 20", [userId, email]);
-  const rows = await q();
+  const first = await q();
   // opłacone w Stripe, a webhook jeszcze nie dotarł (albo nie jest ustawiony) — dociągnij stan od razu
-  return (await syncStripe(rows)) ? q() : rows;
+  const rows = (await syncStripe(first)) ? await q() : first;
+  // linki z wyceny czekającej na wpłatę pokazuje karta wyceny (całość i zaliczka to jedna kwota, nie dwie)
+  return rows.filter((p) => !(p.status === "pending" && p.offer_id && (p.kind === "full" || p.kind === "deposit")));
 }
 
 /** Podsumowanie: bieżący miesiąc, rok, oczekujące i 12 miesięcy wstecz */
@@ -89,7 +93,8 @@ export async function financeSummary() {
   const cur = months[11];
   const prev = months[10];
   const year = String(now.getFullYear());
-  const pending = payments.filter((p) => p.status === "pending");
+  // zaliczka z wyceny to alternatywa dla całości — liczymy tylko całość
+  const pending = payments.filter((p) => p.status === "pending" && p.kind !== "deposit");
   return {
     month: { revenue: rev[cur], costs: cost[cur], profit: rev[cur] - cost[cur], prevRevenue: rev[prev], prevCosts: cost[prev] },
     year: { revenue: months.filter((m) => m.startsWith(year)).reduce((a, m) => a + rev[m], 0), costs: months.filter((m) => m.startsWith(year)).reduce((a, m) => a + cost[m], 0) },
@@ -99,7 +104,7 @@ export async function financeSummary() {
   };
 }
 
-async function notifyPaid(p: Payment, via: string) {
+async function notifyPaid(p: Payment, via: string, started?: { order: string; due: string; deposit: boolean } | null) {
   const text = `Wpłata ${zl(Number(p.amount))} — ${p.title} (${p.client_name})`;
   // mail do admina (powiadomienia albo adres admina)
   try {
@@ -108,8 +113,8 @@ async function notifyPaid(p: Payment, via: string) {
     if (to)
       await sendMail({
         to,
-        subject: `💸 ${p.client_name} zapłacił(a) ${zl(Number(p.amount))}`,
-        react: createElement(PaidEmail, { client: p.client_name, title: p.title, amount: zl(Number(p.amount)), method: via, email: p.client_email, baseUrl: await baseUrl() }),
+        subject: started ? `✅ Zamówienie opłacone: ${p.title} — ${zl(Number(p.amount))}` : `💸 ${p.client_name} zapłacił(a) ${zl(Number(p.amount))}`,
+        react: createElement(PaidEmail, { client: p.client_name, title: p.title, amount: zl(Number(p.amount)), method: via, email: p.client_email, baseUrl: await baseUrl(), started }),
       });
   } catch (e) {
     await log("mail", "Nie wysłano powiadomienia o wpłacie", { level: "error", meta: { error: String(e) } });
@@ -122,7 +127,7 @@ async function notifyPaid(p: Payment, via: string) {
       body: JSON.stringify({
         username: site.domain,
         allowed_mentions: { parse: [] },
-        embeds: [{ title: "Nowa wpłata", description: text, color: 0x34d399, timestamp: new Date().toISOString() }],
+        embeds: [{ title: started ? "Zamówienie opłacone — zlecenie wystartowało" : "Nowa wpłata", description: started ? `${text}\nTermin oddania: ${started.due}` : text, color: 0x34d399, timestamp: new Date().toISOString() }],
       }),
     }).catch(() => {});
 }
@@ -136,8 +141,10 @@ export async function markPaid(id: string, opts: { via: "webhook" | "check" | "m
   if (p.stripe_session) await deactivateLink(p.stripe_session);
   const label = { webhook: "Stripe", check: "sprawdzenie w Stripe", manual: "ręcznie" }[opts.via];
   await log("payment", `Opłacono: ${p.title} — ${zl(Number(p.amount))} (${p.client_name})`, { level: "success", actor: opts.actor ?? null, meta: { id, via: label } });
+  // wpłata za wycenę → zlecenie startuje (termin liczony od dziś)
+  const started = p.offer_id ? await import("./offers").then((m) => m.startFromPayment({ ...p, status: "paid" })).catch((e) => (console.error("offer:", e), null)) : null;
   // ręczne oznaczenie robi sam admin — powiadomienia tylko dla wpłat ze Stripe
-  if (opts.via !== "manual") await notifyPaid(p, "Stripe");
+  if (opts.via !== "manual") await notifyPaid(p, "Stripe", started);
   return { ...p, status: "paid" as const, paid_at: now };
 }
 
@@ -174,6 +181,37 @@ export async function syncStripe(rows: Pick<Payment, "id" | "status" | "method" 
     }),
   );
   return res.some(Boolean);
+}
+
+/** Nowa płatność bez sprawdzania uprawnień (wywołują ją akcje admina i automaty, np. reszta po zaliczce) */
+export async function addPayment(d: { title: string; client_name: string; client_email: string | null; user_id: string | null; service: string | null; amount: number; due_date: string | null; order_id?: string | null; offer_id?: string | null; kind?: Payment["kind"]; stripe: boolean; baseUrl: string }) {
+  const { createPaymentLink, stripeReady } = await import("./stripe");
+  const pid = (await import("./auth/crypto")).id();
+  const method = d.stripe && (await stripeReady()) ? "stripe" : "transfer";
+  await run(
+    "INSERT INTO payments (id, title, client_name, client_email, user_id, service, amount, status, method, due_date, notes, created_at, order_id, offer_id, kind) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, NULL, ?, ?, ?, ?)",
+    [pid, d.title.slice(0, 200), d.client_name.slice(0, 120), d.client_email, d.user_id, d.service, d.amount, method, d.due_date, Date.now(), d.order_id ?? null, d.offer_id ?? null, d.kind ?? null],
+  );
+  let url: string | null = null;
+  if (method === "stripe") {
+    try {
+      const link = await createPaymentLink({ id: pid, title: d.title, amount: d.amount, email: d.client_email, baseUrl: d.baseUrl });
+      url = link.url;
+      await run("UPDATE payments SET stripe_session = ?, stripe_url = ? WHERE id = ?", [link.id, link.url, pid]);
+    } catch (e) {
+      await run("DELETE FROM payments WHERE id = ?", [pid]);
+      throw e;
+    }
+  }
+  return { id: pid, url, method };
+}
+
+/** Anuluje oczekującą płatność (np. druga opcja wyceny po wpłacie pierwszej) */
+export async function voidPayment(pid: string) {
+  const p = await one<Payment>("SELECT * FROM payments WHERE id = ?", [pid]);
+  if (!p || p.status !== "pending") return;
+  await run("UPDATE payments SET status = 'canceled' WHERE id = ?", [pid]);
+  if (p.stripe_session) await deactivateLink(p.stripe_session);
 }
 
 /** Oczekujące płatności z terminem w ciągu `days` dni (albo już po terminie) */

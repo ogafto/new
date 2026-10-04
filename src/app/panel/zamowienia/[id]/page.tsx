@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
-import { getSite } from "@/lib/cms";
+import { getSite, siteHref } from "@/lib/cms";
 import { canSee, fileKind, fmtSize, getOrder, orderFiles, orderPayments } from "@/lib/deliver";
 import { syncStripe, zl } from "@/lib/finance";
 import { daysBetween, today } from "@/lib/orders";
@@ -137,7 +137,7 @@ export default async function ClientOrder({ params }: { params: Promise<{ id: st
                   </Link>
                 )}
                 {site.domain && (
-                  <a href={`https://${site.domain}`} target="_blank" rel="noopener noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-full bg-white/[0.08] text-[13.5px] ring-1 ring-white/[0.1] transition-colors ring-inset hover:bg-white/[0.14]">
+                  <a href={siteHref(site.domain)!} target="_blank" rel="noopener noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-full bg-white/[0.08] text-[13.5px] ring-1 ring-white/[0.1] transition-colors ring-inset hover:bg-white/[0.14]">
                     Otwórz stronę <Icon d={ICONS.site} className="size-4" />
                   </a>
                 )}

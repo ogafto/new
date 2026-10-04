@@ -1,4 +1,5 @@
-import { all, one } from "./db";
+import { timingSafeEqual } from "node:crypto";
+import { all, one, run } from "./db";
 import { baseUrl } from "./mail";
 
 /*
@@ -7,6 +8,8 @@ import { baseUrl } from "./mail";
  * Klient edytuje treści w swoim panelu, a jego strona pobiera je z publicznego API:
  *   GET /api/cms/{public_key}            — wszystkie treści
  *   GET /api/cms/{public_key}/{sekcja}   — jedna sekcja
+ *   + nagłówek „Authorization: Bearer sk_…” (tylko z serwera strony) — również pola typu „sekret”
+ *   PUT /api/cms/{public_key}/schema     — strona sama zgłasza swoje sekcje i pola (Bearer sk_…)
  */
 
 import type { Collection, Entry, Field, Site } from "./cms-schema";
@@ -46,9 +49,13 @@ export async function getEntries(collectionId: string) {
 }
 
 // Treści do publicznego API — obrazki z adresami bezwzględnymi
-export async function publicContent(publicKey: string, only?: string) {
+export async function publicContent(publicKey: string, only?: string, opts: { secret?: string | null; from?: string | null } = {}) {
   const site = await one<Site>("SELECT * FROM cms_sites WHERE public_key = ?", [publicKey]);
   if (!site) return null;
+  // pola „sekret” tylko dla serwera strony (nagłówek Authorization: Bearer sk_…), nigdy publicznie
+  const full = !!opts.secret && !!site.secret_key && safeEq(opts.secret, site.secret_key);
+  // „połączona”: kiedy i skąd strona ostatnio pobrała treści (zapis najwyżej raz na minutę)
+  if (Date.now() - Number(site.last_seen ?? 0) > 60_000) run("UPDATE cms_sites SET last_seen = ?, last_origin = ? WHERE id = ?", [Date.now(), opts.from?.slice(0, 200) ?? null, site.id]).catch(() => {});
   const cols = (await getCollections(site.id)).filter((c) => !only || c.key === only);
   if (only && !cols.length) return null;
   const base = await baseUrl();
@@ -56,11 +63,23 @@ export async function publicContent(publicKey: string, only?: string) {
   const content: Record<string, unknown> = {};
   for (const c of cols) {
     const entries = await getEntries(c.id);
-    const shape = (e: Entry) => Object.fromEntries(c.fields.map((f) => [f.key, f.type === "image" ? abs(e.data[f.key]) : (e.data[f.key] ?? null)]));
+    const shape = (e: Entry) => Object.fromEntries(c.fields.filter((f) => full || f.type !== "secret").map((f) => [f.key, f.type === "image" ? abs(e.data[f.key]) : (e.data[f.key] ?? null)]));
     content[c.key] = c.kind === "single" ? (entries[0] ? shape(entries[0]) : null) : entries.map((e) => ({ id: e.id, ...shape(e) }));
   }
-  return { site: { name: site.name, domain: site.domain }, updatedAt: new Date(site.updated_at).toISOString(), content: only ? content[only] : content };
+  return { site: { name: site.name, domain: site.domain }, updatedAt: new Date(Number(site.updated_at)).toISOString(), private: full, content: only ? content[only] : content };
 }
+
+function safeEq(a: string, b: string) {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+export const siteByKey = (publicKey: string) => one<Site>("SELECT * FROM cms_sites WHERE public_key = ?", [publicKey]);
+export const secretOk = (site: Pick<Site, "secret_key">, header: string | null) => {
+  const t = header?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  return !!t && !!site.secret_key && safeEq(t, site.secret_key);
+};
 
 export function slugKey(v: string) {
   return v

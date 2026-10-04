@@ -62,6 +62,32 @@ function ImageField({ siteId, value, onChange }: { siteId: string; value: string
   );
 }
 
+// klucze API / hasła: ukryte, widoczne tylko na żądanie; nie trafiają do publicznego API strony
+function SecretInput({ value, onChange }: { value: string; onChange: (v: unknown) => void }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="block">
+      <span className="relative flex items-center">
+        <input
+          type={show ? "text" : "password"}
+          autoComplete="off"
+          spellCheck={false}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Wklej klucz…"
+          className={`${field} h-11 pr-11 font-mono text-[13px]`}
+        />
+        <button type="button" onClick={() => setShow((x) => !x)} className="absolute right-2 grid size-8 place-items-center rounded-full text-dim hover:text-ink" aria-label={show ? "Ukryj" : "Pokaż"}>
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z" />
+          </svg>
+        </button>
+      </span>
+      <span className="mt-1.5 block text-[11.5px] text-dim">🔒 Tajne — widzi je tylko serwer Twojej strony, nigdy odwiedzający</span>
+    </span>
+  );
+}
+
 function FieldInput({ f, value, onChange, siteId }: { f: Field; value: unknown; onChange: (v: unknown) => void; siteId: string }) {
   const s = typeof value === "string" ? value : value === null || value === undefined ? "" : String(value);
   switch (f.type) {
@@ -84,6 +110,8 @@ function FieldInput({ f, value, onChange, siteId }: { f: Field; value: unknown; 
       return <input type="date" value={s} onChange={(e) => onChange(e.target.value)} className={`${field} h-11 max-w-[220px] [color-scheme:dark]`} />;
     case "url":
       return <input type="url" value={s} onChange={(e) => onChange(e.target.value)} placeholder="https://" className={`${field} h-11`} />;
+    case "secret":
+      return <SecretInput value={s} onChange={onChange} />;
     default:
       return <input value={s} onChange={(e) => onChange(e.target.value)} className={`${field} h-11`} />;
   }
@@ -159,7 +187,13 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
       </div>
       <AnimatePresence>
         {adding && (
-          <motion.div className="mb-3 overflow-hidden rounded-2xl border border-accent/40 bg-accent/[0.04] p-5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.4, ease }}>
+          <motion.div
+            className="mb-3 overflow-hidden rounded-2xl border border-accent/40 bg-accent/[0.04] p-5"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease }}
+          >
             <p className="mb-4 text-[14px] text-accent-2">Nowa pozycja</p>
             <EntryForm col={col} entry={null} siteId={siteId} onCancel={() => setAdding(false)} onSaved={(e) => (onChange([...entries, e]), setAdding(false))} />
           </motion.div>
@@ -172,7 +206,19 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
           {entries.map((e) => {
             const thumb = thumbOf(col, e);
             return (
-              <Reorder.Item key={e.id} value={e} className="overflow-hidden rounded-2xl border border-line bg-surface" onDragEnd={() => start(() => moveEntry(col.id, entries.map((x) => x.id)))}>
+              <Reorder.Item
+                key={e.id}
+                value={e}
+                className="overflow-hidden rounded-2xl border border-line bg-surface"
+                onDragEnd={() =>
+                  start(() =>
+                    moveEntry(
+                      col.id,
+                      entries.map((x) => x.id),
+                    ),
+                  )
+                }
+              >
                 <div className="flex items-center gap-3 p-3">
                   <span className="cursor-grab text-dim active:cursor-grabbing">
                     <Icon d={ICONS.drag} />
@@ -228,7 +274,11 @@ export default function CmsEditor({ siteId, collections }: { siteId: string; col
         <ul className="p-2">
           {cols.map((c) => (
             <li key={c.id}>
-              <button type="button" onClick={() => setActive(c.id)} className={`relative flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] transition-colors ${active === c.id ? "text-ink" : "text-muted hover:text-ink"}`}>
+              <button
+                type="button"
+                onClick={() => setActive(c.id)}
+                className={`relative flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] transition-colors ${active === c.id ? "text-ink" : "text-muted hover:text-ink"}`}
+              >
                 {active === c.id && <motion.span layoutId="cms-col" className="absolute inset-0 rounded-xl bg-white/[0.06]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
                 <span className="relative truncate">{c.name}</span>
                 <span className="relative text-[11.5px] text-dim">{c.kind === "list" ? c.entries.length : "•"}</span>
@@ -247,12 +297,7 @@ export default function CmsEditor({ siteId, collections }: { siteId: string; col
             <Badge>{col.key}</Badge>
           </div>
           {col.kind === "single" ? (
-            <EntryForm
-              col={col}
-              entry={col.entries[0] ?? null}
-              siteId={siteId}
-              onSaved={(e) => setCols((cs) => cs.map((c) => (c.id === col.id ? { ...c, entries: [e] } : c)))}
-            />
+            <EntryForm col={col} entry={col.entries[0] ?? null} siteId={siteId} onSaved={(e) => setCols((cs) => cs.map((c) => (c.id === col.id ? { ...c, entries: [e] } : c)))} />
           ) : (
             <ListEditor col={col} siteId={siteId} onChange={(entries) => setCols((cs) => cs.map((c) => (c.id === col.id ? { ...c, entries } : c)))} />
           )}

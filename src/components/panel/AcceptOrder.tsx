@@ -158,3 +158,178 @@ export default function AcceptOrder({ q, onDone, onClose }: { q: AcceptFor; onDo
     </form>
   );
 }
+
+/* ---------- wycena z płatnością (domyślna ścieżka) ---------- */
+
+const WORK = [7, 14, 21, 30, 45, 60];
+const PAY = [3, 7, 14];
+const zlf = (v: number) => `${v.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} zł`;
+
+export function OfferForm({ q, onSent, onClose }: { q: AcceptFor; onSent: (r: { amount: number; deposit: number | null; payBy: string; days: number; fullUrl: string | null; depositUrl: string | null }) => void; onClose: () => void }) {
+  const first = q.topic?.split(",")[0]?.trim();
+  const [title, setTitle] = useState(first || "Zlecenie");
+  const [amount, setAmount] = useState(lower(q.budget));
+  const [withDeposit, setWithDeposit] = useState(true);
+  const [deposit, setDeposit] = useState("");
+  const [work, setWork] = useState(SPAN[q.timeline ?? ""] ?? 21);
+  const [pay, setPay] = useState(7);
+  const [message, setMessage] = useState("");
+  const [mail, setMail] = useState(true);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState<{ payBy: string; fullUrl: string | null; depositUrl: string | null; mailed?: boolean } | null>(null);
+  const [pending, run] = useTransition();
+  const amt = Number(amount.replace(",", ".")) || 0;
+  const dep = withDeposit ? Number(deposit.replace(",", ".")) || Math.round(amt * 0.5) : 0;
+
+  if (done)
+    return (
+      <motion.div className="flex flex-col items-center py-2 text-center" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}>
+        <div className="relative grid size-20 place-items-center">
+          <motion.span className="absolute inset-0 rounded-full bg-accent/30 blur-2xl" initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.9 }} />
+          <span className="relative grid size-16 place-items-center rounded-full bg-accent text-white">
+            <Icon d={ICONS.mail} className="size-7" />
+          </span>
+        </div>
+        <p className="h-display mt-4 text-[28px]">Wycena wysłana.</p>
+        <p className="mt-1.5 max-w-sm text-[14.5px] text-muted">
+          {done.mailed ? "Klient dostał maila z linkami do płatności" : "Wycena czeka w panelu klienta"} — płatność do <span className="text-ink">{long(done.payBy)}</span>. Po wpłacie zlecenie wystartuje samo, a Ty dostaniesz maila.
+        </p>
+        <div className="mt-5 w-full space-y-2 text-left">
+          {[
+            ["Link — całość", done.fullUrl],
+            ["Link — zaliczka", done.depositUrl],
+          ]
+            .filter(([, u]) => u)
+            .map(([l, u]) => (
+              <div key={l} className="flex items-center gap-2 rounded-2xl bg-white/[0.03] py-1.5 pr-1.5 pl-4">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] text-dim">{l}</span>
+                  <span className="block truncate text-[13px]">{u}</span>
+                </span>
+                <CopyBtn text={u!} />
+              </div>
+            ))}
+        </div>
+        <button type="button" onClick={onClose} className="mt-6 h-10 rounded-full bg-ink px-6 text-[13.5px] font-medium text-bg transition-colors hover:bg-white">
+          Gotowe
+        </button>
+      </motion.div>
+    );
+
+  return (
+    <form
+      className="space-y-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError("");
+        run(async () => {
+          const { sendOffer } = await import("@/app/panel/admin/zapytania/actions");
+          const r = await sendOffer({ iid: q.id, title, message, amount, deposit: withDeposit ? String(dep) : "", workDays: work, payDays: pay, mail });
+          if (r.error) return setError(r.error);
+          setDone({ payBy: r.payBy!, fullUrl: r.fullUrl ?? null, depositUrl: r.depositUrl ?? null, mailed: r.mailed });
+          onSent({ amount: Math.round(amt * 100), deposit: withDeposit ? Math.round(dep * 100) : null, payBy: r.payBy!, days: work, fullUrl: r.fullUrl ?? null, depositUrl: r.depositUrl ?? null });
+        });
+      }}
+    >
+      {(q.budget || q.timeline) && (
+        <p className="flex flex-wrap gap-x-4 gap-y-1 rounded-2xl bg-white/[0.03] px-4 py-3 text-[13px] text-muted">
+          <span className="text-dim">Klient oczekuje:</span>
+          {q.budget && <span>budżet {q.budget}</span>}
+          {q.timeline && <span>{q.timeline.toLowerCase()}</span>}
+        </p>
+      )}
+      <Label label="Nazwa zlecenia">
+        <input className={`${field} h-11`} value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
+      </Label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Label label="Kwota (zł)">
+          <input inputMode="decimal" className={`${field} h-12 text-[18px] tabular-nums`} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="np. 2400" required />
+        </Label>
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[13px] text-muted">Zaliczka</span>
+            <Toggle checked={withDeposit} onChange={setWithDeposit} label="" />
+          </div>
+          <input
+            inputMode="decimal"
+            disabled={!withDeposit}
+            className={`${field} h-12 text-[18px] tabular-nums disabled:opacity-40`}
+            value={withDeposit ? deposit : ""}
+            onChange={(e) => setDeposit(e.target.value)}
+            placeholder={amt ? `${Math.round(amt * 0.5)} (50%)` : "np. 1200"}
+          />
+          {withDeposit && amt > 0 && (
+            <div className="mt-2 flex gap-1.5">
+              {[30, 50].map((p) => (
+                <button key={p} type="button" onClick={() => setDeposit(String(Math.round((amt * p) / 100)))} className="rounded-full bg-white/[0.05] px-3 py-1 text-[12.5px] text-muted transition-colors hover:bg-white/[0.1] hover:text-ink">
+                  {p}%
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-[13px] text-muted">Czas realizacji — liczony od dnia wpłaty</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {WORK.map((d) => (
+            <button key={d} type="button" onClick={() => setWork(d)} className={`h-9 rounded-full px-3.5 text-[13px] transition-colors ${work === d ? "bg-accent text-white" : "bg-white/[0.05] text-muted hover:bg-white/[0.1] hover:text-ink"}`}>
+              {d} dni
+            </button>
+          ))}
+          <input type="number" min={1} max={365} value={work} onChange={(e) => setWork(Math.max(1, Math.min(365, Number(e.target.value) || 1)))} className={`${field} h-9 w-20 text-center tabular-nums`} aria-label="Dni realizacji" />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-[13px] text-muted">Termin płatności</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PAY.map((d) => (
+            <button key={d} type="button" onClick={() => setPay(d)} className={`h-9 rounded-full px-3.5 text-[13px] transition-colors ${pay === d ? "bg-accent text-white" : "bg-white/[0.05] text-muted hover:bg-white/[0.1] hover:text-ink"}`}>
+              {d} dni · do {long(iso(d)).split(",")[1]?.trim() ?? long(iso(d))}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Label label="Wiadomość do klienta (opcjonalnie)">
+        <textarea rows={3} className={`${field} resize-none py-3 leading-relaxed`} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1500} placeholder="Np. W cenie: projekt, wdrożenie, 2 rundy poprawek i panel do edycji treści." />
+      </Label>
+
+      {amt > 0 && (
+        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(140deg,rgb(139_108_255/0.16),rgb(139_108_255/0.03))] p-4 ring-1 ring-accent/20 ring-inset">
+          <p className="text-[12px] text-dim">Klient dostanie</p>
+          <p className="mt-1 text-[15px] leading-relaxed">
+            Wycenę <span className="text-ink">{zlf(amt)}</span>
+            {withDeposit && dep > 0 && dep < amt ? (
+              <>
+                {" "}
+                — może zapłacić całość albo zaliczkę <span className="text-ink">{zlf(dep)}</span>
+              </>
+            ) : null}
+            . Płatność do <span className="text-ink">{long(iso(pay))}</span>, oddanie <span className="text-ink">{work} dni</span> od wpłaty.
+          </p>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-3">
+        <Toggle checked={mail} onChange={setMail} label="Wyślij mailem" />
+      </div>
+      <AnimatePresence>
+        {error && (
+          <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden text-[13.5px] text-red-300">
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+      <button type="submit" disabled={pending} className="group flex h-12 w-full items-center justify-between rounded-full bg-ink pr-1.5 pl-5 text-[15px] font-medium text-bg transition-colors hover:bg-white disabled:opacity-60">
+        {pending ? "Wysyłanie…" : "Wyślij wycenę"}
+        <span className="grid size-9 place-items-center rounded-full bg-accent text-white transition-transform duration-500 group-hover:rotate-45">
+          <Icon d={ICONS.arrowUp} className="size-4 rotate-45" />
+        </span>
+      </button>
+    </form>
+  );
+}

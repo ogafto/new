@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { all, one, run } from "@/lib/db";
 import { id } from "@/lib/auth/crypto";
 import { isAdmin, requireAdmin, requireUser } from "@/lib/auth/session";
@@ -33,7 +34,8 @@ function refresh(siteId: string) {
   revalidatePath(`/panel/admin/strony/${siteId}`);
   revalidatePath(`/panel/strona/${siteId}`);
   revalidatePath("/panel/admin/strony");
-  revalidatePath("/panel");
+  // menu klienta („Moja strona”) jest w layoucie panelu
+  revalidatePath("/panel", "layout");
 }
 
 // po zapisie: powiadom stronę klienta (np. Vercel Deploy Hook), żeby się przebudowała
@@ -90,10 +92,15 @@ export async function regenerateSecret(siteId: string) {
   refresh(siteId);
 }
 
-/** Czy strona odpowiada (podgląd w panelu) */
+/** Czy strona odpowiada (podgląd w panelu) — admin albo właściciel strony */
 export async function checkSite(siteId: string): Promise<{ ok: boolean; status?: number; ms?: number; frame?: boolean }> {
-  await requireAdmin();
-  const site = await getSite(siteId);
+  let site;
+  try {
+    ({ site } = await canEdit(siteId));
+  } catch (e) {
+    unstable_rethrow(e);
+    return { ok: false };
+  }
   const href = site?.domain ? (site.domain.startsWith("http://") ? site.domain : `https://${site.domain}`) : null;
   if (!href) return { ok: false };
   const t = Date.now();
@@ -119,8 +126,12 @@ export async function resetSiteContent(siteId: string) {
 
 export async function deleteSite(siteId: string) {
   await requireAdmin();
+  await run("UPDATE orders SET site_id = NULL WHERE site_id = ?", [siteId]);
+  await run("DELETE FROM cms_entries WHERE collection_id IN (SELECT id FROM cms_collections WHERE site_id = ?)", [siteId]);
+  await run("DELETE FROM cms_collections WHERE site_id = ?", [siteId]);
   await run("DELETE FROM cms_sites WHERE id = ?", [siteId]);
-  revalidatePath("/panel/admin/strony");
+  revalidatePath("/panel/admin", "layout");
+  revalidatePath("/panel", "layout");
 }
 
 /* ---------- sekcje i pola (admin) ---------- */
@@ -156,6 +167,8 @@ export async function saveCollection(siteId: string, input: { id?: string; name:
 
 export async function deleteCollection(siteId: string, cid: string) {
   await requireAdmin();
+  if (!(await one<{ id: string }>("SELECT id FROM cms_collections WHERE id = ? AND site_id = ?", [cid, siteId]))) return;
+  await run("DELETE FROM cms_entries WHERE collection_id = ?", [cid]);
   await run("DELETE FROM cms_collections WHERE id = ? AND site_id = ?", [cid, siteId]);
   await touch(siteId);
   refresh(siteId);
@@ -215,6 +228,7 @@ export async function uploadCmsImage(siteId: string, form: FormData): Promise<{ 
     if (!(file instanceof File)) return { error: "Brak pliku." };
     return { url: (await saveImage(file, `cms/${siteId}`)).url };
   } catch (e) {
+    unstable_rethrow(e);
     return { error: e instanceof Error ? e.message : "Nie udało się wgrać zdjęcia." };
   }
 }

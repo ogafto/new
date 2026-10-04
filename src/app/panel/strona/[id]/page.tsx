@@ -5,13 +5,13 @@ import { getSite, siteHref } from "@/lib/cms";
 import { loadCollections } from "@/lib/cms-load";
 import { Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
-import CmsEditor from "@/components/panel/CmsEditor";
+import SiteWorkspace from "@/components/panel/client/SiteWorkspace";
 
 export const metadata: Metadata = { title: "Moja strona" };
 
 const STEPS = [
   ["Wybierz część strony", "np. Baner, Oferta albo FAQ."],
-  ["Zmień albo dodaj", "tekst, zdjęcie, cenę; w listach: dodaj, usuń, przesuń."],
+  ["Zmień albo dodaj", "tekst, zdjęcie, cenę — obok widzisz stronę na żywo."],
   ["Kliknij „Zapisz zmiany”", "i gotowe — zmiana jest na stronie od razu."],
 ];
 
@@ -66,7 +66,7 @@ export default async function ClientSite({ params }: { params: Promise<{ id: str
           </p>
         </div>
       )}
-      <CmsEditor siteId={site.id} collections={collections} />
+      <SiteWorkspace siteId={site.id} href={href} collections={collections} />
     </>
   );
 }

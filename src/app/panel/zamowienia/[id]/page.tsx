@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { plural } from "@/lib/format";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
@@ -50,7 +51,7 @@ export default async function ClientOrder({ params }: { params: Promise<{ id: st
   const steps = [
     { label: "Przyjęte", sub: day(Number(o.created_at)), state: "done" as const },
     { label: "W realizacji", sub: started ? `od ${long(o.start_date)}` : `start ${long(o.start_date)}`, state: done ? ("done" as const) : started ? ("now" as const) : ("next" as const) },
-    { label: "Pliki i strona", sub: files.length ? `${files.length} ${files.length === 1 ? "plik" : files.length < 5 ? "pliki" : "plików"}` : site ? "strona podpięta" : "w przygotowaniu", state: done ? ("done" as const) : files.length || site ? ("now" as const) : ("next" as const) },
+    { label: "Pliki i strona", sub: files.length ? `${files.length} ${plural(files.length, "plik", "pliki", "plików")}` : site ? "strona podpięta" : "w przygotowaniu", state: done ? ("done" as const) : files.length || site ? ("now" as const) : ("next" as const) },
     { label: "Oddane", sub: done && o.done_at ? day(Number(o.done_at)) : `termin ${long(o.due_date)}`, state: done ? ("done" as const) : ("next" as const) },
   ];
 

@@ -133,6 +133,7 @@ function EntryForm({ col, entry, siteId, onSaved, onCancel }: { col: Collection;
           if (r?.error) return setErr(r.error);
           setSaved(true);
           setTimeout(() => setSaved(false), 3500);
+          dispatchEvent(new Event("afto:cms-saved"));
           onSaved({ id: r!.id!, collection_id: col.id, data, sort: entry?.sort ?? 999, updated_at: Date.now(), updated_by: null });
         });
       }}
@@ -194,12 +195,13 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
   const item = col.item || "element";
   const reorder = (next: Entry[]) => {
     onChange(next);
-    start(() =>
-      moveEntry(
+    start(async () => {
+      await moveEntry(
         col.id,
         next.map((x) => x.id),
-      ),
-    );
+      );
+      dispatchEvent(new Event("afto:cms-saved"));
+    });
   };
   const shift = (i: number, d: -1 | 1) => {
     const j = i + d;
@@ -245,12 +247,13 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
                 value={e}
                 className="overflow-hidden rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.04] ring-inset"
                 onDragEnd={() =>
-                  start(() =>
-                    moveEntry(
+                  start(async () => {
+                    await moveEntry(
                       col.id,
                       entries.map((x) => x.id),
-                    ),
-                  )
+                    );
+                    dispatchEvent(new Event("afto:cms-saved"));
+                  })
                 }
               >
                 <div className="flex items-center gap-2.5 p-2.5 sm:gap-3 sm:p-3">
@@ -277,7 +280,15 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
                   <Btn size="sm" variant={open === e.id ? "outline" : "ghost"} icon={ICONS.edit} onClick={() => setOpen(open === e.id ? null : e.id)}>
                     <span className="hidden sm:inline">{open === e.id ? "Zwiń" : "Edytuj"}</span>
                   </Btn>
-                  <ConfirmBtn onConfirm={() => start(async () => (await deleteEntry(col.id, e.id), onChange(entries.filter((x) => x.id !== e.id))))}>
+                  <ConfirmBtn
+                    onConfirm={() =>
+                      start(async () => {
+                        await deleteEntry(col.id, e.id);
+                        onChange(entries.filter((x) => x.id !== e.id));
+                        dispatchEvent(new Event("afto:cms-saved"));
+                      })
+                    }
+                  >
                     <span className="sr-only">Usuń</span>
                   </ConfirmBtn>
                 </div>
@@ -300,7 +311,7 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
 }
 
 // Edytor treści: po lewej sekcje, po prawej formularz / lista
-export default function CmsEditor({ siteId, collections, admin = false }: { siteId: string; collections: ColWithEntries[]; admin?: boolean }) {
+export default function CmsEditor({ siteId, collections, admin = false, compact = false }: { siteId: string; collections: ColWithEntries[]; admin?: boolean; compact?: boolean }) {
   const [cols, setCols] = useState(collections);
   const [active, setActive] = useState(collections[0]?.id ?? "");
   const col = cols.find((c) => c.id === active);
@@ -313,9 +324,9 @@ export default function CmsEditor({ siteId, collections, admin = false }: { site
     );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-      {/* telefon: sekcje jako przewijane chipsy */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden" data-lenis-prevent>
+    <div className={`grid gap-4 ${compact ? "" : "lg:grid-cols-[280px_1fr]"}`}>
+      {/* telefon (i tryb obok podglądu): sekcje jako przewijane chipsy */}
+      <div className={`flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] ${compact ? "flex-wrap" : "-mx-4 px-4 lg:hidden"}`} data-lenis-prevent>
         {cols.map((c) => (
           <button key={c.id} type="button" onClick={() => setActive(c.id)} className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition-colors ${active === c.id ? "bg-ink text-bg" : "bg-white/[0.05] text-muted"}`}>
             {c.name}
@@ -323,7 +334,7 @@ export default function CmsEditor({ siteId, collections, admin = false }: { site
           </button>
         ))}
       </div>
-      <Card pad={false} className="hidden lg:block lg:self-start">
+      <Card pad={false} className={compact ? "hidden" : "hidden lg:block lg:self-start"}>
         <p className="px-5 pt-4 pb-1 text-[12.5px] text-dim">Części strony</p>
         <ul className="p-2">
           {cols.map((c) => (

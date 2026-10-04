@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { plural } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
 import { all } from "@/lib/db";
-import { zl, type Payment } from "@/lib/finance";
+import { paymentsForUser, zl, type Payment } from "@/lib/finance";
 import { Badge, Card, CardHead, Empty, Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 
@@ -14,7 +15,12 @@ const fmtDay = (d: string) => new Intl.DateTimeFormat("pl-PL", { day: "numeric",
 export default async function PaymentsPage() {
   const user = await requireUser();
   if (isAdmin(user)) redirect("/panel/admin");
-  const payments = await all<Payment>("SELECT * FROM payments WHERE (user_id = ? OR lower(client_email) = lower(?)) AND status IN ('pending', 'paid', 'refunded') ORDER BY created_at DESC LIMIT 100", [user.id, user.email]);
+  // najpierw dociągnij wpłaty ze Stripe (paymentsForUser), potem pełna lista z historią zwrotów
+  await paymentsForUser(user.id, user.email);
+  const payments = (await all<Payment>("SELECT * FROM payments WHERE (user_id = ? OR lower(client_email) = lower(?)) AND status IN ('pending', 'paid', 'refunded') ORDER BY created_at DESC LIMIT 100", [user.id, user.email])).filter(
+    // całość i zaliczka z wyceny czekającej na wpłatę to jedna kwota — pokazuje ją karta wyceny w „Moich zamówieniach”
+    (p) => !(p.status === "pending" && p.offer_id && (p.kind === "full" || p.kind === "deposit")),
+  );
   const due = payments.filter((p) => p.status === "pending");
   const history = payments.filter((p) => p.status !== "pending");
   const paidSum = history.filter((p) => p.status === "paid").reduce((a, p) => a + Number(p.amount), 0);
@@ -38,7 +44,7 @@ export default async function PaymentsPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr] lg:gap-5">
         <Card glow={due.length > 0}>
-          <CardHead title="Do zapłaty" sub={due.length ? `${due.length} ${due.length === 1 ? "płatność" : "płatności"} do opłacenia` : undefined} />
+          <CardHead title="Do zapłaty" sub={due.length ? `${due.length} ${plural(due.length, "płatność", "płatności", "płatności")} do opłacenia` : undefined} />
           {due.length ? (
             <ul className="space-y-3">
               {due.map((p) => (

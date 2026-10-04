@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { plural } from "@/lib/format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
@@ -40,7 +41,7 @@ export default async function OrdersPage() {
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-5">
         <div className="space-y-4 lg:space-y-5">
           <Card>
-            <CardHead title="W realizacji" sub={active.length ? `${active.length} ${active.length === 1 ? "zlecenie" : "zlecenia"}` : undefined} />
+            <CardHead title="W realizacji" sub={active.length ? `${active.length} ${plural(active.length, "zlecenie", "zlecenia", "zleceń")}` : undefined} />
             {active.length ? (
               <div className="space-y-3">
                 {active.map((o) => (

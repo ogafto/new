@@ -72,7 +72,7 @@ export async function paymentsForUser(userId: string, email: string) {
 
 /** Podsumowanie: bieżący miesiąc, rok, oczekujące i 12 miesięcy wstecz */
 export async function financeSummary() {
-  const [payments, expenses] = await Promise.all([all<Payment>("SELECT amount, status, paid_at, due_date, created_at FROM payments"), all<Expense>("SELECT amount, date, recurring, created_at FROM expenses")]);
+  const [payments, expenses] = await Promise.all([all<Payment>("SELECT amount, status, paid_at, due_date, created_at, kind FROM payments"), all<Expense>("SELECT amount, date, recurring, created_at FROM expenses")]);
   const now = new Date();
   const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const months = Array.from({ length: 12 }, (_, i) => ym(new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)));
@@ -137,7 +137,9 @@ export async function markPaid(id: string, opts: { via: "webhook" | "check" | "m
   const p = await one<Payment>("SELECT * FROM payments WHERE id = ?", [id]);
   if (!p || p.status === "paid") return p;
   const now = Date.now();
-  await run("UPDATE payments SET status = 'paid', paid_at = ?, stripe_payment = COALESCE(?, stripe_payment) WHERE id = ?", [now, opts.stripePayment ?? null, id]);
+  // webhook, strona po płatności i synchronizacja panelu mogą przyjść naraz — dalej idzie tylko ten, kto faktycznie zmienił status
+  const r = await run("UPDATE payments SET status = 'paid', paid_at = ?, stripe_payment = COALESCE(?, stripe_payment) WHERE id = ? AND status != 'paid'", [now, opts.stripePayment ?? null, id]);
+  if (!r.rowsAffected) return { ...p, status: "paid" as const, paid_at: now };
   if (p.stripe_session) await deactivateLink(p.stripe_session);
   const label = { webhook: "Stripe", check: "sprawdzenie w Stripe", manual: "ręcznie" }[opts.via];
   await log("payment", `Opłacono: ${p.title} — ${zl(Number(p.amount))} (${p.client_name})`, { level: "success", actor: opts.actor ?? null, meta: { id, via: label } });
@@ -218,7 +220,7 @@ export async function voidPayment(pid: string) {
 export async function paymentsDueSoon(days: number) {
   const limit = new Date(Date.now() + days * 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Warsaw" });
   return all<Pick<Payment, "id" | "title" | "client_name" | "amount" | "due_date">>(
-    "SELECT id, title, client_name, amount, due_date FROM payments WHERE status = 'pending' AND due_date IS NOT NULL AND due_date <= ? ORDER BY due_date LIMIT 5",
+    "SELECT id, title, client_name, amount, due_date FROM payments WHERE status = 'pending' AND COALESCE(kind, '') != 'deposit' AND due_date IS NOT NULL AND due_date <= ? ORDER BY due_date LIMIT 5",
     [limit],
   );
 }

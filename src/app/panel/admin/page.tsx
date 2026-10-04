@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { plural } from "@/lib/format";
 import Link from "next/link";
 import { all, one } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/session";
@@ -64,9 +65,9 @@ export default async function Cockpit() {
   const nLate = pay.filter((p) => daysBetween(t, p.due_date!) < 0).length;
   const nSoon = next.filter((o) => daysBetween(t, o.due_date) <= 7).length;
   const summary = [
-    nNew ? `${nNew} ${nNew === 1 ? "nowe zapytanie" : "nowe zapytania"}` : "Brak nowych zapytań",
-    nLate ? `${nLate} ${nLate === 1 ? "płatność po terminie" : "płatności po terminie"}` : null,
-    nSoon ? `${nSoon} ${nSoon === 1 ? "termin" : "terminy"} w tym tygodniu` : null,
+    nNew ? `${nNew} ${plural(nNew, "nowe zapytanie", "nowe zapytania", "nowych zapytań")}` : "Brak nowych zapytań",
+    nLate ? `${nLate} ${plural(nLate, "płatność", "płatności", "płatności")} po terminie` : null,
+    nSoon ? `${nSoon} ${plural(nSoon, "termin", "terminy", "terminów")} w tym tygodniu` : null,
   ]
     .filter(Boolean)
     .join(" · ") + ".";
@@ -81,7 +82,7 @@ export default async function Cockpit() {
 
   return (
     <>
-      <PageHead title="Kokpit" text={`${greet()}, ${admin.name.split(" ")[0]} — ${todo.length ? `${todo.length} ${todo.length === 1 ? "sprawa czeka" : todo.length < 5 ? "sprawy czekają" : "spraw czeka"} na Ciebie. ${summary}` : "wszystko ogarnięte."}`} />
+      <PageHead title="Kokpit" text={`${greet()}, ${admin.name.split(" ")[0]} — ${todo.length ? `${todo.length} ${plural(todo.length, "sprawa czeka", "sprawy czekają", "spraw czeka")} na Ciebie. ${summary}` : "wszystko ogarnięte."}`} />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Metric i={0} label="Przychód w tym miesiącu" value={Math.round(fin.month.revenue / 100)} suffix=" zł" viz={{ kind: "dots", data: fin.chart.map((m) => m.revenue) }} delta={pct(fin.month.revenue, fin.month.prevRevenue)} foot="vs poprzedni miesiąc" href="/panel/admin/finanse" />
@@ -100,7 +101,7 @@ export default async function Cockpit() {
           value={Math.round(fin.pending.amount / 100)}
           suffix=" zł"
           viz={{ kind: "gauge", value: paidShare, label: `opłacono ${Math.round(paidShare * 100)}% w tym roku` }}
-          foot={fin.pending.overdue ? <span className="text-red-300">{fin.pending.overdue} po terminie</span> : `${fin.pending.count} ${fin.pending.count === 1 ? "płatność" : "płatności"} czeka`}
+          foot={fin.pending.overdue ? <span className="text-red-300">{fin.pending.overdue} po terminie</span> : `${fin.pending.count} ${plural(fin.pending.count, "płatność czeka", "płatności czekają", "płatności czeka")}`}
           href="/panel/admin/finanse"
         />
       </div>

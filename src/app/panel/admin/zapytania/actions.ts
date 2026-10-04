@@ -61,6 +61,7 @@ export async function acceptInquiry(d: AcceptInput): Promise<AcceptResult> {
   const q = await one<{ id: string; name: string; email: string; company: string | null; topic: string | null; user_id: string | null; order_id: string | null }>("SELECT id, name, email, company, topic, user_id, order_id FROM inquiries WHERE id = ?", [d.iid]);
   if (!q) return { error: "Nie ma już tego zapytania." };
   if (q.order_id) return { error: "To zamówienie jest już przyjęte." };
+  if ((await (await import("@/lib/offers")).latestOffer(q.id))?.status === "sent") return { error: "Wycena czeka na wpłatę — anuluj ją, zanim przyjmiesz zlecenie bez płatności." };
   const title = d.title.trim().slice(0, 120);
   if (title.length < 2) return { error: "Podaj nazwę zlecenia." };
   if (!DATE.test(d.start) || !DATE.test(d.due)) return { error: "Ustaw datę startu i termin." };

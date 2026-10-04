@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { deleteClient, resendInvite, revokeInvite, updateClient, type InviteState } from "@/app/panel/admin/actions";
 import { Badge, Btn, Card, ease, Empty, field, Icon, ICONS, Modal } from "./kit";
 import { STAGES } from "@/lib/format";
 import { CodeResult } from "./InviteForm";
+
 import { ago, Avatar, CopyBtn, fold, Menu, Portal, Search, Segmented, StageBar, useNow } from "./crm/ui";
 
 const tz = "Europe/Warsaw";
@@ -106,7 +108,9 @@ function Unverified() {
 
 export function ClientsTable({ rows, now: serverNow }: { rows: ClientRowData[]; now: number }) {
   const now = useNow(serverNow);
-  const [q, setQ] = useState("");
+  // wejście z wyszukiwarki ⌘K (?q=…) — lista od razu przefiltrowana
+  const initialQ = useSearchParams().get("q") ?? "";
+  const [q, setQ] = useState(initialQ);
   const [stage, setStage] = useState<"all" | "work" | "done">("all");
   const [edit, setEdit] = useState<ClientRowData | null>(null);
   const [del, setDel] = useState<ClientRowData | null>(null);

@@ -125,6 +125,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ key: str
     if (keep.has(c.key)) continue;
     const e = await all<{ data: string }>("SELECT data FROM cms_entries WHERE collection_id = ?", [c.id]);
     if (e.every((x) => empty(x.data))) {
+      await run("DELETE FROM cms_entries WHERE collection_id = ?", [c.id]);
       await run("DELETE FROM cms_collections WHERE id = ?", [c.id]);
       removed.push(c.key);
     }

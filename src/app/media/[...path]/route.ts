@@ -43,6 +43,8 @@ async function fromBlob(req: Request, pathname: string) {
 export async function GET(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const parts = (await params).path;
   if (parts[0] === "b" && parts.length > 1) return fromBlob(req, parts.slice(1).join("/"));
+  // pliki zleceń tylko przez /api/pliki/{id} (sprawdza, czy to klient tego zlecenia)
+  if (parts[0] === "zlecenia") return new Response("Nie znaleziono", { status: 404 });
   const file = path.resolve(/*turbopackIgnore: true*/ UPLOAD_DIR, ...parts);
   if (!file.startsWith(UPLOAD_DIR + path.sep)) return new Response("Nie znaleziono", { status: 404 });
   try {

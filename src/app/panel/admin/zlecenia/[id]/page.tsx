@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { plural } from "@/lib/format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/session";
@@ -56,7 +57,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Metric i={0} label={o.status === "done" ? "Oddane" : left < 0 ? "Po terminie" : "Do terminu"} value={o.status === "done" ? 0 : Math.abs(left)} suffix=" dni" viz={{ kind: "gauge", value: o.status === "done" ? 1 : Math.max(0, Math.min(1, daysBetween(o.start_date, t) / total)), label: long(o.due_date) }} foot={`start ${long(o.start_date)}`} tone={left < 0 && o.status !== "done" ? "text-red-300" : undefined} />
         <Metric i={1} label="Wycena" value={o.amount ?? 0} suffix=" zł" icon={ICONS.money} foot={o.service ?? "—"} />
-        <Metric i={2} label="Opłacono" value={Math.round(paid / 100)} suffix=" zł" icon={ICONS.wallet} foot={`${payments.length} ${payments.length === 1 ? "płatność" : "płatności"}`} />
+        <Metric i={2} label="Opłacono" value={Math.round(paid / 100)} suffix=" zł" icon={ICONS.wallet} foot={`${payments.length} ${plural(payments.length, "płatność", "płatności", "płatności")}`} />
         <Metric i={3} label="Pliki dla klienta" value={files.length} icon={ICONS.download} foot={site ? `strona: ${site.name}` : "bez strony w CMS"} />
       </div>
 

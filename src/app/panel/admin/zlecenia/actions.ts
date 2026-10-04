@@ -101,10 +101,16 @@ export async function linkOrderSite(oid: string, siteId: string | null): Promise
     // właścicielem strony zostaje klient zlecenia, żeby mógł ją edytować
     if (o.user_id && s.owner_id !== o.user_id) await run("UPDATE cms_sites SET owner_id = ? WHERE id = ?", [o.user_id, siteId]);
   }
+  const old = o.site_id;
   await run("UPDATE orders SET site_id = ? WHERE id = ?", [siteId, oid]);
+  // odpięcie: klient traci edycję tej strony, chyba że ma ją podpiętą w innym swoim zleceniu
+  if (old && old !== siteId) {
+    const still = o.user_id ? await one<{ n: number }>("SELECT COUNT(*) n FROM orders WHERE site_id = ? AND user_id = ? AND status != 'cancelled'", [old, o.user_id]) : null;
+    if (!Number(still?.n)) await run("UPDATE cms_sites SET owner_id = NULL WHERE id = ? AND owner_id IS ?", [old, o.user_id]);
+  }
   refresh(oid);
   revalidatePath("/panel/admin/strony");
-  return { ok: siteId ? "Podpięto stronę." : "Odpięto stronę." };
+  return { ok: siteId ? "Podpięto stronę." : "Odpięto stronę — klient nie ma już do niej dostępu." };
 }
 
 /** Nowa strona w CMS od razu dla klienta tego zlecenia (z gotowym zestawem sekcji) */
@@ -120,6 +126,8 @@ export async function createOrderSite(oid: string, d: { name: string; domain: st
   fd.set("preset", d.preset || "firma");
   const r = await createSite(undefined, fd);
   if (!r?.id) return { error: r?.error ?? "Nie udało się utworzyć strony." };
+  // poprzednia strona zlecenia: klient traci do niej dostęp (jak przy odpięciu)
+  if (o.site_id) await linkOrderSite(oid, null);
   await run("UPDATE orders SET site_id = ? WHERE id = ?", [r.id, oid]);
   refresh(oid);
   return { ok: "Utworzono stronę.", siteId: r.id };

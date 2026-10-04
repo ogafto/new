@@ -13,7 +13,9 @@ const ITEMS: Item[] = [
   { id: "kokpit", label: "Kokpit", icon: ICONS.home, href: "/panel/admin", group: "Przejdź do" },
   { id: "analityka", label: "Analityka", icon: ICONS.chart, href: "/panel/admin/analityka", group: "Przejdź do", keywords: "statystyki odwiedziny ruch" },
   { id: "kalendarz", label: "Kalendarz", icon: ICONS.calendar, href: "/panel/admin/kalendarz", group: "Przejdź do", keywords: "zlecenia terminy" },
-  { id: "zapytania", label: "Zapytania", icon: ICONS.inbox, href: "/panel/admin/zapytania", group: "Przejdź do", keywords: "formularz wiadomości" },
+  { id: "zapytania", label: "Zapytania", icon: ICONS.inbox, href: "/panel/admin/zapytania", group: "Przejdź do", keywords: "formularz wiadomości wyceny" },
+  { id: "zlecenia", label: "Zlecenia", icon: ICONS.receipt, href: "/panel/admin/zlecenia", group: "Przejdź do", keywords: "pliki oddanie realizacja" },
+  { id: "strony", label: "Strony klientów", icon: ICONS.layers, href: "/panel/admin/strony", group: "Przejdź do", keywords: "cms api prompt" },
   { id: "klienci", label: "Klienci i zaproszenia", icon: ICONS.users, href: "/panel/admin/klienci", group: "Przejdź do" },
   { id: "finanse", label: "Finanse", icon: ICONS.wallet, href: "/panel/admin/finanse", group: "Przejdź do", keywords: "płatności przychód koszty stripe" },
   { id: "tresci", label: "Treści strony", icon: ICONS.doc, href: "/panel/admin/tresci", group: "Przejdź do", keywords: "cms hero ceny seo ogłoszenie" },
@@ -67,6 +69,24 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const [i, setI] = useState(0);
   const input = useRef<HTMLInputElement>(null);
 
+  // wyniki z bazy (klienci, zapytania, zlecenia, płatności, strony) — z opóźnieniem, żeby nie pytać przy każdej literze
+  const [hits, setHits] = useState<Item[]>([]);
+  useEffect(() => {
+    const term = q.trim();
+    const t = setTimeout(
+      async () => {
+        if (term.length < 2) return setHits([]);
+        const r = (await fetch(`/api/panel/search?q=${encodeURIComponent(term)}`, { cache: "no-store" })
+          .then((x) => (x.ok ? x.json() : { hits: [] }))
+          .catch(() => ({ hits: [] }))) as { hits: { id: string; kind: string; label: string; hint: string; href: string }[] };
+        const icon: Record<string, string> = { client: ICONS.users, inquiry: ICONS.inbox, order: ICONS.receipt, payment: ICONS.wallet, site: ICONS.layers };
+        setHits(r.hits.map((h) => ({ id: h.id, label: h.label, hint: h.hint, href: h.href, icon: icon[h.kind] ?? ICONS.search, group: "Wyniki" })));
+      },
+      term.length < 2 ? 0 : 180,
+    );
+    return () => clearTimeout(t);
+  }, [q]);
+
   const list = useMemo(() => {
     const f = fold(q.trim());
     if (!f) return ITEMS;
@@ -77,11 +97,14 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
       if (l.includes(f)) return 2;
       return fold(`${it.hint ?? ""} ${it.keywords ?? ""}`).includes(f) ? 1 : 0;
     };
-    return ITEMS.map((it) => ({ it, s: score(it) }))
-      .filter((x) => x.s)
-      .sort((a, b) => b.s - a.s)
-      .map((x) => x.it);
-  }, [q]);
+    return [
+      ...hits,
+      ...ITEMS.map((it) => ({ it, s: score(it) }))
+        .filter((x) => x.s)
+        .sort((a, b) => b.s - a.s)
+        .map((x) => x.it),
+    ];
+  }, [q, hits]);
 
   useEffect(() => {
     if (!open) return;
@@ -137,13 +160,13 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                   } else if (e.key === "Enter" && ordered[i]) go(ordered[i]);
                   else if (e.key === "Escape") onClose();
                 }}
-                placeholder="Dokąd idziemy? Np. „płatność”, „logi”…"
+                placeholder="Szukaj klienta, zlecenia, płatności… albo przejdź do sekcji"
                 className="h-14 flex-1 bg-transparent text-[15.5px] outline-none placeholder:text-dim"
               />
               <kbd className="rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-dim">esc</kbd>
             </div>
             <div className="max-h-[55svh] overflow-y-auto p-2" data-lenis-prevent>
-              {list.length === 0 && <p className="px-4 py-10 text-center text-[13.5px] text-dim">Nic nie znaleziono.</p>}
+              {list.length === 0 && <p className="px-4 py-10 text-center text-[13.5px] text-dim">{q.trim().length < 2 ? "Wpisz co najmniej 2 znaki." : `Nic nie znaleziono dla „${q.trim()}”.`}</p>}
               {groups.map((g) => (
                 <div key={g} className="mb-1">
                   <p className="px-3 pt-2 pb-1.5 text-[11.5px] text-dim">{g}</p>
@@ -159,9 +182,9 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                           <span className={`relative grid size-8 place-items-center rounded-lg ${on ? "bg-accent/20 text-accent-2" : "bg-white/[0.04]"}`}>
                             <Icon d={it.icon} className="size-4" />
                           </span>
-                          <span className="relative flex-1">
-                            {it.label}
-                            {it.hint && <span className="ml-2 text-[12px] text-dim">{it.hint}</span>}
+                          <span className="relative min-w-0 flex-1">
+                            <span className="block truncate">{it.label}</span>
+                            {it.hint && <span className="block truncate text-[12px] text-dim">{it.hint}</span>}
                           </span>
                           {on && <span className="relative text-[12px] text-dim">↵</span>}
                         </button>

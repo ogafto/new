@@ -85,6 +85,8 @@ export async function updateClient(userId: string, form: FormData) {
 export async function deleteClient(userId: string) {
   await requireAdmin();
   const u = await one<{ email: string }>("SELECT email FROM users WHERE id = ? AND role = 'client'", [userId]);
+  if (!u) return;
+  await run("DELETE FROM sessions WHERE user_id = ?", [userId]);
   await run("DELETE FROM users WHERE id = ? AND role = 'client'", [userId]);
   if (u) await log("client", `Usunięto konto klienta ${u.email}`, { level: "warn" });
   await run("UPDATE cms_sites SET owner_id = NULL WHERE owner_id = ?", [userId]);

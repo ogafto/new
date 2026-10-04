@@ -117,6 +117,9 @@ export async function startFromPayment(p: Payment) {
   if (!o) return null;
   // reszta po zaliczce — zlecenie już trwa
   if (p.kind === "rest" || o.status !== "sent") return null;
+  // dokładnie jedno zlecenie na wycenę, nawet gdy dwie wpłaty (całość i zaliczka) albo dwa potwierdzenia przyjdą naraz
+  const claim = await run("UPDATE offers SET status = 'paid', paid_at = ? WHERE id = ? AND status = 'sent'", [Date.now(), o.id]);
+  if (!claim.rowsAffected) return null;
   const start = today();
   const due = plus(start, o.work_days);
   const order = id();
@@ -124,7 +127,7 @@ export async function startFromPayment(p: Payment) {
     "INSERT INTO orders (id, title, client_name, client_email, user_id, service, amount, start_date, due_date, status, notes, remind_days, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NULL, 3, ?)",
     [order, o.title, o.client_name, o.client_email, o.user_id, o.service, Math.round(o.amount / 100), start, due, Date.now()],
   );
-  await run("UPDATE offers SET status = 'paid', order_id = ?, paid_at = ? WHERE id = ?", [order, Date.now(), o.id]);
+  await run("UPDATE offers SET order_id = ? WHERE id = ?", [order, o.id]);
   await run("UPDATE payments SET order_id = ? WHERE offer_id = ?", [order, o.id]);
   if (o.inquiry_id) await run("UPDATE inquiries SET status = 'won', order_id = ? WHERE id = ?", [order, o.inquiry_id]);
 
@@ -134,7 +137,10 @@ export async function startFromPayment(p: Payment) {
   const base = await baseUrl();
   let rest: { url: string | null; amount: number } | null = null;
   if (p.kind === "deposit" && o.amount > Number(p.amount)) {
-    const r = await addPayment({ title: `${o.title} — pozostała kwota`, client_name: o.client_name, client_email: o.client_email, user_id: o.user_id, service: o.service, amount: o.amount - Number(p.amount), due_date: due, order_id: order, offer_id: o.id, kind: "rest", stripe: true, baseUrl: base }).catch(() => null);
+    const r = await addPayment({ title: `${o.title} — pozostała kwota`, client_name: o.client_name, client_email: o.client_email, user_id: o.user_id, service: o.service, amount: o.amount - Number(p.amount), due_date: due, order_id: order, offer_id: o.id, kind: "rest", stripe: true, baseUrl: base }).catch(async (e) => {
+      await log("payment", `Nie utworzono płatności za resztę (${o.title}) — dodaj ją ręcznie w zleceniu: ${e instanceof Error ? e.message : e}`, { level: "error", meta: { order } });
+      return null;
+    });
     if (r) rest = { url: r.url, amount: o.amount - Number(p.amount) };
   }
   await log("payment", `Zlecenie wystartowało po wpłacie: ${o.title} — termin ${longDate(due)}`, { level: "success", meta: { offer: o.id, order } });

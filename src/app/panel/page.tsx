@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { plural } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { isAdmin, requireUser } from "@/lib/auth/session";
 import { clientOrders, clientRequests } from "@/lib/client";
@@ -39,7 +40,7 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
     [
       nextDue ? `Najbliższy termin: ${longDate(nextDue.due_date)}` : null,
       dueSum ? `do zapłaty ${zl(dueSum)}` : null,
-      openRequests.length ? `${openRequests.length} ${openRequests.length === 1 ? "zgłoszenie czeka na odpowiedź" : "zgłoszenia czekają na odpowiedź"}` : null,
+      openRequests.length ? `${openRequests.length} ${plural(openRequests.length, "zgłoszenie czeka", "zgłoszenia czekają", "zgłoszeń czeka")} na odpowiedź` : null,
     ]
       .filter(Boolean)
       .join(" · ") || "Zamów stronę, sklep, identyfikację albo projekt UI — wszystko ogarniesz tutaj";

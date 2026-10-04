@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { plural } from "@/lib/format";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
@@ -593,7 +594,7 @@ function OrderList({ orders, today, onOpen, onNew }: { orders: O[]; today: strin
                 <tfoot>
                   <tr className="border-t border-line text-[13px]">
                     <td className="py-3 pr-3 pl-5 text-dim" colSpan={1}>
-                      {list.length} {list.length === 1 ? "zlecenie" : list.length < 5 ? "zlecenia" : "zleceń"}
+                      {list.length} {plural(list.length, "zlecenie", "zlecenia", "zleceń")}
                     </td>
                     <td className="hidden xl:table-cell" />
                     <td />

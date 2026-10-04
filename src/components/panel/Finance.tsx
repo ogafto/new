@@ -9,6 +9,7 @@ import { Badge, Btn, Card, CardHead, ConfirmBtn, ease, Empty, Icon, ICONS, Modal
 import { Drawer, Kpi, RowMenu, SearchField, Segmented, Th, useToast, type MenuItem } from "./views/ui";
 import RevenueChart from "./finance/RevenueChart";
 import { NewExpenseForm, NewPaymentForm } from "./finance/Forms";
+
 import { cat, CATS, day, dayFull, daysTo, dueText, hue, initials, isoDay, isOpen, METHOD, monthName, norm, STATUS, zl, type Expense, type Msg, type P, type Summary } from "./finance/shared";
 
 type Act = (fn: () => Promise<Msg>, after?: () => void) => void;
@@ -210,7 +211,9 @@ function SortTh({ label, k, sort, setSort, right, className = "" }: { label: str
 
 function Payments({ payments, act, onMsg, onNew, busy }: { payments: P[]; act: Act; onMsg: (m: Msg) => void; onNew: () => void; busy: boolean }) {
   const [f, setF] = useState<PF>("all");
-  const [q, setQ] = useState("");
+  // wejście z wyszukiwarki ⌘K (?q=…) — lista od razu przefiltrowana
+  const initialQ = useSearchParams().get("q") ?? "";
+  const [q, setQ] = useState(initialQ);
   const [sort, setSort] = useState<Sort>({ k: "default", dir: -1 });
   const [limit, setLimit] = useState(PAGE);
   const [sel, setSel] = useState<string | null>(null);

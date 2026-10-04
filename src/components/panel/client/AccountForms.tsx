@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { changePassword, updateProfile } from "@/app/panel/actions";
 import { logout } from "@/app/konto/actions";
 import { Btn, Card, CardHead, field, ICONS, Label } from "../kit";
+import PhoneInput from "../PhoneInput";
 
 function Msg({ r }: { r?: { ok?: string; error?: string } }) {
   return (
@@ -22,6 +23,7 @@ function Msg({ r }: { r?: { ok?: string; error?: string } }) {
 export default function AccountForms({ name, phone, email, since }: { name: string; phone: string; email: string; since: number }) {
   const router = useRouter();
   const [p, setP] = useState({ name, phone });
+  const [phoneOk, setPhoneOk] = useState(true);
   const [pw, setPw] = useState({ current: "", next: "" });
   const [r1, setR1] = useState<{ ok?: string; error?: string }>();
   const [r2, setR2] = useState<{ ok?: string; error?: string }>();
@@ -35,6 +37,7 @@ export default function AccountForms({ name, phone, email, since }: { name: stri
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!phoneOk) return setR1({ error: "Popraw numer telefonu." });
             s1(async () => {
               const r = await updateProfile(p);
               setR1(r);
@@ -45,9 +48,10 @@ export default function AccountForms({ name, phone, email, since }: { name: stri
           <Label label="Imię i nazwisko">
             <input className={`${field} h-11`} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
           </Label>
-          <Label label="Telefon">
-            <input className={`${field} h-11`} value={p.phone} onChange={(e) => setP({ ...p, phone: e.target.value })} />
-          </Label>
+          <div>
+            <span className="mb-1.5 block text-[13px] text-muted">Telefon</span>
+            <PhoneInput value={phone} onChange={(v, valid) => (setP((x) => ({ ...x, phone: v })), setPhoneOk(valid || !v))} />
+          </div>
           <Label label="E-mail">
             <input className={`${field} h-11 opacity-60`} value={email} disabled />
           </Label>

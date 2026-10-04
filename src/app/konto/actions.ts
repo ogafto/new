@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { normalizePhone } from "@/lib/phone";
 import { all, one, run, type Invite, type User } from "@/lib/db";
 import { hashPassword, id, normalizeCode, safeEqual, sha256, verifyPassword } from "@/lib/auth/crypto";
 import { createSession, currentUser, destroySession, isAdmin, setRoleCookie } from "@/lib/auth/session";
@@ -105,7 +106,8 @@ export async function register(_: FormState, form: FormData): Promise<FormState>
   if (first.length < 2 || last.length < 2) return { error: "Podaj imię i nazwisko.", fields };
   if (email !== inv.email) return { error: `Zaproszenie jest przypisane do adresu ${inv.email}.`, fields };
   if (isAdminEmail(email)) return { error: "Tego adresu nie można użyć.", fields };
-  if (phone.replace(/\D/g, "").length < 9) return { error: "Podaj numer telefonu.", fields };
+  const ph = normalizePhone(phone);
+  if (!ph.ok || !ph.value) return { error: ph.ok ? "Podaj numer telefonu." : ph.error, fields };
   if (password.length < 8) return { error: "Hasło musi mieć co najmniej 8 znaków.", fields };
   if (!form.get("consent")) return { error: "Zaakceptuj regulamin i politykę prywatności.", fields };
 
@@ -116,11 +118,11 @@ export async function register(_: FormState, form: FormData): Promise<FormState>
   const hash = await hashPassword(password);
   let userId = existing?.id;
   if (existing) {
-    await run("UPDATE users SET name = ?, phone = ?, password = ?, role = 'client', invite_id = ? WHERE id = ?", [name, phone, hash, inv.id, existing.id]);
+    await run("UPDATE users SET name = ?, phone = ?, password = ?, role = 'client', invite_id = ? WHERE id = ?", [name, ph.value, hash, inv.id, existing.id]);
     await run("DELETE FROM sessions WHERE user_id = ?", [existing.id]);
   } else {
     userId = id();
-    await run("INSERT INTO users (id, email, name, phone, password, role, invite_id, created_at) VALUES (?, ?, ?, ?, ?, 'client', ?, ?)", [userId, email, name, phone, hash, inv.id, Date.now()]);
+    await run("INSERT INTO users (id, email, name, phone, password, role, invite_id, created_at) VALUES (?, ?, ?, ?, ?, 'client', ?, ?)", [userId, email, name, ph.value, hash, inv.id, Date.now()]);
   }
 
   const sent = await sendVerification({ id: userId!, email, name });

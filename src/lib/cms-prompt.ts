@@ -10,11 +10,14 @@
  *      (Claude Code, Cursor, ChatGPT z repo). Klucze są już w nim wpisane.
  *
  *  Prompt mówi AI, żeby:
- *   - samo wybrało z kodu, co ma być edytowalne (teksty, zdjęcia, oferta, ceny, linki, ustawienia),
- *   - zgłosiło to do panelu jednym PUT /schema (sekcje i pola pojawią się u klienta same),
- *   - pobierało treści z API (publicznie na froncie albo z sekretami tylko na serwerze),
+ *   - samo wybrało z kodu, co ma być edytowalne (teksty, zdjęcia, oferta, ceny, FAQ, linki, ustawienia),
+ *   - zgłosiło to do panelu jednym PUT /schema RAZEM z obecną treścią strony (defaults) —
+ *     klient od razu widzi w panelu to, co jest na stronie, i może to zmieniać, usuwać, dopisywać,
+ *   - opisało każdą sekcję po ludzku (hint) i nazwało element listy (item: „pytanie”, „ranga”),
+ *   - zarejestrowało webhook odświeżania — zmiana klienta jest na stronie od razu,
+ *   - renderowało stronę dokładnie z CMS-a (usunięte przez klienta = znika ze strony),
  *   - trzymało klucze klienta (płatności, API, hasła) w polach „sekret” — nigdy w przeglądarce,
- *   - miało treści awaryjne, gdy API nie odpowiada, i odświeżało się po zmianie (webhook).
+ *   - miało treści awaryjne tylko na wypadek awarii API.
  *  Plik bez zależności serwerowych — używany w komponencie panelu.
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -38,31 +41,54 @@ Publiczny adres (bez sekretów, można użyć w przeglądarce): ${p.api}
 
 ## API (zwykły JSON, działa z każdą technologią)
 - GET  ${p.api}
-  → { site, updatedAt, private: false, content: { [sekcja]: obiekt (pojedyncza) | tablica z polem id (lista) } }
-  Publiczne, cache 30 s, CORS włączony. NIE zawiera pól typu "secret".
+  → { site, updatedAt, private: false, content: { [sekcja]: obiekt (single) | tablica obiektów z polem id (list) } }
+  Publiczne, BEZ cache (zmiana klienta jest w API natychmiast), CORS włączony. NIE zawiera pól typu "secret".
 - GET  ${p.api}?private=1   z nagłówkiem  Authorization: Bearer $AFTO_CMS_SECRET
   → to samo + pola "secret". Wołaj WYŁĄCZNIE po stronie serwera (API route, server component, backend, plugin) — nigdy z przeglądarki.
 - GET  ${p.api}/{sekcja}  (i ?private=1) — jedna sekcja.
-- PUT  ${p.api}/schema   z Authorization: Bearer $AFTO_CMS_SECRET
-  body: { "collections": [ { "key": "hero", "name": "Baner główny", "kind": "single" | "list", "fields": [ { "key": "title", "label": "Nagłówek", "type": "text", "required": true, "help": "krótka podpowiedź" } ] } ] }
-  Dopisuje/aktualizuje sekcje po kluczu (nic nie usuwa, treści zostają). Po tym klient od razu widzi formularze w panelu.
+- PUT  ${p.api}/schema   z Authorization: Bearer $AFTO_CMS_SECRET, body:
+  {
+    "webhook": "https://ADRES-STRONY/api/revalidate?token=…",          // panel woła go (POST) po każdym zapisie klienta
+    "collections": [
+      { "key": "faq", "name": "Pytania i odpowiedzi", "kind": "list", "item": "pytanie",
+        "hint": "Sekcja FAQ na dole strony głównej",
+        "fields": [ { "key": "question", "label": "Pytanie", "type": "text", "required": true },
+                    { "key": "answer", "label": "Odpowiedź", "type": "textarea" } ],
+        "defaults": [ { "question": "…obecne pytanie ze strony…", "answer": "…" }, … ] },
+      { "key": "hero", "name": "Baner główny", "kind": "single", "hint": "Pierwszy ekran strony",
+        "fields": [ … ], "defaults": { "title": "…obecny nagłówek…", "image": "https://…/hero.jpg" } }
+    ]
+  }
+  Dopisuje/aktualizuje sekcje po kluczu (nic nie usuwa). "defaults" (obecna treść strony) wgrywa się TYLKO RAZ na sekcję —
+  dzięki temu klient od razu widzi w panelu wszystko, co jest na stronie, a jego późniejsze zmiany i usunięcia nie są nadpisywane.
 - GET  ${p.api}/schema   z Bearer — aktualny schemat.
-Typy pól: text, textarea, image (URL obrazka), url, number, toggle (bool), color (#hex), date (RRRR-MM-DD), secret (klucz API / hasło — tylko z ?private=1).
+Typy pól: text, textarea, image (pełny URL obrazka), url, number, toggle (bool), color (#hex), date (RRRR-MM-DD), secret (klucz API / hasło — tylko z ?private=1).
 
 ## Obecny schemat w panelu
 ${current}
 
 ## Zadanie krok po kroku
-1. Przejrzyj kod strony i wypisz wszystko, co właściciel może chcieć zmieniać: teksty i nagłówki, zdjęcia, oferta/produkty/cennik, FAQ, opinie, dane kontaktowe, godziny, linki do social mediów, SEO (title/description), kolory akcentu, przełączniki sekcji (toggle), ogłoszenia.
-2. Zaprojektuj schemat: rzeczy występujące raz → kind "single"; powtarzalne (produkty, rangi, pakiety, usługi, galeria, FAQ, opinie) → kind "list". Klucze snake_case po angielsku, etykiety i "help" po polsku, prosto dla laika. Ceny jako number (w złotych), obrazy jako image.
-3. Integracje i płatności klienta: wszystko, co jest kluczem, tokenem, hasłem lub ID konta (np. klucz Stripe/PayPal/Przelewy24 klienta, webhook Discorda, hasło RCON, IP i port serwera gry, klucze API dostawców) → osobna sekcja "integrations" (single) z polami type "secret" (i "text"/"url" dla rzeczy niewrażliwych). Czytaj je tylko na serwerze przez ?private=1.
-4. Napisz skrypt (np. scripts/afto-schema.(ts|js|php)), który wysyła ten schemat przez PUT /schema, i uruchom go raz. Schemat trzymaj w repo jako jedno źródło prawdy.
-5. Napisz małego klienta CMS (jedna funkcja/moduł): pobiera treści, waliduje typy, ma WBUDOWANE treści awaryjne (obecne teksty ze strony) na wypadek, gdy API nie odpowiada albo pole jest puste. Strona nigdy nie może się wysypać przez CMS.
-6. Podmień zahardkodowane treści na dane z CMS-a (z fallbackiem). Listy renderuj w kolejności z API.
-7. Cache: na serwerze odświeżaj co 60 s (np. Next.js fetch { next: { revalidate: 60 } } / ISR / cache w pamięci z TTL). Opcjonalnie wystaw endpoint revalidate (np. POST /api/revalidate?token=…) i podaj mi jego adres — wkleję go w panelu jako webhook „po zmianie treści”, żeby strona odświeżała się od razu po zapisie.
-8. Obrazy z CMS-a to pełne adresy URL — dodaj domenę ${p.origin.replace(/^https?:\/\//, "")} do dozwolonych hostów obrazków (np. next.config images.remotePatterns).
-9. Bezpieczeństwo: AFTO_CMS_SECRET i pola "secret" nigdy nie trafiają do kodu klienckiego, logów ani odpowiedzi API strony. Waliduj/sanityzuj wartości z CMS-a (np. URL-e, liczby) zanim ich użyjesz, a tekstu nie wstawiaj jako surowego HTML.
-10. Na koniec wypisz: listę sekcji i pól (co klient może edytować), jakie zmienne środowiskowe ustawić na produkcji, adres webhooka do odświeżania (jeśli jest) oraz co przetestowałeś.
+1. Przejrzyj kod strony i wypisz wszystko, co właściciel może chcieć zmieniać, w kolejności, w jakiej występuje na stronie: teksty i nagłówki, zdjęcia, oferta/produkty/cennik, FAQ, opinie, zespół, galeria, dane kontaktowe, godziny, linki social media, SEO (title/description), ogłoszenia, przełączniki sekcji (toggle).
+2. Zaprojektuj schemat PROSTY DLA LAIKA (klient nie jest techniczny i nie dostanie instrukcji):
+   - rzeczy występujące raz → kind "single"; powtarzalne (FAQ, produkty, rangi, pakiety, usługi, galeria, opinie, zespół) → kind "list",
+   - "name" = nazwa części strony po polsku, tak jak klient ją widzi („Pytania i odpowiedzi”, „Rangi w sklepie”),
+   - "hint" = jedno zdanie, gdzie to jest na stronie i co się stanie po zmianie,
+   - "item" = nazwa jednego elementu listy w bierniku/mianowniku („pytanie”, „rangę”, „zdjęcie”, „opinię”) — przycisk w panelu brzmi „Dodaj {item}”,
+   - etykiety pól krótkie i ludzkie, "help" tylko gdy trzeba (np. format, rozmiar zdjęcia), klucze snake_case po angielsku,
+   - tylko to, co naprawdę warto edytować — bez technicznych pól, bez duplikatów. Ceny jako number (zł), obrazy jako image.
+3. Integracje i płatności klienta: klucze, tokeny, hasła, ID kont (np. klucz Stripe/PayPal/Przelewy24 klienta, webhook Discorda, hasło RCON, IP i port serwera gry, klucze API dostawców) → osobna sekcja "integrations" (single, name „Ustawienia i integracje”) z polami type "secret" (i "text"/"url" dla rzeczy niewrażliwych). Czytaj je tylko na serwerze przez ?private=1.
+4. Przygotuj "defaults" = DOKŁADNIE obecna treść strony: wszystkie teksty dosłownie, każdy element każdej listy (np. wszystkie pytania FAQ), obrazy jako pełne publiczne URL-e (zdjęcia z repo opublikuj pod stałym adresem strony). Po wgraniu klient ma zobaczyć w panelu 1:1 to, co jest na stronie.
+5. Odświeżanie od razu: zrób endpoint revalidate (np. Next.js: app/api/revalidate/route.ts z sekretnym tokenem → revalidatePath("/") / revalidateTag("afto-cms"); inne technologie: wyczyść cache / przebuduj) i podaj jego pełny adres https w polu "webhook" przy PUT /schema. Dodatkowo cache treści na serwerze max 10 s (fetch { next: { revalidate: 10, tags: ["afto-cms"] } }), żeby zmiany były widoczne nawet bez webhooka.
+6. Napisz skrypt (np. scripts/afto-schema.(ts|js|php)), który wysyła schemat + defaults przez PUT /schema, i uruchom go raz. Schemat trzymaj w repo jako jedno źródło prawdy (ponowne uruchomienie jest bezpieczne — defaults nie nadpisują zmian klienta).
+7. Napisz małego klienta CMS (jedna funkcja/moduł) z twardymi zasadami renderowania:
+   - po wgraniu treści CMS jest JEDYNYM źródłem prawdy: strona pokazuje dokładnie to, co zwraca API,
+   - pusta lista → ta część strony się nie wyświetla (klient usunął wszystkie FAQ = brak sekcji FAQ), puste pole → element ukryty,
+   - treści awaryjne (obecne teksty z kodu) TYLKO gdy API nie odpowiada (błąd sieci / 5xx / timeout 3 s) — nigdy jako uzupełnienie pustych pól,
+   - waliduj typy (liczby, URL-e), tekst wstawiaj jako tekst (nie surowy HTML), kolejność list jak w API.
+8. Podmień zahardkodowane treści na dane z CMS-a. Nie zmieniaj wyglądu strony — zmienia się tylko źródło treści.
+9. Obrazy z CMS-a to pełne adresy URL — dodaj ${p.origin.replace(/^https?:\/\//, "")} i domenę strony do dozwolonych hostów obrazków (np. next.config images.remotePatterns).
+10. Bezpieczeństwo: AFTO_CMS_SECRET i pola "secret" nigdy nie trafiają do kodu klienckiego, logów ani odpowiedzi API strony; token endpointu revalidate trzymaj w env.
+11. Na koniec wypisz: listę części strony i pól (co klient może edytować), jakie zmienne środowiskowe ustawić na produkcji, adres webhooka, co przetestowałeś (w tym: zmiana w panelu → widoczna na stronie, usunięcie elementu listy → znika ze strony).
 
-Pisz czysty, produkcyjny kod w stylu istniejącego projektu. Nie zmieniaj wyglądu strony — zmienia się tylko źródło treści.`;
+Pisz czysty, produkcyjny kod w stylu istniejącego projektu.`;
 }

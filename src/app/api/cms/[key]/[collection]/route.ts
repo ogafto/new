@@ -18,5 +18,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const data = await publicContent(key, collection, { secret: auth, from: req.headers.get("origin") ?? req.headers.get("user-agent") });
   if (!data) return Response.json({ error: "Nie znaleziono" }, { status: 404, headers: cors });
   if (priv && !data.private) return Response.json({ error: "Nieprawidłowy klucz sekretny" }, { status: 401, headers: { ...cors, "Cache-Control": "no-store" } });
-  return Response.json(data, { headers: { ...cors, "Cache-Control": priv ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=300" } });
+  return Response.json(data, { headers: { ...cors, "Cache-Control": priv ? "private, no-store" : "no-store" } });
 }

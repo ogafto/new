@@ -14,7 +14,7 @@ const from = (req: Request) => req.headers.get("origin") ?? req.headers.get("ref
 
 /*
  * Treści strony klienta.
- *   GET /api/cms/{key}             — publiczne (bez pól „sekret”), cache CDN 30 s
+ *   GET /api/cms/{key}             — publiczne (bez pól „sekret”), bez cache: zmiana klienta jest od razu w API
  *   GET /api/cms/{key}?private=1   — z nagłówkiem Authorization: Bearer sk_… — pełne, z sekretami, bez cache
  * Osobny adres dla wersji prywatnej, żeby CDN nigdy nie pomylił jej z publiczną.
  */
@@ -24,5 +24,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const data = await publicContent((await params).key, undefined, { secret: auth, from: from(req) });
   if (!data) return Response.json({ error: "Nie znaleziono" }, { status: 404, headers: cors });
   if (priv && !data.private) return Response.json({ error: "Nieprawidłowy klucz sekretny" }, { status: 401, headers: { ...cors, "Cache-Control": "no-store" } });
-  return Response.json(data, { headers: { ...cors, "Cache-Control": priv ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=300" } });
+  return Response.json(data, { headers: { ...cors, "Cache-Control": priv ? "private, no-store" : "no-store" } });
 }

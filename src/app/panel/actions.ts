@@ -75,8 +75,12 @@ export async function updateProfile(d: { name: string; phone: string }): Promise
   if (!user) return { error: "Zaloguj się ponownie." };
   const name = d.name.trim().slice(0, 80);
   if (name.length < 3) return { error: "Podaj imię i nazwisko." };
+  if (/[0-9]/.test(name) || !/^[\p{L}][\p{L}\s'’.-]+$/u.test(name)) return { error: "Imię i nazwisko może zawierać tylko litery." };
+  const { normalizePhone } = await import("@/lib/phone");
+  const phone = normalizePhone(d.phone);
+  if (!phone.ok) return { error: phone.error };
   const { run } = await import("@/lib/db");
-  await run("UPDATE users SET name = ?, phone = ? WHERE id = ?", [name, d.phone.trim().slice(0, 30) || null, user.id]);
+  await run("UPDATE users SET name = ?, phone = ? WHERE id = ?", [name, phone.value, user.id]);
   const { revalidatePath } = await import("next/cache");
   revalidatePath("/panel", "layout");
   return { ok: "Zapisano." };

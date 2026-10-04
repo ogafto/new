@@ -2,7 +2,7 @@
 
 export type FieldType = "text" | "textarea" | "image" | "url" | "number" | "toggle" | "color" | "date" | "secret";
 export type Field = { key: string; label: string; type: FieldType; required?: boolean; help?: string };
-export type Collection = { id: string; site_id: string; key: string; name: string; kind: "single" | "list"; fields: Field[]; sort: number };
+export type Collection = { id: string; site_id: string; key: string; name: string; kind: "single" | "list"; fields: Field[]; sort: number; item?: string | null; hint?: string | null };
 export type Entry = { id: string; collection_id: string; data: Record<string, unknown>; sort: number; updated_at: number; updated_by: string | null };
 export type Site = { id: string; name: string; domain: string | null; owner_id: string | null; public_key: string; webhook_url: string | null; created_at: number; updated_at: number; secret_key?: string | null; last_seen?: number | null; last_origin?: string | null };
 
@@ -131,3 +131,15 @@ export const PRESETS: Record<string, { name: string; collections: { key: string;
   pusta: { name: "Pusta (sam zbudujesz)", collections: [] },
 };
 
+
+/** Ujednolicenie wartości wpisu do typów pól (zapis z panelu i treści startowe zgłaszane przez stronę) */
+export function cleanEntry(fields: Field[], data: Record<string, unknown>) {
+  const clean: Record<string, unknown> = {};
+  for (const f of fields) {
+    const v = data?.[f.key];
+    if (f.type === "toggle") clean[f.key] = v === true || v === "true" || v === 1;
+    else if (f.type === "number") clean[f.key] = v === "" || v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Number(v);
+    else clean[f.key] = typeof v === "string" ? v.slice(0, f.type === "textarea" ? 20000 : 2000) : typeof v === "number" ? String(v) : null;
+  }
+  return clean;
+}

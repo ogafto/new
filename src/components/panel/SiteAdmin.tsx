@@ -469,7 +469,7 @@ export default function SiteAdmin({ site, collections, clients, origin }: { site
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease }}>
           {tab === "preview" && <Preview site={site} />}
-          {tab === "content" && <CmsEditor key={JSON.stringify(collections.map((c) => [c.id, c.fields.length]))} siteId={site.id} collections={collections} />}
+          {tab === "content" && <CmsEditor key={JSON.stringify(collections.map((c) => [c.id, c.fields.length]))} siteId={site.id} collections={collections} admin />}
           {tab === "structure" && <Structure siteId={site.id} collections={collections} />}
           {tab === "api" && <Integration site={site} origin={origin} collections={collections} />}
           {tab === "settings" && <Settings site={site} clients={clients} />}

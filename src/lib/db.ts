@@ -302,6 +302,7 @@ const COLUMNS: Record<string, Record<string, string>> = {
   orders: { site_id: "TEXT", client_note: "TEXT", done_at: "INTEGER" },
   payments: { offer_id: "TEXT", kind: "TEXT" },
   cms_sites: { secret_key: "TEXT", last_seen: "INTEGER", last_origin: "TEXT" },
+  cms_collections: { item: "TEXT", hint: "TEXT", seeded: "INTEGER" },
 };
 
 async function migrate(client: Client) {
@@ -313,7 +314,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 12;
+const VERSION = 13;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

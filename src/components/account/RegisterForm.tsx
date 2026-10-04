@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useAnimate } from "motion/react";
 import { checkInvite, register } from "@/app/konto/actions";
 import Input from "../ui/Input";
 import { pulse } from "./AuthShell";
+import PhoneInput from "../panel/PhoneInput";
 import VerifyStep from "./VerifyStep";
 import { Alert, AuthTitle, Slots, Steps, Strength, Submit, type SlotState } from "./ui";
 
@@ -138,7 +139,10 @@ export default function RegisterForm({ code: initial = "" }: { code?: string; em
                   </svg>
                 </div>
               </div>
-              <Input name="phone" label="Numer telefonu" type="tel" inputMode="tel" required autoComplete="tel" />
+              <div>
+                <span className="mb-1.5 block text-[12.5px] text-dim">Numer telefonu</span>
+                <PhoneInput value="" name="phone" large />
+              </div>
               <div>
                 <Input name="password" label="Hasło" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={setPassword} />
                 <Strength value={password} />

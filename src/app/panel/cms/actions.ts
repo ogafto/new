@@ -2,10 +2,11 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { one, run } from "@/lib/db";
 import { id } from "@/lib/auth/crypto";
 import { isAdmin, requireAdmin, requireUser } from "@/lib/auth/session";
-import { getCollection, getSite, PRESETS, slugKey, type Field, type FieldType } from "@/lib/cms";
+import { cleanEntry, getCollection, getSite, PRESETS, slugKey, type Field, type FieldType } from "@/lib/cms";
 import { saveImage } from "@/lib/storage";
 
 export type CmsState = { error?: string; ok?: boolean; id?: string } | undefined;
@@ -36,9 +37,10 @@ function refresh(siteId: string) {
 }
 
 // po zapisie: powiadom stronę klienta (np. Vercel Deploy Hook), żeby się przebudowała
+// after(): wywołanie dochodzi do skutku także na Vercelu (funkcja nie kończy się przed wysłaniem)
 async function ping(webhook: string | null) {
   if (!webhook) return;
-  fetch(webhook, { method: "POST" }).catch(() => {});
+  after(() => fetch(webhook, { method: "POST", signal: AbortSignal.timeout(8000) }).catch(() => {}));
 }
 
 /* ---------- strony (admin) ---------- */
@@ -160,14 +162,8 @@ export async function saveEntry(collectionId: string, entryId: string | null, da
   } catch {
     return { error: "Brak dostępu." };
   }
-  const clean: Record<string, unknown> = {};
-  for (const f of col.fields) {
-    const v = data[f.key];
-    if (f.type === "toggle") clean[f.key] = !!v;
-    else if (f.type === "number") clean[f.key] = v === "" || v === null || v === undefined ? null : Number(v);
-    else clean[f.key] = typeof v === "string" ? v.slice(0, f.type === "textarea" ? 20000 : 2000) : null;
-    if (f.required && (clean[f.key] === null || clean[f.key] === "")) return { error: `Pole „${f.label}” jest wymagane.` };
-  }
+  const clean = cleanEntry(col.fields, data);
+  for (const f of col.fields) if (f.required && (clean[f.key] === null || clean[f.key] === "")) return { error: `Pole „${f.label}” jest wymagane.` };
   const now = Date.now();
   if (entryId) {
     await run("UPDATE cms_entries SET data = ?, updated_at = ?, updated_by = ? WHERE id = ? AND collection_id = ?", [JSON.stringify(clean), now, ctx.user.name, entryId, collectionId]);

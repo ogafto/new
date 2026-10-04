@@ -132,7 +132,7 @@ function EntryForm({ col, entry, siteId, onSaved, onCancel }: { col: Collection;
           const r = await saveEntry(col.id, entry?.id ?? null, data);
           if (r?.error) return setErr(r.error);
           setSaved(true);
-          setTimeout(() => setSaved(false), 1800);
+          setTimeout(() => setSaved(false), 3500);
           onSaved({ id: r!.id!, collection_id: col.id, data, sort: entry?.sort ?? 999, updated_at: Date.now(), updated_by: null });
         });
       }}
@@ -144,16 +144,26 @@ function EntryForm({ col, entry, siteId, onSaved, onCancel }: { col: Collection;
         </Label>
       ))}
       {err && <p className="text-[13px] text-red-300">{err}</p>}
-      <div className="flex items-center gap-2">
-        <Btn type="submit" variant="primary" size="sm" icon={ICONS.check} disabled={pending || (!dirty && !!entry)}>
-          {pending ? "Zapisywanie…" : saved ? "Zapisano ✓" : "Zapisz i opublikuj"}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <Btn type="submit" variant="primary" icon={ICONS.check} disabled={pending || (!dirty && !!entry)}>
+          {pending ? "Zapisywanie…" : entry ? "Zapisz zmiany" : "Dodaj na stronę"}
         </Btn>
         {onCancel && (
-          <Btn type="button" size="sm" variant="ghost" onClick={onCancel}>
+          <Btn type="button" variant="ghost" onClick={onCancel}>
             Anuluj
           </Btn>
         )}
-        {dirty && entry && <span className="text-[12px] text-amber-200">Niezapisane zmiany</span>}
+        <AnimatePresence mode="wait">
+          {saved ? (
+            <motion.span key="ok" initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-[13px] text-emerald-300">
+              <Icon d={ICONS.check} className="size-4" /> Zapisane — już na stronie
+            </motion.span>
+          ) : dirty && entry ? (
+            <motion.span key="dirty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-amber-200">
+              Masz niezapisane zmiany
+            </motion.span>
+          ) : null}
+        </AnimatePresence>
       </div>
     </form>
   );
@@ -170,19 +180,42 @@ const thumbOf = (col: Collection, e: Entry) => {
   return typeof v === "string" && v ? v : null;
 };
 
+const subOf = (col: Collection, e: Entry) => {
+  const f = col.fields.filter((x) => x.type === "text" || x.type === "textarea" || x.type === "number")[1];
+  const v = f ? e.data[f.key] : null;
+  return v === null || v === undefined || v === "" ? null : `${f!.label}: ${String(v).slice(0, 90)}`;
+};
+
 function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: string; onChange: (entries: Entry[]) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [, start] = useTransition();
   const entries = col.entries;
+  const item = col.item || "element";
+  const reorder = (next: Entry[]) => {
+    onChange(next);
+    start(() =>
+      moveEntry(
+        col.id,
+        next.map((x) => x.id),
+      ),
+    );
+  };
+  const shift = (i: number, d: -1 | 1) => {
+    const j = i + d;
+    if (j < 0 || j >= entries.length) return;
+    const next = [...entries];
+    [next[i], next[j]] = [next[j], next[i]];
+    reorder(next);
+  };
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[13px] text-dim">
-          {entries.length} {entries.length === 1 ? "pozycja" : "pozycji"} · przeciągnij, żeby zmienić kolejność
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13.5px] text-muted">
+          {entries.length ? `${entries.length} na stronie · kolejność jak tutaj` : "Na razie pusto — ta część strony się nie wyświetla"}
         </p>
-        <Btn size="sm" variant="primary" icon={ICONS.plus} onClick={() => setAdding(true)}>
-          Dodaj
+        <Btn variant="primary" icon={ICONS.plus} onClick={() => setAdding(true)}>
+          {`Dodaj ${item}`}
         </Btn>
       </div>
       <AnimatePresence>
@@ -194,22 +227,23 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.4, ease }}
           >
-            <p className="mb-4 text-[14px] text-accent-2">Nowa pozycja</p>
+            <p className="mb-4 text-[14px] text-accent-2">{`Nowy ${item} — wypełnij i kliknij „Dodaj na stronę”`}</p>
             <EntryForm col={col} entry={null} siteId={siteId} onCancel={() => setAdding(false)} onSaved={(e) => (onChange([...entries, e]), setAdding(false))} />
           </motion.div>
         )}
       </AnimatePresence>
       {entries.length === 0 && !adding ? (
-        <Empty icon={ICONS.layers} title="Pusto" text="Dodaj pierwszą pozycję — pojawi się na stronie." />
+        <Empty icon={ICONS.layers} title="Nic tu jeszcze nie ma" text={`Kliknij „Dodaj ${item}” — pojawi się na stronie od razu po zapisaniu.`} />
       ) : (
         <Reorder.Group axis="y" values={entries} onReorder={onChange} className="space-y-2" as="ul">
-          {entries.map((e) => {
+          {entries.map((e, i) => {
             const thumb = thumbOf(col, e);
+            const sub = subOf(col, e);
             return (
               <Reorder.Item
                 key={e.id}
                 value={e}
-                className="overflow-hidden rounded-2xl border border-line bg-surface"
+                className="overflow-hidden rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.04] ring-inset"
                 onDragEnd={() =>
                   start(() =>
                     moveEntry(
@@ -219,19 +253,29 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
                   )
                 }
               >
-                <div className="flex items-center gap-3 p-3">
-                  <span className="cursor-grab text-dim active:cursor-grabbing">
+                <div className="flex items-center gap-2.5 p-2.5 sm:gap-3 sm:p-3">
+                  <span className="hidden cursor-grab text-dim active:cursor-grabbing sm:block" title="Przeciągnij, żeby zmienić kolejność">
                     <Icon d={ICONS.drag} />
                   </span>
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[12px] text-muted tabular-nums">{i + 1}</span>
                   {thumb && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={thumb} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
                   )}
-                  <button type="button" onClick={() => setOpen(open === e.id ? null : e.id)} className="min-w-0 flex-1 truncate text-left text-[14.5px]">
-                    {titleOf(col, e)}
+                  <button type="button" onClick={() => setOpen(open === e.id ? null : e.id)} className="min-w-0 flex-1 text-left">
+                    <span className="block truncate text-[14.5px]">{titleOf(col, e)}</span>
+                    {sub && <span className="block truncate text-[12.5px] text-dim">{sub}</span>}
                   </button>
-                  <Btn size="sm" variant="ghost" icon={ICONS.edit} onClick={() => setOpen(open === e.id ? null : e.id)}>
-                    <span className="hidden sm:inline">Edytuj</span>
+                  <span className="flex shrink-0 flex-col">
+                    <button type="button" onClick={() => shift(i, -1)} disabled={i === 0} className="grid h-4 w-7 place-items-center text-dim hover:text-ink disabled:opacity-20" aria-label="W górę">
+                      <Icon d="M6 15l6-6 6 6" className="size-3.5" />
+                    </button>
+                    <button type="button" onClick={() => shift(i, 1)} disabled={i === entries.length - 1} className="grid h-4 w-7 place-items-center text-dim hover:text-ink disabled:opacity-20" aria-label="W dół">
+                      <Icon d="M6 9l6 6 6-6" className="size-3.5" />
+                    </button>
+                  </span>
+                  <Btn size="sm" variant={open === e.id ? "outline" : "ghost"} icon={ICONS.edit} onClick={() => setOpen(open === e.id ? null : e.id)}>
+                    <span className="hidden sm:inline">{open === e.id ? "Zwiń" : "Edytuj"}</span>
                   </Btn>
                   <ConfirmBtn onConfirm={() => start(async () => (await deleteEntry(col.id, e.id), onChange(entries.filter((x) => x.id !== e.id))))}>
                     <span className="sr-only">Usuń</span>
@@ -256,7 +300,7 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
 }
 
 // Edytor treści: po lewej sekcje, po prawej formularz / lista
-export default function CmsEditor({ siteId, collections }: { siteId: string; collections: ColWithEntries[] }) {
+export default function CmsEditor({ siteId, collections, admin = false }: { siteId: string; collections: ColWithEntries[]; admin?: boolean }) {
   const [cols, setCols] = useState(collections);
   const [active, setActive] = useState(collections[0]?.id ?? "");
   const col = cols.find((c) => c.id === active);
@@ -264,13 +308,23 @@ export default function CmsEditor({ siteId, collections }: { siteId: string; col
   if (!cols.length)
     return (
       <Card>
-        <Empty icon={ICONS.layers} title="Ta strona nie ma jeszcze sekcji" text="Administrator musi najpierw dodać sekcje i pola do edycji." />
+        <Empty icon={ICONS.layers} title="Strona jest w przygotowaniu" text="Gdy podepnę ją do panelu, zobaczysz tu wszystko, co możesz zmienić — teksty, zdjęcia, ofertę." />
       </Card>
     );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-      <Card pad={false} className="lg:self-start">
+    <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+      {/* telefon: sekcje jako przewijane chipsy */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden" data-lenis-prevent>
+        {cols.map((c) => (
+          <button key={c.id} type="button" onClick={() => setActive(c.id)} className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition-colors ${active === c.id ? "bg-ink text-bg" : "bg-white/[0.05] text-muted"}`}>
+            {c.name}
+            {c.kind === "list" && <span className="ml-1.5 opacity-60">{c.entries.length}</span>}
+          </button>
+        ))}
+      </div>
+      <Card pad={false} className="hidden lg:block lg:self-start">
+        <p className="px-5 pt-4 pb-1 text-[12.5px] text-dim">Części strony</p>
         <ul className="p-2">
           {cols.map((c) => (
             <li key={c.id}>
@@ -280,8 +334,11 @@ export default function CmsEditor({ siteId, collections }: { siteId: string; col
                 className={`relative flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] transition-colors ${active === c.id ? "text-ink" : "text-muted hover:text-ink"}`}
               >
                 {active === c.id && <motion.span layoutId="cms-col" className="absolute inset-0 rounded-xl bg-white/[0.06]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-                <span className="relative truncate">{c.name}</span>
-                <span className="relative text-[11.5px] text-dim">{c.kind === "list" ? c.entries.length : "•"}</span>
+                <span className="relative min-w-0">
+                  <span className="block truncate">{c.name}</span>
+                  {c.hint && <span className="block truncate text-[11.5px] text-dim">{c.hint}</span>}
+                </span>
+                <span className="relative shrink-0 rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] text-dim tabular-nums">{c.kind === "list" ? c.entries.length : "edytuj"}</span>
               </button>
             </li>
           ))}
@@ -289,12 +346,14 @@ export default function CmsEditor({ siteId, collections }: { siteId: string; col
       </Card>
       {col && (
         <Card key={col.id}>
-          <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="mb-6 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-[20px] font-medium tracking-[-0.02em]">{col.name}</h2>
-              <p className="mt-0.5 text-[12.5px] text-dim">{col.kind === "list" ? "Lista pozycji" : "Pojedyncza sekcja"}</p>
+              <h2 className="text-[22px] font-medium tracking-[-0.02em]">{col.name}</h2>
+              <p className="mt-1 max-w-xl text-[13.5px] leading-relaxed text-muted">
+                {col.hint || (col.kind === "list" ? `Dodawaj, zmieniaj i usuwaj — kolejność tutaj to kolejność na stronie.` : "Zmień, co chcesz, i kliknij „Zapisz zmiany” — od razu pojawi się na stronie.")}
+              </p>
             </div>
-            <Badge>{col.key}</Badge>
+            {admin && <Badge>{col.key}</Badge>}
           </div>
           {col.kind === "single" ? (
             <EntryForm col={col} entry={col.entries[0] ?? null} siteId={siteId} onSaved={(e) => setCols((cs) => cs.map((c) => (c.id === col.id ? { ...c, entries: [e] } : c)))} />

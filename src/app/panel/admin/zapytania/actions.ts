@@ -109,7 +109,7 @@ export async function acceptInquiry(d: AcceptInput): Promise<AcceptResult> {
     const base = await baseUrl();
     const r = await sendMail({
       to: q.email,
-      subject: `Przyjęte: ${title} — termin ${pl(d.due)}`,
+      subject: `Przyjęte: ${title}, termin ${pl(d.due)}`,
       react: createElement(OrderAcceptedEmail, {
         name: q.name,
         title,

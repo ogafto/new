@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${site.domain} — strony internetowe premium`,
+    name: `${site.domain} | strony internetowe premium`,
     short_name: site.brand,
     description: "Strony internetowe, sklepy i identyfikacje wizualne, które wyglądają drogo i sprzedają.",
     start_url: "/",

@@ -69,7 +69,7 @@ export async function sendPaymentEmail(pid: string): Promise<R> {
   const due = p.due_date ? new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${p.due_date}T12:00:00`)) : null;
   const r = await sendMail({
     to: p.client_email,
-    subject: `${p.title} — płatność ${zl(Number(p.amount))}`,
+    subject: `${p.title}: płatność ${zl(Number(p.amount))}`,
     react: createElement(PaymentEmail, { name: p.client_name, title: p.title, amount: zl(Number(p.amount)), due, url: p.stripe_url, baseUrl: await baseUrl() }),
   });
   if (!r.ok) return { error: "Nie udało się wysłać maila — sprawdź ustawienia e-mail." };

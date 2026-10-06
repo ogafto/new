@@ -182,7 +182,7 @@ export const steps = [
   {
     title: "Rozmowa",
     lead: "Poznaję Twoją firmę i potrzeby",
-    text: "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później — po niej dostajesz konkretną wycenę i termin.",
+    text: "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później. Po niej dostajesz konkretną wycenę i termin.",
     points: ["Cel i grupa docelowa", "Zakres i budżet", "Wycena i termin"],
   },
   {
@@ -194,7 +194,7 @@ export const steps = [
   {
     title: "Projekt",
     lead: "Każdy ekran dopracowany co do piksela",
-    text: "Pełny projekt w Figmie — desktop i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.",
+    text: "Pełny projekt w Figmie, na komputer i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.",
     points: ["Makiety i prototyp", "Wersja mobilna", "Poprawki do akceptacji"],
   },
   {

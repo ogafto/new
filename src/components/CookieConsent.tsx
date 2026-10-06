@@ -180,7 +180,7 @@ gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
               <ul className="mt-6 space-y-2">
                 {[
                   { key: "necessary", name: "Niezbędne", text: "Zapamiętanie Twojego wyboru i logowanie do panelu klienta. Bez nich strona nie działa poprawnie.", on: true, fixed: true, list: ["afto_consent · 180 dni", "afto_session · 30 dni"] },
-                  { key: "analytics", name: "Analityczne", text: "Google Analytics — statystyki odwiedzin. Włączają się tylko za Twoją zgodą.", on: draft.analytics, list: ["_ga, _ga_* · do 2 lat"] },
+                  { key: "analytics", name: "Analityczne", text: "Google Analytics, statystyki odwiedzin. Włączają się tylko za Twoją zgodą.", on: draft.analytics, list: ["_ga, _ga_* · do 2 lat"] },
                 ].map((r) => (
                   <li key={r.key} className="rounded-2xl border border-line p-4">
                     <div className="flex items-start justify-between gap-6">

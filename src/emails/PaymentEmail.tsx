@@ -3,14 +3,14 @@ import Layout, { c, Cta, font, Kicker, P, Title } from "./Layout";
 
 export default function PaymentEmail({ name, title, amount, due, url, baseUrl }: { name: string; title: string; amount: string; due: string | null; url: string; baseUrl: string }) {
   return (
-    <Layout preview={`${title} — ${amount}`} baseUrl={baseUrl} note="Płatność obsługuje Stripe — możesz zapłacić kartą, BLIK-iem albo szybkim przelewem. Potwierdzenie przyjdzie automatycznie.">
+    <Layout preview={`${title}: ${amount}`} baseUrl={baseUrl} note="Płatność obsługuje Stripe. Możesz zapłacić kartą, BLIK-iem albo szybkim przelewem. Potwierdzenie przyjdzie automatycznie.">
       <Kicker>Płatność</Kicker>
       <Title>
         Cześć {name.split(" ")[0]},
         <br />
         <span style={{ color: c.accent2 }}>link do płatności.</span>
       </Title>
-      <P>Poniżej szczegóły — kliknij przycisk, żeby zapłacić bezpiecznie online.</P>
+      <P>Poniżej szczegóły. Kliknij przycisk, żeby zapłacić bezpiecznie online.</P>
       <Section style={{ marginTop: 22 }}>
         <table cellPadding={0} cellSpacing={0} role="presentation" width="100%" style={{ background: c.card2, border: `1px solid ${c.line2}`, borderRadius: 16 }}>
           <tbody>

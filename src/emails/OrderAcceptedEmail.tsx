@@ -11,7 +11,7 @@ export default function OrderAcceptedEmail({ name, title, start, due, amount, de
     ...(deposit ? ([["Zaliczka", deposit]] as [string, string][]) : []),
   ];
   return (
-    <Layout preview={`Przyjęte: ${title} — termin ${due}`} baseUrl={baseUrl} note="Postęp i termin widzisz cały czas w panelu klienta. Masz pytania? Po prostu odpisz na tego maila.">
+    <Layout preview={`Przyjęte: ${title}, termin ${due}`} baseUrl={baseUrl} note="Postęp i termin widzisz cały czas w panelu klienta. Masz pytania? Po prostu odpisz na tego maila.">
       <Kicker>Zamówienie przyjęte</Kicker>
       <Title>
         Cześć {name.split(" ")[0]},

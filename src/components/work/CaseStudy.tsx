@@ -83,7 +83,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
         {/* telefon: całe zdjęcie 4:3 bez przycinania; od sm: szerszy kadr z paralaksą */}
         <div className="relative aspect-[4/3] overflow-hidden rounded-[18px] ring-1 ring-white/10 sm:rounded-[28px] md:aspect-[16/9]">
           <motion.div className="absolute inset-0 max-sm:!transform-none sm:inset-x-0 sm:-top-[9%] sm:h-[118%]" style={{ y }}>
-            <Image src={p.image} alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill preload sizes="(min-width: 1400px) 1320px, 100vw" className="object-cover" />
+            <Image src={p.image} alt={`${p.name}, ${serviceName(p.category).toLowerCase()} dla: ${p.client}`} fill preload sizes="(min-width: 1400px) 1320px, 100vw" className="object-cover" />
           </motion.div>
         </div>
       </motion.div>
@@ -113,7 +113,7 @@ export default function CaseStudy({ p, next }: { p: Project; next: Project }) {
         <div className="mx-auto grid max-w-[1400px] gap-5 px-5 pb-24 sm:px-10 md:grid-cols-2">
           {p.gallery.map((src, i) => (
             <FadeUp key={src} delay={(i % 2) * 0.08} className={i % 3 === 0 ? "md:col-span-2" : ""}>
-              <Image src={src} alt={`${p.name} — ${p.client}, zdjęcie ${i + 2}`} width={1600} height={1200} sizes="(min-width: 768px) 50vw, 100vw" className="h-auto w-full rounded-[24px] object-cover" />
+              <Image src={src} alt={`${p.name}, ${p.client}, zdjęcie ${i + 2}`} width={1600} height={1200} sizes="(min-width: 768px) 50vw, 100vw" className="h-auto w-full rounded-[24px] object-cover" />
             </FadeUp>
           ))}
         </div>

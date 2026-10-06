@@ -89,7 +89,7 @@ export async function createOffer(d: { inquiryId: string | null; userId: string 
   if (d.mail) {
     const r = await sendMail({
       to: d.clientEmail,
-      subject: `Wycena: ${d.title} — ${zl(d.amount)}`,
+      subject: `Wycena: ${d.title}, ${zl(d.amount)}`,
       react: createElement(OfferEmail, {
         name: d.clientName,
         title: d.title,
@@ -147,7 +147,7 @@ export async function startFromPayment(p: Payment) {
 
   await sendMail({
     to: o.client_email,
-    subject: `Startujemy: ${o.title} — termin ${longDate(due)}`,
+    subject: `Startujemy: ${o.title}, termin ${longDate(due)}`,
     react: createElement(OrderStartedEmail, { name: o.client_name, title: o.title, paid: zl(Number(p.amount)), deposit: p.kind === "deposit", start: longDate(start), due: longDate(due), days: o.work_days, rest: rest ? zl(rest.amount) : null, restUrl: rest?.url ?? null, url: `${base}/panel/zamowienia/${order}`, baseUrl: base }),
   }).catch(() => {});
   return { order, due: longDate(due), deposit: p.kind === "deposit" };

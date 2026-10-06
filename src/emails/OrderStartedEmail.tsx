@@ -5,7 +5,7 @@ import Layout, { c, Cta, font, Kicker, P, Title } from "./Layout";
 export default function OrderStartedEmail({ name, title, paid, deposit, start, due, days, rest, restUrl, url, baseUrl }: { name: string; title: string; paid: string; deposit: boolean; start: string; due: string; days: number; rest: string | null; restUrl: string | null; url: string; baseUrl: string }) {
   const rows: [string, string][] = [["Wpłata", `${paid}${deposit ? " (zaliczka)" : ""}`], ["Start", start], ["Termin oddania", `${due} · ${days} dni`], ...(rest ? ([["Pozostało do zapłaty", rest]] as [string, string][]) : [])];
   return (
-    <Layout preview={`Startujemy: ${title} — termin ${due}`} baseUrl={baseUrl} note="Odliczanie do terminu, pliki i wiadomości znajdziesz w panelu klienta.">
+    <Layout preview={`Startujemy: ${title}, termin ${due}`} baseUrl={baseUrl} note="Odliczanie do terminu, pliki i wiadomości znajdziesz w panelu klienta.">
       <Kicker>Płatność przyjęta</Kicker>
       <Title>
         Dzięki, {name.split(" ")[0]}!
@@ -30,7 +30,7 @@ export default function OrderStartedEmail({ name, title, paid, deposit, start, d
         </table>
       </Section>
       <Cta href={url}>Zobacz zlecenie</Cta>
-      {rest && restUrl && <P>Pozostałą kwotę możesz zapłacić w dowolnym momencie przed oddaniem — link jest w panelu.</P>}
+      {rest && restUrl && <P>Pozostałą kwotę możesz zapłacić w dowolnym momencie przed oddaniem. Link jest w panelu.</P>}
     </Layout>
   );
 }

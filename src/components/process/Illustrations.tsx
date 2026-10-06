@@ -90,7 +90,7 @@ const chat = [
   { me: false, t: "Dzień dobry! Potrzebuję strony internetowej 👋" },
   { me: true, t: "Dzień dobry! Chętnie pomogę. Czym zajmuje się Twoja firma?" },
   { me: false, t: "Mam salon fryzjerski. Chcę, żeby klienci mogli umawiać się online." },
-  { me: true, t: "Świetnie — zrobię stronę z rezerwacjami, idealną na telefon. Wycenę wyślę jutro ✨" },
+  { me: true, t: "Świetnie, zrobię stronę z rezerwacjami, idealną na telefon. Wycenę wyślę jutro ✨" },
 ];
 const STEP = 1.9;
 

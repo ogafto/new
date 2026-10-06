@@ -5,7 +5,7 @@ import { loadContent } from "@/lib/content-server";
 
 export const metadata: Metadata = {
   title: "Regulamin",
-  description: "Regulamin świadczenia usług projektowania stron internetowych, sklepów, identyfikacji wizualnej i projektów UI/UX — afto.works.",
+  description: "Regulamin świadczenia usług projektowania stron internetowych, sklepów, identyfikacji wizualnej i projektów UI/UX w afto.works.",
   alternates: { canonical: "/regulamin" },
 };
 
@@ -16,9 +16,9 @@ function build() {
 
   const summary = [
     "`Usługi świadczy ${owner} w ramach działalności nierejestrowanej.`",
-    "Cenę, zakres i termin ustalamy indywidualnie — umowa zawiera się z chwilą akceptacji wyceny.",
+    "Cenę, zakres i termin ustalamy indywidualnie. Umowa zawiera się z chwilą akceptacji wyceny.",
     "Po pełnej zapłacie otrzymujesz autorskie prawa majątkowe do projektu i kodu.",
-    "Konsument może odstąpić od umowy w ciągu 14 dni — z wyjątkami opisanymi w § 9.",
+    "Konsument może odstąpić od umowy w ciągu 14 dni, z wyjątkami opisanymi w § 9.",
     "Reklamacje rozpatruję w ciągu 14 dni.",
     "Panel klienta i edytor treści są bezpłatnym dodatkiem do współpracy.",
   ];
@@ -47,7 +47,7 @@ function build() {
     {
       title: "Wymagania techniczne",
       items: [
-        "Do korzystania z Serwisu potrzebne jest urządzenie z dostępem do internetu, aktualna przeglądarka internetowa z włączoną obsługą JavaScript oraz — w przypadku kontaktu i panelu klienta — aktywny adres e-mail.",
+        "Do korzystania z Serwisu potrzebne jest urządzenie z dostępem do internetu, aktualna przeglądarka internetowa z włączoną obsługą JavaScript oraz, w przypadku kontaktu i panelu klienta, aktywny adres e-mail.",
         "Zakazane jest dostarczanie przez Klienta treści o charakterze bezprawnym oraz podejmowanie działań zakłócających działanie Serwisu.",
       ],
     },
@@ -110,7 +110,7 @@ function build() {
     {
       title: "Reklamacje",
       items: [
-        "Wykonawca odpowiada za zgodność usługi z umową. Wobec Konsumentów — na zasadach ustawy o prawach konsumenta, w tym przepisów o treściach i usługach cyfrowych; wobec pozostałych Klientów — na zasadach Kodeksu cywilnego.",
+        "Wykonawca odpowiada za zgodność usługi z umową. Wobec Konsumentów na zasadach ustawy o prawach konsumenta, w tym przepisów o treściach i usługach cyfrowych, a wobec pozostałych Klientów na zasadach Kodeksu cywilnego.",
         `Reklamację można złożyć e-mailem na adres ${site.email}. Warto podać: dane kontaktowe, opis problemu i oczekiwany sposób jego rozwiązania.`,
         "Wykonawca odpowiada na reklamację w ciągu 14 dni od jej otrzymania. Odpowiedź zostanie przesłana e-mailem.",
         "Błędy techniczne zgłoszone w okresie wsparcia wskazanym w wycenie Wykonawca usuwa bezpłatnie.",

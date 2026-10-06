@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { title, description } = seo;
   return {
     metadataBase: new URL(site.url),
-    title: { default: title, template: `%s — ${site.domain}` },
+    title: { default: title, template: `%s | ${site.domain}` },
     description,
     applicationName: site.domain,
     keywords,

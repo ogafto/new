@@ -15,11 +15,11 @@ const PAGE = 12;
 // Karta projektu: duże zdjęcie + podpis pod spodem
 export function ProjectCard({ p, wide = false }: { p: Project; wide?: boolean }) {
   return (
-    <TLink href={`/portfolio/${p.slug}`} label={p.name} className="group block" aria-label={`${p.name} — ${serviceName(p.category)}`}>
+    <TLink href={`/portfolio/${p.slug}`} label={p.name} className="group block" aria-label={`${p.name}, ${serviceName(p.category)}`}>
       <div className={`relative overflow-hidden rounded-[20px] bg-surface ${wide ? "aspect-[4/3] md:aspect-[2/1]" : "aspect-[4/3]"}`}>
         <Image
           src={p.image}
-          alt={`${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`}
+          alt={`${p.name}, ${serviceName(p.category).toLowerCase()} dla: ${p.client}`}
           fill
           sizes={wide ? "(min-width: 768px) 90vw, 100vw" : "(min-width: 768px) 45vw, 100vw"}
           className="object-cover object-top transition-transform duration-[1.2s] ease-out-expo group-hover:scale-[1.035]"
@@ -116,8 +116,8 @@ export default function AllWork({ projects }: { projects: Project[] }) {
         <div className="mt-16 flex justify-center">
           <button type="button" onClick={() => setAll(true)} className="group btn btn-outline">
             <span className="roll">
-              <span>Pokaż wszystkie — {list.length}</span>
-              <span aria-hidden>Pokaż wszystkie — {list.length}</span>
+              <span>Pokaż wszystkie ({list.length})</span>
+              <span aria-hidden>Pokaż wszystkie ({list.length})</span>
             </span>
           </button>
         </div>

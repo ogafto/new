@@ -105,7 +105,7 @@ function Marquee({ href }: { href: string }) {
       href={href}
       label="Kontakt"
       className="group block overflow-hidden border-y border-line py-8 sm:py-12"
-      aria-label={`${content().texts.footer.marquee} — przejdź do kontaktu`}
+      aria-label={`${content().texts.footer.marquee}, przejdź do kontaktu`}
       onPointerEnter={() => {
         target.current = 0.25;
         kick.current();

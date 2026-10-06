@@ -9,7 +9,7 @@ export default function InviteEmail({ name, email, code, baseUrl, days }: Invite
     <Layout
       preview={`Twój kod do panelu afto.works: ${code}`}
       baseUrl={baseUrl}
-      note={`Zaproszenie wysłano na ${email}. Jeśli nie spodziewasz się tej wiadomości, po prostu ją zignoruj — bez kodu nikt nie założy konta.`}
+      note={`Zaproszenie wysłano na ${email}. Jeśli nie spodziewasz się tej wiadomości, po prostu ją zignoruj. Bez kodu nikt nie założy konta.`}
     >
       <Kicker>Zaproszenie do panelu</Kicker>
       <Title>

@@ -15,7 +15,7 @@ export function homeSchema() {
         "@id": id("business"),
         name: site.domain,
         alternateName: site.brand,
-        description: "Web designer & web developer — projektowanie stron internetowych, sklepów internetowych, identyfikacji wizualnych, projektów UI/UX i animacji dla firm z całej Polski.",
+        description: "Web designer & web developer. Projektowanie stron internetowych, sklepów internetowych, identyfikacji wizualnych, projektów UI/UX i animacji dla firm z całej Polski.",
         url: site.url,
         logo: `${site.url}/brand/afto-icon-dark.png`,
         image: `${site.url}/opengraph-image`,

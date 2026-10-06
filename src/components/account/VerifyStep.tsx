@@ -45,7 +45,7 @@ export default function VerifyStep({ email, initialError }: { email: string; ini
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       {done ? (
-        <Success key="ok" title="Witamy w afto." text="Konto gotowe — otwieram Twój panel." bar={1.2} />
+        <Success key="ok" title="Witamy w afto." text="Konto gotowe, otwieram Twój panel." bar={1.2} />
       ) : (
         <motion.div key="verify" exit={{ opacity: 0, y: -10, filter: "blur(6px)" }}>
           <AuthTitle

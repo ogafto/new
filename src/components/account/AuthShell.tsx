@@ -68,7 +68,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bg to-transparent" aria-hidden />
 
       <motion.header animate={leaving ? { opacity: 0, y: -12 } : {}} transition={{ duration: 0.5, ease }} className="relative z-10 flex items-center justify-between px-5 py-6 sm:px-10">
-        <Link href="/" className="flex items-center gap-3" aria-label="afto.works — strona główna">
+        <Link href="/" className="flex items-center gap-3" aria-label="afto.works, strona główna">
           <Mark className="size-8" />
           <Wordmark className="h-[19px] w-auto" />
         </Link>

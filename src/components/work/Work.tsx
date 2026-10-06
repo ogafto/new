@@ -68,7 +68,7 @@ function Layer({ p, i, n, progress }: { p: Project; i: number; n: number; progre
   const cardY = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => `${(1 - r) * 55 - c * 14}%`);
   const cardTilt = useTransform(reveal, (r) => (1 - r) * 28);
   const cardScale = useTransform([reveal, covered] as MotionValue<number>[], ([r, c]: number[]) => 0.9 + r * 0.1 - c * 0.1);
-  const alt = `${p.name} — ${serviceName(p.category).toLowerCase()} dla: ${p.client}`;
+  const alt = `${p.name}, ${serviceName(p.category).toLowerCase()} dla: ${p.client}`;
   const bg = backdrop(p.palette);
   return (
     <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: clip, zIndex: i }}>

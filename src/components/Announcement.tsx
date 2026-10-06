@@ -19,7 +19,7 @@ function SoonPreview() {
           <span className="absolute inset-0 animate-ping rounded-full bg-amber-300/70" />
           <span className="relative size-2 rounded-full bg-amber-300" />
         </span>
-        Podgląd — inni widzą zapowiedź
+        Podgląd: inni widzą zapowiedź
         <button
           type="button"
           disabled={busy}

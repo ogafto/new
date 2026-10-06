@@ -8,7 +8,7 @@ export default function VerifyEmail({ name, code, baseUrl, minutes }: VerifyProp
     <Layout
       preview={`Kod weryfikacyjny: ${code}`}
       baseUrl={baseUrl}
-      note="Nie zakładasz konta w afto.works? Zignoruj tę wiadomość — bez kodu adres nie zostanie potwierdzony."
+      note="Nie zakładasz konta w afto.works? Zignoruj tę wiadomość. Bez kodu adres nie zostanie potwierdzony."
     >
       <Kicker>Weryfikacja adresu</Kicker>
       <Title>

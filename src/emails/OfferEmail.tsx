@@ -5,14 +5,14 @@ import Layout, { c, Cta, font, Kicker, P, Title } from "./Layout";
 export default function OfferEmail({ name, title, message, amount, deposit, workDays, payBy, fullUrl, depositUrl, transfer, panelUrl, baseUrl }: { name: string; title: string; message: string | null; amount: string; deposit: string | null; workDays: number; payBy: string; fullUrl: string | null; depositUrl: string | null; transfer: boolean; panelUrl: string; baseUrl: string }) {
   const rows: [string, string][] = [["Zlecenie", title], ["Kwota", amount], ...(deposit ? ([["Zaliczka na start", deposit]] as [string, string][]) : []), ["Realizacja", `${workDays} dni od wpłaty`], ["Zapłać do", payBy]];
   return (
-    <Layout preview={`Wycena: ${title} — ${amount}`} baseUrl={baseUrl} note="Po wpłacie zlecenie startuje automatycznie, a termin oddania liczy się od dnia płatności. Postęp widzisz w panelu klienta.">
+    <Layout preview={`Wycena: ${title}, ${amount}`} baseUrl={baseUrl} note="Po wpłacie zlecenie startuje automatycznie, a termin oddania liczy się od dnia płatności. Postęp widzisz w panelu klienta.">
       <Kicker>Wycena</Kicker>
       <Title>
         Cześć {name.split(" ")[0]},
         <br />
         <span style={{ color: c.accent2 }}>oto wycena.</span>
       </Title>
-      {message ? <P style={{ color: c.ink }}>{message}</P> : <P>Dzięki za zamówienie — poniżej szczegóły. Zapłać całość albo zaliczkę, a od razu zaczynam.</P>}
+      {message ? <P style={{ color: c.ink }}>{message}</P> : <P>Dzięki za zamówienie. Poniżej szczegóły. Zapłać całość albo zaliczkę, a od razu zaczynam.</P>}
       <Section style={{ marginTop: 22 }}>
         <table cellPadding={0} cellSpacing={0} role="presentation" width="100%" style={{ background: c.card2, border: `1px solid ${c.line2}`, borderRadius: 16 }}>
           <tbody>
@@ -29,9 +29,9 @@ export default function OfferEmail({ name, title, message, amount, deposit, work
           </tbody>
         </table>
       </Section>
-      {fullUrl && <Cta href={fullUrl}>{`Zapłać całość — ${amount}`}</Cta>}
-      {depositUrl && deposit && <Cta href={depositUrl}>{`Zapłać zaliczkę — ${deposit}`}</Cta>}
-      {transfer && <P>Płatność przelewem — dane do przelewu prześlę w odpowiedzi. Po zaksięgowaniu zlecenie wystartuje.</P>}
+      {fullUrl && <Cta href={fullUrl}>{`Zapłać całość: ${amount}`}</Cta>}
+      {depositUrl && deposit && <Cta href={depositUrl}>{`Zapłać zaliczkę: ${deposit}`}</Cta>}
+      {transfer && <P>Płatność przelewem. Dane do przelewu prześlę w odpowiedzi. Po zaksięgowaniu zlecenie wystartuje.</P>}
       <P>
         Wycenę zobaczysz też w panelu: <a href={panelUrl} style={{ color: c.accent2 }}>{panelUrl.replace(/^https?:\/\//, "")}</a>
       </P>

@@ -37,12 +37,12 @@ export type Content = {
 /* Teksty sekcji strony (nagłówki, opisy, przyciski) — wszystko, co nie jest danymi powyżej */
 export const DEFAULT_TEXTS = {
   hero: { cta: "Wyceń projekt", ctaSecondary: "Portfolio", recent: "Ostatnie projekty" },
-  work: { label: "Portfolio", text: "Strony, sklepy, identyfikacje i projekty UI/UX — każdy zaprojektowany od zera, pod konkretny cel.", more: "Całe portfolio", view: "Zobacz projekt" },
+  work: { label: "Portfolio", text: "Strony, sklepy, identyfikacje i projekty UI/UX. Każdy zaprojektowany od zera, pod konkretny cel.", more: "Całe portfolio", view: "Zobacz projekt" },
   process: {
     kicker: "Proces",
     title: "Od pierwszej rozmowy",
     accent: "do premiery.",
-    text: "Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej — a postęp widzisz w swoim panelu.",
+    text: "Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej, a postęp widzisz w swoim panelu.",
     ctaText: "Pierwszy krok to",
     ctaAccent: "krótka rozmowa.",
     ctaButton: "Umów rozmowę",
@@ -51,7 +51,7 @@ export const DEFAULT_TEXTS = {
     kicker: "Kontakt",
     title: "Porozmawiajmy",
     accent: "o Twoim projekcie",
-    text: "Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.",
+    text: "Cztery krótkie pytania, zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.",
     direct: "Wolisz bezpośrednio?",
     q1: "Czego potrzebujesz?",
     q2: "Jaki masz budżet?",
@@ -61,7 +61,7 @@ export const DEFAULT_TEXTS = {
     when: "Kiedy chcesz zacząć? (opcjonalnie)",
     send: "Wyślij zapytanie",
     successTitle: "Dziękuję",
-    successText: "Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.",
+    successText: "Wiadomość dotarła. Odezwę się najszybciej, jak to możliwe.",
   },
   footer: { marquee: "Zacznijmy projekt", tagline: "Projektuję i koduję strony, które wyglądają drogo i sprzedają." },
 };
@@ -89,7 +89,7 @@ export const DEFAULT_HERO = {
 };
 
 export const DEFAULT_SEO = {
-  title: `Web designer & web developer — strony internetowe i sklepy | ${site.domain}`,
+  title: `Web designer & web developer: strony internetowe i sklepy | ${site.domain}`,
   description: "Web designer & web developer. Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla firm z całej Polski. Strona od 200 zł.",
 };
 
@@ -107,7 +107,7 @@ export const DEFAULT_SOON: Soon = {
   kicker: "afto.works",
   title: "Coś nowego",
   accent: "nadchodzi.",
-  text: "Pracuję nad nową odsłoną. Dołącz na Discordzie, żeby dowiedzieć się pierwszy — i zobaczyć więcej wcześniej.",
+  text: "Pracuję nad nową odsłoną. Dołącz na Discordzie, żeby dowiedzieć się pierwszy i zobaczyć więcej wcześniej.",
   button: "Dołącz na Discordzie",
   link: "",
   date: "",
@@ -131,10 +131,29 @@ export const defaultContent = (): Content => ({
   forms: structuredClone(DEFAULT_FORMS),
 });
 
+
+/*
+ * Zdania z poprzednich wersji domyślnych treści (z myślnikami), zapisane już w bazie przy edycji w CMS —
+ * podmieniane 1:1 na nowe brzmienie. Teksty wpisane samodzielnie zostają nietknięte.
+ */
+const REWORDED: Record<string, string> = {
+  "Strony, sklepy, identyfikacje i projekty UI/UX — każdy zaprojektowany od zera, pod konkretny cel.": "Strony, sklepy, identyfikacje i projekty UI/UX. Każdy zaprojektowany od zera, pod konkretny cel.",
+  "Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej — a postęp widzisz w swoim panelu.": "Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej, a postęp widzisz w swoim panelu.",
+  "Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.": "Cztery krótkie pytania, zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.",
+  "Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.": "Wiadomość dotarła. Odezwę się najszybciej, jak to możliwe.",
+  "Pracuję nad nową odsłoną. Dołącz na Discordzie, żeby dowiedzieć się pierwszy — i zobaczyć więcej wcześniej.": "Pracuję nad nową odsłoną. Dołącz na Discordzie, żeby dowiedzieć się pierwszy i zobaczyć więcej wcześniej.",
+  "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później — po niej dostajesz konkretną wycenę i termin.": "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później. Po niej dostajesz konkretną wycenę i termin.",
+  "Pełny projekt w Figmie — desktop i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.": "Pełny projekt w Figmie, na komputer i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.",
+  "Web designer & web developer — strony internetowe i sklepy | afto.works": "Web designer & web developer: strony internetowe i sklepy | afto.works",
+};
+const reword = (v: unknown): unknown =>
+  typeof v === "string" ? (REWORDED[v] ?? v) : Array.isArray(v) ? v.map(reword) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, reword(x)])) : v;
+
 /** Scala zapisane dane z domyślnymi (brakujące pola = domyślne) */
-export function mergeContent(saved: Partial<Content> | null | undefined): Content {
+export function mergeContent(input: Partial<Content> | null | undefined): Content {
   const d = defaultContent();
-  if (!saved) return d;
+  if (!input) return d;
+  const saved = reword(input) as Partial<Content>;
   const pick = <T extends Record<string, unknown>>(def: T, v: unknown): T => {
     const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
     return Object.fromEntries(Object.entries(def).map(([k, dv]) => [k, typeof o[k] === typeof dv && o[k] !== "" ? o[k] : dv])) as T;

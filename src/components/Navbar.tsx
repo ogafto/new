@@ -52,7 +52,7 @@ export default function Navbar() {
         />
         <div className="relative">
           <nav aria-label="Główna nawigacja" className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-5 sm:px-10">
-            <TLink href="/" label="Strona główna" className="group flex items-center gap-3" aria-label={`${site.domain} — strona główna`} onClick={() => setOpen(false)}>
+            <TLink href="/" label="Strona główna" className="group flex items-center gap-3" aria-label={`${site.domain}, strona główna`} onClick={() => setOpen(false)}>
               <Mark className="size-8 transition-transform duration-700 ease-out-expo group-hover:-rotate-12" />
               <Wordmark className="hidden h-[20px] w-auto sm:block" />
             </TLink>
@@ -78,7 +78,7 @@ export default function Navbar() {
                 href="/konto"
                 label="Panel klienta"
                 className="group relative grid size-11 place-items-center overflow-hidden rounded-full border border-line-2 text-muted transition-colors duration-500 hover:border-accent/60 hover:text-ink"
-                aria-label="Konto — logowanie do panelu klienta"
+                aria-label="Konto: logowanie do panelu klienta"
                 title="Panel klienta"
               >
                 <span className="absolute inset-0 scale-0 rounded-full bg-accent/15 transition-transform duration-500 ease-out-expo group-hover:scale-100" />

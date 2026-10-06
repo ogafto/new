@@ -14,10 +14,10 @@ import { iconOf, iconPath } from "@/lib/service-icons";
 const description = "Usługi web designera i web developera: projektowanie stron internetowych, sklepy internetowe, identyfikacja wizualna, projekt UI/UX i animacje. Cała Polska.";
 
 export const metadata: Metadata = {
-  title: "Usługi — strony internetowe, sklepy, logo, UI/UX, animacje",
+  title: "Usługi | strony internetowe, sklepy, logo, UI/UX, animacje",
   description,
   alternates: { canonical: "/uslugi" },
-  openGraph: { title: "Usługi — afto.works", description, url: "/uslugi", images: ["/opengraph-image"] },
+  openGraph: { title: "Usługi | afto.works", description, url: "/uslugi", images: ["/opengraph-image"] },
 };
 
 export default async function ServicesPage() {
@@ -43,7 +43,7 @@ export default async function ServicesPage() {
             <span className="text-muted">& development</span>
           </h1>
           <p className="mt-7 max-w-[620px] text-[18px] leading-relaxed text-muted">
-            Projektuję i koduję strony internetowe, sklepy, identyfikacje wizualne i interfejsy aplikacji. Jedna osoba od pomysłu do publikacji — dla firm z całej Polski.
+            Projektuję i koduję strony internetowe, sklepy, identyfikacje wizualne i interfejsy aplikacji. Jedna osoba od pomysłu do publikacji, dla firm z całej Polski.
           </p>
           <ul className="mt-16 border-t border-line">
             {offers.filter((o) => !o.hidden).map((o, i) => (
@@ -92,7 +92,7 @@ export default async function ServicesPage() {
             ))}
           </ul>
           <FadeUp className="mt-20">
-            <Heading className="text-[clamp(2rem,4vw,3.4rem)]" lines={["Nie wiesz, czego potrzebujesz?", <span key="2" className="text-muted">Opisz projekt — doradzę.</span>]} />
+            <Heading className="text-[clamp(2rem,4vw,3.4rem)]" lines={["Nie wiesz, czego potrzebujesz?", <span key="2" className="text-muted">Opisz projekt, a doradzę.</span>]} />
             <div className="mt-8">
               <TLink href="/#kontakt" label="Kontakt" className="group btn btn-primary">
                 <span className="roll">

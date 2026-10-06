@@ -88,7 +88,7 @@ export async function checkInvite(_: InviteCheck, form: FormData): Promise<Invit
   const inv = await findInvite(str(form, "code"));
   if (!inv) {
     fail(key);
-    return { error: "Ten kod nie działa — sprawdź, czy jest przepisany poprawnie, albo poproś o nowy." };
+    return { error: "Ten kod nie działa. Sprawdź, czy jest przepisany poprawnie, albo poproś o nowy." };
   }
   return { ok: true, code: normalizeCode(str(form, "code")), email: inv.email, name: inv.name };
 }
@@ -112,7 +112,7 @@ export async function register(_: FormState, form: FormData): Promise<FormState>
   if (!form.get("consent")) return { error: "Zaakceptuj regulamin i politykę prywatności.", fields };
 
   const existing = await one<User>("SELECT * FROM users WHERE email = ?", [email]);
-  if (existing?.verified_at) return { error: "Konto z tym adresem już istnieje — zaloguj się.", fields };
+  if (existing?.verified_at) return { error: "Konto z tym adresem już istnieje. Zaloguj się.", fields };
 
   const name = `${first} ${last}`;
   const hash = await hashPassword(password);
@@ -127,26 +127,26 @@ export async function register(_: FormState, form: FormData): Promise<FormState>
 
   const sent = await sendVerification({ id: userId!, email, name });
   await createSession(userId!);
-  return sent.ok ? { ok: email } : { ok: email, error: "Nie udało się wysłać maila — kliknij „Wyślij ponownie”." };
+  return sent.ok ? { ok: email } : { ok: email, error: "Nie udało się wysłać maila. Kliknij „Wyślij ponownie”." };
 }
 
 export async function verify(_: FormState, form: FormData): Promise<FormState> {
   const user = await currentUser();
-  if (!user) return { error: "Sesja wygasła — zaloguj się ponownie.", done: "/konto/logowanie" };
+  if (!user) return { error: "Sesja wygasła. Zaloguj się ponownie.", done: "/konto/logowanie" };
   if (user.verified_at) return { done: home(user) };
 
   const code = str(form, "code").replace(/\D/g, "");
   if (code.length !== 6) return { error: "Wpisz 6 cyfr z maila." };
 
   const row = await one<{ code_hash: string; expires_at: number; attempts: number }>("SELECT * FROM verification_codes WHERE user_id = ?", [user.id]);
-  if (!row) return { error: "Brak aktywnego kodu — wyślij nowy." };
-  if (row.attempts >= 5) return { error: "Zbyt wiele błędnych prób — wyślij nowy kod." };
-  if (row.expires_at < Date.now()) return { error: "Kod wygasł — wyślij nowy." };
+  if (!row) return { error: "Brak aktywnego kodu. Wyślij nowy." };
+  if (row.attempts >= 5) return { error: "Zbyt wiele błędnych prób. Wyślij nowy kod." };
+  if (row.expires_at < Date.now()) return { error: "Kod wygasł. Wyślij nowy." };
 
   if (!safeEqual(row.code_hash, sha256(`${user.id}:${code}`))) {
     await run("UPDATE verification_codes SET attempts = attempts + 1 WHERE user_id = ?", [user.id]);
     const left = 4 - row.attempts;
-    return { error: left > 0 ? `Nieprawidłowy kod. Pozostało prób: ${left}.` : "Nieprawidłowy kod — wyślij nowy." };
+    return { error: left > 0 ? `Nieprawidłowy kod. Pozostało prób: ${left}.` : "Nieprawidłowy kod. Wyślij nowy." };
   }
 
   const now = Date.now();
@@ -160,7 +160,7 @@ export async function verify(_: FormState, form: FormData): Promise<FormState> {
 
 export async function resend(): Promise<FormState> {
   const user = await currentUser();
-  if (!user) return { error: "Sesja wygasła — zaloguj się ponownie." };
+  if (!user) return { error: "Sesja wygasła. Zaloguj się ponownie." };
   if (user.verified_at) return { done: home(user) };
   const row = await one<{ sent_at: number }>("SELECT sent_at FROM verification_codes WHERE user_id = ?", [user.id]);
   const wait = row ? Math.ceil((row.sent_at + 60_000 - Date.now()) / 1000) : 0;

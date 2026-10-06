@@ -11,7 +11,7 @@ import { isAdminToken, soonEnabled } from "@/lib/gate";
  */
 
 // zawsze dostępne, także w trybie zapowiedzi
-const OPEN = /^\/(konto|panel|api|media|platnosc|wkrotce|_next|brand|prace|favicon|icon|apple-icon|manifest|robots|opengraph-image)/;
+const OPEN = /^\/(konto|panel|api|media|platnosc|wkrotce|_next|brand|prace|favicon|icon|apple-icon|apple-touch-icon|manifest|robots|opengraph-image)/;
 
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;

@@ -83,7 +83,7 @@ function SecretInput({ value, onChange }: { value: string; onChange: (v: unknown
           </svg>
         </button>
       </span>
-      <span className="mt-1.5 block text-[11.5px] text-dim">🔒 Tajne — widzi je tylko serwer Twojej strony, nigdy odwiedzający</span>
+      <span className="mt-1.5 block text-[11.5px] text-dim">🔒 Tajne. Widzi je tylko serwer Twojej strony, nigdy odwiedzający</span>
     </span>
   );
 }
@@ -157,7 +157,7 @@ function EntryForm({ col, entry, siteId, onSaved, onCancel }: { col: Collection;
         <AnimatePresence mode="wait">
           {saved ? (
             <motion.span key="ok" initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-[13px] text-emerald-300">
-              <Icon d={ICONS.check} className="size-4" /> Zapisane — już na stronie
+              <Icon d={ICONS.check} className="size-4" /> Zapisane, już na stronie
             </motion.span>
           ) : dirty && entry ? (
             <motion.span key="dirty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-amber-200">
@@ -214,7 +214,7 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13.5px] text-muted">
-          {entries.length ? `${entries.length} na stronie · kolejność jak tutaj` : "Na razie pusto — ta część strony się nie wyświetla"}
+          {entries.length ? `${entries.length} na stronie · kolejność jak tutaj` : "Na razie pusto, ta część strony się nie wyświetla"}
         </p>
         <Btn variant="primary" icon={ICONS.plus} onClick={() => setAdding(true)}>
           {`Dodaj ${item}`}
@@ -229,13 +229,13 @@ function ListEditor({ col, siteId, onChange }: { col: ColWithEntries; siteId: st
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.4, ease }}
           >
-            <p className="mb-4 text-[14px] text-accent-2">{`Nowy ${item} — wypełnij i kliknij „Dodaj na stronę”`}</p>
+            <p className="mb-4 text-[14px] text-accent-2">{`Nowy ${item}: wypełnij i kliknij „Dodaj na stronę”`}</p>
             <EntryForm col={col} entry={null} siteId={siteId} onCancel={() => setAdding(false)} onSaved={(e) => (onChange([...entries, e]), setAdding(false))} />
           </motion.div>
         )}
       </AnimatePresence>
       {entries.length === 0 && !adding ? (
-        <Empty icon={ICONS.layers} title="Nic tu jeszcze nie ma" text={`Kliknij „Dodaj ${item}” — pojawi się na stronie od razu po zapisaniu.`} />
+        <Empty icon={ICONS.layers} title="Nic tu jeszcze nie ma" text={`Kliknij „Dodaj ${item}”, a pojawi się na stronie od razu po zapisaniu.`} />
       ) : (
         <Reorder.Group axis="y" values={entries} onReorder={onChange} className="space-y-2" as="ul">
           {entries.map((e, i) => {
@@ -319,7 +319,7 @@ export default function CmsEditor({ siteId, collections, admin = false, compact 
   if (!cols.length)
     return (
       <Card>
-        <Empty icon={ICONS.layers} title="Strona jest w przygotowaniu" text="Gdy podepnę ją do panelu, zobaczysz tu wszystko, co możesz zmienić — teksty, zdjęcia, ofertę." />
+        <Empty icon={ICONS.layers} title="Strona jest w przygotowaniu" text="Gdy podepnę ją do panelu, zobaczysz tu wszystko, co możesz zmienić: teksty, zdjęcia, ofertę." />
       </Card>
     );
 
@@ -361,7 +361,7 @@ export default function CmsEditor({ siteId, collections, admin = false, compact 
             <div>
               <h2 className="text-[22px] font-medium tracking-[-0.02em]">{col.name}</h2>
               <p className="mt-1 max-w-xl text-[13.5px] leading-relaxed text-muted">
-                {col.hint || (col.kind === "list" ? `Dodawaj, zmieniaj i usuwaj — kolejność tutaj to kolejność na stronie.` : "Zmień, co chcesz, i kliknij „Zapisz zmiany” — od razu pojawi się na stronie.")}
+                {col.hint || (col.kind === "list" ? `Dodawaj, zmieniaj i usuwaj. Kolejność tutaj to kolejność na stronie.` : "Zmień, co chcesz, i kliknij „Zapisz zmiany”. Od razu pojawi się na stronie.")}
               </p>
             </div>
             {admin && <Badge>{col.key}</Badge>}

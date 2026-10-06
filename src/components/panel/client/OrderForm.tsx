@@ -172,7 +172,7 @@ export default function OrderForm({ services }: { services: Service[] }) {
         <Card delay={0.12} glow>
           <p className="text-[13px] text-dim">Podsumowanie</p>
           <p className="mt-2 text-[16px] leading-snug">{picked.length ? picked.join(" · ") : "Wybierz usługę"}</p>
-          <p className="mt-1 text-[13px] text-muted">{[budget, timeline].filter(Boolean).join(" · ") || "Budżet i termin — opcjonalnie"}</p>
+          <p className="mt-1 text-[13px] text-muted">{[budget, timeline].filter(Boolean).join(" · ") || "Budżet i termin są opcjonalne"}</p>
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-3 overflow-hidden text-[13.5px] text-red-300">

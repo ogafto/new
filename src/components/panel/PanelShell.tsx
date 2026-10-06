@@ -495,7 +495,7 @@ function SideCard({ admin, soon }: { admin: boolean; soon: boolean }) {
       ) : (
         <>
           <p className="relative mt-3 text-[16px] font-medium">Coś nowego?</p>
-          <p className="relative mt-1 text-[12.5px] leading-relaxed text-muted">Strona, sklep, logo albo projekt UI — zamów w minutę.</p>
+          <p className="relative mt-1 text-[12.5px] leading-relaxed text-muted">Strona, sklep, logo albo projekt UI. Zamów w minutę.</p>
           <Link href="/panel/zamow" className="relative mt-4 flex h-10 items-center justify-center gap-2 rounded-full bg-white/[0.08] text-[13.5px] ring-1 ring-white/[0.1] transition-colors ring-inset hover:bg-white/[0.14]">
             Zamów usługę <Icon d="M5 12h14M13 6l6 6-6 6" className="size-4" />
           </Link>

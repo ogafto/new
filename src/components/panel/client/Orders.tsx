@@ -107,7 +107,7 @@ export function OfferCard({ o, today }: { o: OfferView; today: string }) {
               Zapłać zaliczkę · {zlx(dep.amount)}
             </a>
           )}
-          {!full?.stripe_url && <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[13px] text-muted">Płatność przelewem — dane do przelewu dostaniesz mailem. Zlecenie wystartuje po zaksięgowaniu.</p>}
+          {!full?.stripe_url && <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[13px] text-muted">Płatność przelewem. Dane do przelewu dostaniesz mailem. Zlecenie wystartuje po zaksięgowaniu.</p>}
           <p className="pt-1 text-[12px] text-dim">Po wpłacie zlecenie startuje od razu, a termin liczy się od dnia płatności.</p>
         </div>
       </div>

@@ -77,7 +77,7 @@ export async function createOffer(d: { inquiryId: string | null; userId: string 
   let full, dep;
   try {
     full = await addPayment({ ...common, title: d.title, amount: d.amount, kind: "full" });
-    dep = d.deposit ? await addPayment({ ...common, title: `${d.title} — zaliczka`, amount: d.deposit, kind: "deposit" }) : null;
+    dep = d.deposit ? await addPayment({ ...common, title: `${d.title} (zaliczka)`, amount: d.deposit, kind: "deposit" }) : null;
   } catch (e) {
     await run("UPDATE offers SET status = 'cancelled' WHERE id = ?", [oid]);
     if (full) await voidPayment(full.id);
@@ -137,7 +137,7 @@ export async function startFromPayment(p: Payment) {
   const base = await baseUrl();
   let rest: { url: string | null; amount: number } | null = null;
   if (p.kind === "deposit" && o.amount > Number(p.amount)) {
-    const r = await addPayment({ title: `${o.title} — pozostała kwota`, client_name: o.client_name, client_email: o.client_email, user_id: o.user_id, service: o.service, amount: o.amount - Number(p.amount), due_date: due, order_id: order, offer_id: o.id, kind: "rest", stripe: true, baseUrl: base }).catch(async (e) => {
+    const r = await addPayment({ title: `${o.title} (pozostała kwota)`, client_name: o.client_name, client_email: o.client_email, user_id: o.user_id, service: o.service, amount: o.amount - Number(p.amount), due_date: due, order_id: order, offer_id: o.id, kind: "rest", stripe: true, baseUrl: base }).catch(async (e) => {
       await log("payment", `Nie utworzono płatności za resztę (${o.title}) — dodaj ją ręcznie w zleceniu: ${e instanceof Error ? e.message : e}`, { level: "error", meta: { order } });
       return null;
     });

@@ -49,7 +49,7 @@ export default async function PaymentDone({ searchParams }: { searchParams: Prom
         </Rise>
         <Rise i={2}>
           <p className="mx-auto mt-4 max-w-[400px] text-[16px] leading-relaxed text-muted">
-            {paid ? "Wpłata dotarła i jest już widoczna w panelu klienta. Potwierdzenie ze Stripe przyjdzie na Twój e-mail." : "Bank jeszcze księguje przelew — status w panelu zmieni się sam, gdy tylko dotrze potwierdzenie."}
+            {paid ? "Wpłata dotarła i jest już widoczna w panelu klienta. Potwierdzenie ze Stripe przyjdzie na Twój e-mail." : "Bank jeszcze księguje przelew. Status w panelu zmieni się sam, gdy tylko dotrze potwierdzenie."}
           </p>
         </Rise>
 

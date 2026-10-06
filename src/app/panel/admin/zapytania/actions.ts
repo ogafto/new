@@ -87,7 +87,7 @@ export async function acceptInquiry(d: AcceptInput): Promise<AcceptResult> {
   let warn: string | undefined;
   if (deposit) {
     const r = await createPayment({
-      title: `${title} — zaliczka`,
+      title: `${title} (zaliczka)`,
       client_name: client,
       client_email: q.email,
       user_id: userId ?? "",

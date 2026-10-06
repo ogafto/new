@@ -11,8 +11,8 @@ export const metadata: Metadata = { title: "Moja strona" };
 
 const STEPS = [
   ["Wybierz część strony", "np. Baner, Oferta albo FAQ."],
-  ["Zmień albo dodaj", "tekst, zdjęcie, cenę — obok widzisz stronę na żywo."],
-  ["Kliknij „Zapisz zmiany”", "i gotowe — zmiana jest na stronie od razu."],
+  ["Zmień albo dodaj", "tekst, zdjęcie albo cenę. Obok widzisz stronę na żywo."],
+  ["Kliknij „Zapisz zmiany”", "i gotowe. Zmiana jest na stronie od razu."],
 ];
 
 export default async function ClientSite({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +62,7 @@ export default async function ClientSite({ params }: { params: Promise<{ id: str
             <span className="relative size-2.5 rounded-full bg-accent-2" />
           </span>
           <p className="text-[14px] leading-relaxed text-muted">
-            <span className="text-ink">Strona jest właśnie podłączana do panelu.</span> Za chwilę zobaczysz tu wszystkie jej treści gotowe do edycji — nic nie musisz robić.
+            <span className="text-ink">Strona jest właśnie podłączana do panelu.</span> Za chwilę zobaczysz tu wszystkie jej treści gotowe do edycji. Nic nie musisz robić.
           </p>
         </div>
       )}

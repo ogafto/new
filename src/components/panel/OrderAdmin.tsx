@@ -329,7 +329,7 @@ export function SiteLink({ orderId, site, sites, clientHasAccount, origin }: { o
 export function OrderPayments({ order, payments }: { order: { id: string; title: string; client_name: string; client_email: string | null; user_id: string | null; service: string | null }; payments: Pay[] }) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
-  const [title, setTitle] = useState(`${order.title} — `);
+  const [title, setTitle] = useState(`${order.title} (zaliczka)`);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
   const zl = (gr: number) => `${(gr / 100).toLocaleString("pl-PL", { maximumFractionDigits: 2 })} zł`;

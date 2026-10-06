@@ -25,7 +25,7 @@ export type NewPayment = { title: string; client_name: string; client_email: str
 export async function createPayment(d: NewPayment): Promise<R> {
   const admin = await requireAdmin();
   const amount = grosze(d.amount);
-  if (!d.title.trim()) return { error: "Podaj tytuł (np. Strona internetowa — zaliczka)." };
+  if (!d.title.trim()) return { error: "Podaj tytuł (np. Strona internetowa, zaliczka)." };
   if (!d.client_name.trim()) return { error: "Podaj klienta." };
   if (!amount || amount < 200) return { error: "Kwota musi wynosić co najmniej 2 zł." };
   if (d.client_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.client_email)) return { error: "Nieprawidłowy e-mail klienta." };

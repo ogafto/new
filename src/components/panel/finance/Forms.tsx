@@ -76,7 +76,7 @@ export function NewPaymentForm({ stripe, clients, services, onDone }: { stripe: 
       )}
 
       <Label label="Za co">
-        <input required className={`${field} h-11`} value={d.title} onChange={(e) => up({ title: e.target.value })} placeholder="np. Strona internetowa — zaliczka 50%" />
+        <input required className={`${field} h-11`} value={d.title} onChange={(e) => up({ title: e.target.value })} placeholder="np. Strona internetowa (zaliczka 50%)" />
       </Label>
       <div className="grid gap-4 sm:grid-cols-2">
         <Label label="Kwota (zł)">

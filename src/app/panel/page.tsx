@@ -43,7 +43,7 @@ export default async function ClientPanel({ searchParams }: { searchParams: Prom
       openRequests.length ? `${openRequests.length} ${plural(openRequests.length, "zgłoszenie czeka", "zgłoszenia czekają", "zgłoszeń czeka")} na odpowiedź` : null,
     ]
       .filter(Boolean)
-      .join(" · ") || "Zamów stronę, sklep, identyfikację albo projekt UI — wszystko ogarniesz tutaj";
+      .join(" · ") || "Zamów stronę, sklep, identyfikację albo projekt UI. Wszystko ogarniesz tutaj";
 
   const contact = [
     { label: "E-mail", value: site.email, href: `mailto:${site.email}`, icon: ICONS.mail },

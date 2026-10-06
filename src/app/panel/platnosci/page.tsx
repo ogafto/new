@@ -67,7 +67,7 @@ export default async function PaymentsPage() {
                       </span>
                     </a>
                   ) : (
-                    <p className="mt-3 text-[12.5px] text-muted">Płatność przelewem — szczegóły w mailu.</p>
+                    <p className="mt-3 text-[12.5px] text-muted">Płatność przelewem, szczegóły w mailu.</p>
                   )}
                 </li>
               ))}

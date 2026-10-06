@@ -95,7 +95,7 @@ export default function LiveSite({ siteId, href, tall = false }: { siteId: strin
           <div className="grid h-full place-items-center p-6 text-center">
             <div>
               <p className="text-[15px]">Ta strona nie pozwala pokazać się w podglądzie</p>
-              <p className="mt-1 text-[13px] text-dim">Otwórz ją w nowej karcie — zmiany są tam od razu po zapisaniu.</p>
+              <p className="mt-1 text-[13px] text-dim">Otwórz ją w nowej karcie, zmiany są tam od razu po zapisaniu.</p>
               <a href={href} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex h-10 items-center rounded-full bg-ink px-5 text-[13.5px] font-medium text-bg">
                 Otwórz stronę ↗
               </a>

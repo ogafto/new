@@ -100,7 +100,7 @@ export default async function OrdersPage() {
               })}
             </ul>
           ) : (
-            <Empty icon={ICONS.inbox} title="Brak zgłoszeń" text="Zamów usługę — odezwę się z pytaniami i wyceną.">
+            <Empty icon={ICONS.inbox} title="Brak zgłoszeń" text="Zamów usługę, a odezwę się z pytaniami i wyceną.">
               <Link href="/panel/zamow" className="btn btn-outline !h-10 text-[13.5px]">
                 Zamów usługę
               </Link>

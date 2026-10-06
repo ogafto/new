@@ -67,7 +67,7 @@ export async function submitOrderRequest(d: { services: string[]; description: s
     }).catch(() => {});
   const { revalidatePath } = await import("next/cache");
   revalidatePath("/panel", "layout");
-  return { ok: "Zamówienie wysłane — odezwę się wkrótce." };
+  return { ok: "Zamówienie wysłane. Odezwę się wkrótce." };
 }
 
 export async function updateProfile(d: { name: string; phone: string }): Promise<R> {

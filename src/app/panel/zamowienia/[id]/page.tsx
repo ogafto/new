@@ -112,7 +112,7 @@ export default async function ClientOrder({ params }: { params: Promise<{ id: st
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-dim">
                   <Icon d={ICONS.download} className="size-5" />
                 </span>
-                <p className="text-[14px] leading-relaxed text-muted">Gotowe pliki (np. logo, projekt, eksport strony) pojawią się tutaj — dostaniesz też maila, gdy będą do pobrania.</p>
+                <p className="text-[14px] leading-relaxed text-muted">Gotowe pliki (np. logo, projekt, eksport strony) pojawią się tutaj. Dostaniesz też maila, gdy będą do pobrania.</p>
               </div>
             )}
           </Panel>
@@ -143,7 +143,7 @@ export default async function ClientOrder({ params }: { params: Promise<{ id: st
                   </a>
                 )}
               </div>
-              <p className="relative mt-4 text-[12px] leading-relaxed text-muted">Teksty, zdjęcia i ofertę zmieniasz sam — zmiany pojawią się na stronie po zapisaniu.</p>
+              <p className="relative mt-4 text-[12px] leading-relaxed text-muted">Teksty, zdjęcia i ofertę zmieniasz sam. Zmiany pojawią się na stronie po zapisaniu.</p>
             </section>
           )}
 

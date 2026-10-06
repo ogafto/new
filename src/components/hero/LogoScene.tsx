@@ -16,7 +16,8 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
  *   (rozgrzanie shaderów), bez 60 kl./s pod zasłoną,
  * - jakość dopasowuje się do sprzętu: poziomy 0–2 (gęstość pikseli, rozdzielczość i próbki szkła), licznik klatek
  *   obniża poziom, gdy komputer nie nadąża; programowy WebGL (brak GPU) i „ogranicz ruch” → jedna nieruchoma klatka,
- * - wynik zapamiętany na czas sesji (powrót na stronę główną startuje od razu z dobrym poziomem).
+ * - poziom zapamiętany na czas sesji osobno dla każdej sceny (hero / tło konta), bez nieruchomej klatki — chwilowe
+ *   przycięcie na jednej stronie nie zamraża logo na pozostałych; gdy sprzęt znów nadąża, poziom wraca w górę.
  */
 
 type Tier = 0 | 1 | 2;
@@ -26,7 +27,7 @@ const LEVELS = [
   { dpr: 1, res: 512, samples: 5, backside: true },
   { dpr: 0.8, res: 384, samples: 3, backside: false },
 ] as const;
-const KEY = "afto:gl";
+const KEY = "afto:gl2";
 
 // programowy WebGL (SwiftShader, llvmpipe…) — GPU zablokowane albo brak; każda klatka to setki ms na procesorze
 let software: boolean | null = null;
@@ -47,16 +48,20 @@ function isSoftware() {
   return software;
 }
 
-function initialQuality(): Quality {
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as Quality | null;
-    if (saved && [0, 1, 2].includes(saved.tier)) return saved;
-  } catch {}
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (isSoftware()) return { tier: 1, still: true };
+// poziom startowy sprzętu (bez historii klatek)
+function baseTier(): Tier {
   const nav = navigator as Navigator & { deviceMemory?: number };
-  const weak = (navigator.hardwareConcurrency || 8) <= 4 || (nav.deviceMemory ?? 8) <= 4;
-  return { tier: weak ? 1 : 0, still: reduce };
+  return (navigator.hardwareConcurrency || 8) <= 4 || (nav.deviceMemory ?? 8) <= 4 ? 1 : 0;
+}
+
+function initialQuality(scene: string): Quality {
+  if (isSoftware()) return { tier: 1, still: true };
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  try {
+    const tier = JSON.parse(sessionStorage.getItem(`${KEY}:${scene}`) ?? "null");
+    if ([0, 1, 2].includes(tier)) return { tier, still };
+  } catch {}
+  return { tier: baseTier(), still };
 }
 
 // częstotliwość odświeżania (mediana odstępów klatek) — próg „nie nadąża” zależy od ekranu (60/120 Hz, tryb oszczędzania 30 Hz)
@@ -81,12 +86,15 @@ function useRefreshRate() {
   return hz;
 }
 
-// Licznik klatek (okna 1 s): 2 okna z rzędu za wolno → niższy poziom; na najniższym 3 okna poniżej połowy odświeżania
-// → nieruchoma klatka; 2 okna dramatycznie wolno (<15 kl./s, np. bardzo słabe GPU) → od razu najniższy poziom
+// Licznik klatek (okna 1 s): 3 okna z rzędu za wolno → niższy poziom; na najniższym 4 okna dramatycznie wolno
+// (<15 kl./s, bardzo słabe GPU) → nieruchoma klatka (tylko do końca wizyty na tej stronie); 2 okna dramatycznie wolno
+// na wyższym poziomie → od razu najniższy. 6 płynnych okien poniżej poziomu sprzętu → poziom wyżej (raz na scenę,
+// żeby jakość nie skakała w kółko)
 function Governor({ quality, onChange, hz }: { quality: Quality; onChange: (q: Quality) => void; hz: React.RefObject<number> }) {
-  const s = useRef({ warm: 0, t: 0, n: 0, bad: 0, severe: 0 });
+  const s = useRef({ warm: 0, t: 0, n: 0, bad: 0, severe: 0, good: 0 });
+  const raised = useRef(false);
   useEffect(() => {
-    s.current = { warm: 0, t: 0, n: 0, bad: 0, severe: 0 };
+    s.current = { warm: 0, t: 0, n: 0, bad: 0, severe: 0, good: 0 };
   }, [quality]);
   useFrame((_, dt) => {
     const a = s.current;
@@ -99,13 +107,18 @@ function Governor({ quality, onChange, hz }: { quality: Quality; onChange: (q: Q
     const fps = a.n / a.t;
     a.t = a.n = 0;
     const lowest = quality.tier === 2;
-    // (próg nie rośnie ponad 51/30 kl./s — na ekranach 120 Hz 90 kl./s to nadal płynnie)
-    const limit = lowest ? Math.min(30, hz.current * 0.5) : Math.min(51, hz.current * 0.85);
+    // (próg nie rośnie ponad 51 kl./s — na ekranach 120 Hz 90 kl./s to nadal płynnie)
+    const limit = Math.min(51, hz.current * 0.85);
     a.severe = fps < Math.min(15, hz.current * 0.4) ? a.severe + 1 : 0;
     a.bad = fps < limit ? a.bad + 1 : 0;
-    if (lowest && (a.severe >= 2 || a.bad >= 3)) onChange({ tier: 1, still: true });
+    a.good = fps >= Math.min(57, hz.current * 0.95) ? a.good + 1 : 0;
+    if (lowest && a.severe >= 4) onChange({ tier: 2, still: true });
     else if (!lowest && a.severe >= 2) onChange({ tier: 2, still: false });
-    else if (!lowest && a.bad >= 2) onChange({ tier: (quality.tier + 1) as Tier, still: false });
+    else if (!lowest && a.bad >= 3) onChange({ tier: (quality.tier + 1) as Tier, still: false });
+    else if (!raised.current && a.good >= 6 && quality.tier > baseTier()) {
+      raised.current = true;
+      onChange({ tier: (quality.tier - 1) as Tier, still: false });
+    }
   });
   return null;
 }
@@ -322,7 +335,8 @@ function Monogram({ ready, mobile, center = false, at, quality, moving }: { read
 
 export default function LogoScene({ ready, active, center = false, at }: { ready: boolean; active: boolean; center?: boolean; at?: number }) {
   const [mobile] = useState(() => window.innerWidth < 768);
-  const [quality, setQuality] = useState(initialQuality);
+  const scene = center ? "center" : "hero";
+  const [quality, setQuality] = useState(() => initialQuality(scene));
   const hz = useRefreshRate();
   // „puls” w trybie nieruchomej klatki: na chwilę włącz animację, żeby obrót było widać
   const [burst, setBurst] = useState(false);
@@ -342,14 +356,16 @@ export default function LogoScene({ ready, active, center = false, at }: { ready
   const lower = (q: Quality) => {
     setQuality(q);
     try {
-      sessionStorage.setItem(KEY, JSON.stringify(q));
+      // nieruchoma klatka nie przechodzi na kolejne strony — tylko poziom jakości
+      sessionStorage.setItem(`${KEY}:${scene}`, JSON.stringify(q.tier));
     } catch {}
   };
 
   const moving = !quality.still || burst;
   // poza ekranem — nic; za ekranem ładowania albo jako nieruchoma klatka — tylko na żądanie (pierwsza klatka kompiluje shadery)
   const frameloop = !active ? "never" : moving && ready ? "always" : "demand";
-  const dpr = Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, LEVELS[quality.tier].dpr);
+  // tło konta / wkrótce leży pod kartą i winietą — wyższa gęstość pikseli nic tam nie daje, a kosztuje
+  const dpr = Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, LEVELS[quality.tier].dpr, center ? 1.25 : 2);
 
   return (
     // antialias wyłączony: obraz i tak przechodzi przez EffectComposer (bez MSAA), więc wygładzanie płótna tylko kosztowało

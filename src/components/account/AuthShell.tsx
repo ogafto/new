@@ -80,7 +80,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
 
       <main className="relative z-10 flex min-h-[calc(100svh-92px)] items-center justify-center px-4 pb-16">
         <motion.div
-          className="beam relative w-full max-w-[460px] rounded-[30px] bg-bg/55 p-6 shadow-[0_40px_120px_-30px_rgb(139_108_255/0.35)] backdrop-blur-2xl sm:p-9"
+          className="beam relative w-full max-w-[460px] rounded-[30px] bg-bg/65 p-6 shadow-[0_40px_120px_-30px_rgb(139_108_255/0.35)] backdrop-blur-md sm:p-9"
           initial={{ opacity: 0, y: 40, scale: 0.96, filter: "blur(10px)" }}
           animate={leaving ? { opacity: 0, y: 0, scale: 0.9, filter: "blur(12px)" } : { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
           transition={leaving ? { duration: 0.6, ease } : { delay: 0.3, duration: 1.2, ease }}

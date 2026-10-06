@@ -15,7 +15,7 @@ export default async function OrderPage() {
   return (
     <>
       <PageHead kicker="Zamówienia" title="Zamów usługę" text="Wybierz, czego potrzebujesz — odezwę się z pytaniami i wyceną." />
-      <OrderForm services={services.map((s) => ({ id: s.id, name: s.name, price: s.price, time: s.time, description: s.description }))} />
+      <OrderForm services={services.map((s) => ({ id: s.id, name: s.name, price: s.price, time: s.time, description: s.description, icon: s.icon }))} />
     </>
   );
 }

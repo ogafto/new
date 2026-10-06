@@ -9,6 +9,7 @@ import { Arrow, Magnetic } from "./ui/Button";
 import { FadeUp, Heading } from "./ui/Reveal";
 import Input from "./ui/Input";
 import { content } from "@/lib/content";
+import { iconOf, iconPath } from "@/lib/service-icons";
 
 /*
  * Kontakt krok po kroku — jedno pytanie na ekran:
@@ -17,26 +18,13 @@ import { content } from "@/lib/content";
  */
 
 const ease = [0.16, 1, 0.3, 1] as const;
-const discord = site.socials.find((s) => s.label === "Discord")?.href ?? "https://discord.com/";
-
-const budgets = [
-  { v: "50–200 zł", hint: "Drobne zmiany, prosta wizytówka" },
-  { v: "200–500 zł", hint: "Strona-wizytówka, landing" },
-  { v: "500–1 000 zł", hint: "Strona firmowa, logo" },
-  { v: "1 000–3 000 zł", hint: "Sklep, rozbudowana strona" },
-  { v: "powyżej 3 000 zł", hint: "Duży projekt, marka od zera" },
-  { v: "Jeszcze nie wiem", hint: "Doradzę, co ma sens" },
-];
-const timelines = ["Jak najszybciej", "W ciągu miesiąca", "Bez pośpiechu"];
 const stepNames = ["Usługa", "Budżet", "Projekt", "Kontakt"];
-const questions = ["Czego potrzebujesz?", "Jaki masz budżet?", "Opowiedz o projekcie", "Gdzie mam odpisać?"];
 
 type Opt = string;
 // liczone przy renderze — lista usług może się zmienić z panelu (applyContent)
-const getOptions = (): { id: Opt; name: string; meta: string }[] => [
-  ...services.map((s) => ({ id: s.id, name: s.name, meta: `od ${s.price} zł · ${s.time}` })),
-  { id: "anim", name: "Animacja", meta: "Logo w ruchu, intro, social media" },
-  { id: "other", name: "Coś innego", meta: "Opiszesz w kolejnym kroku" },
+const getOptions = (): { id: Opt; name: string; meta: string; icon: string }[] => [
+  ...services.map((s) => ({ id: s.id, name: s.name, meta: [s.price ? `od ${s.price} zł` : "", s.time].filter(Boolean).join(" · ") || s.description, icon: iconOf(s) })),
+  { id: "other", name: "Coś innego", meta: "Opiszesz w kolejnym kroku", icon: "other" },
 ];
 
 const empty = { services: [] as Opt[], other: "", budget: "", message: "", timeline: "", name: "", email: "", phone: "" };
@@ -48,7 +36,7 @@ type Status = { state: "idle" | "sending" | "sent" | "error"; message?: string }
  * Warianty płyną z kafelka: rest → hover → on.
  */
 const spring = { type: "spring", stiffness: 380, damping: 18 } as const;
-function ServiceIcon({ id, on, hover }: { id: Opt; on: boolean; hover: boolean }) {
+function ServiceIcon({ icon: id, on, hover }: { icon: string; on: boolean; hover: boolean }) {
   const st = on ? "on" : hover ? "hover" : "rest";
   const svg = (children: React.ReactNode) => (
     <svg viewBox="0 0 24 24" className="size-[26px] overflow-visible" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -56,7 +44,7 @@ function ServiceIcon({ id, on, hover }: { id: Opt; on: boolean; hover: boolean }
     </svg>
   );
   let art: React.ReactNode;
-  if (id === "www")
+  if (id === "web")
     art = svg(
       <>
         <rect x="3" y="4.5" width="18" height="15" rx="2.2" />
@@ -122,6 +110,11 @@ function ServiceIcon({ id, on, hover }: { id: Opt; on: boolean; hover: boolean }
         />
       </>,
     );
+  else if (id !== "other")
+    // ikony z katalogu (usługi dodane w CMS): delikatny „podskok” po najechaniu i wypełnienie po wyborze
+    art = svg(
+      <motion.path d={iconPath(id)} animate={{ scale: st === "rest" ? 1 : 1.12, rotate: st === "hover" ? -6 : 0 }} transition={spring} style={{ originX: "50%", originY: "50%" }} />,
+    );
   else
     art = svg(
       <>
@@ -180,10 +173,12 @@ function Burst() {
   );
 }
 
-const direct = [
-  { label: "E-mail", value: site.email, short: "Napisz maila", href: `mailto:${site.email}`, copy: site.email, kind: "mail" as const },
-  { label: "Telefon", value: site.phone, short: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}`, copy: site.phone, kind: "phone" as const },
-  { label: "Discord", value: "Napisz na Discordzie", href: discord, kind: "discord" as const },
+// liczone przy renderze — e-mail, telefon i Discord zmieniają się w CMS
+type Direct = { label: string; value: string; short?: string; href: string; copy?: string; kind: "mail" | "phone" | "discord" };
+const getDirect = (): Direct[] => [
+  { label: "E-mail", value: site.email, short: "Napisz maila", href: `mailto:${site.email}`, copy: site.email, kind: "mail" },
+  { label: "Telefon", value: site.phone, short: site.phone, href: `tel:${site.phone.replace(/\s/g, "")}`, copy: site.phone, kind: "phone" },
+  { label: "Discord", value: "Napisz na Discordzie", href: site.socials.find((s) => s.label === "Discord")?.href ?? "https://discord.com/", kind: "discord" },
 ];
 
 // Animowane ikony kanałów — grają po najechaniu na wiersz (group/dc)
@@ -222,7 +217,7 @@ function DirectIcon({ kind }: { kind: "mail" | "phone" | "discord" }) {
 }
 
 // Bezpośredni kontakt: ikona w kółku (wypełnia się fioletem) + wartość + „Kopiuj”
-function DirectItem({ c }: { c: (typeof direct)[number] }) {
+function DirectItem({ c }: { c: Direct }) {
   const [copied, setCopied] = useState(false);
   return (
     <li className="group/dc flex items-center gap-3">
@@ -318,7 +313,7 @@ export default function Contact() {
   const topic = d.services
     .map((id) => {
       const s = services.find((x) => x.id === id);
-      return s ? `${s.name} (od ${s.price} zł)` : id === "anim" ? "Animacja" : "Coś innego";
+      return s ? `${s.name}${s.price ? ` (od ${s.price} zł)` : ""}` : "Coś innego";
     })
     .join(", ");
 
@@ -380,6 +375,10 @@ export default function Contact() {
   const summary = [serviceLabel, d.budget, d.message && step > 2 ? "Opis projektu" : ""].map((t, i) => ({ t, i })).filter((x) => x.t && x.i < step);
 
   const availability = content().availability;
+  const t = content().texts.contact;
+  const { budgets, timelines } = content().forms;
+  const questions = [t.q1, t.q2, t.q3, t.q4];
+  const direct = getDirect();
 
   return (
     <section id="kontakt" className="relative mx-auto max-w-[1400px] px-5 py-32 sm:px-10 lg:py-40">
@@ -389,7 +388,7 @@ export default function Contact() {
         <div className="flex min-w-0 flex-col lg:sticky lg:top-28 lg:self-start">
           <FadeUp>
             <div className="flex flex-wrap items-center gap-2.5">
-              <p className="kicker">Kontakt</p>
+              <p className="kicker">{t.kicker}</p>
               <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12.5px] ${availability.open ? "border-emerald-400/25 bg-emerald-400/[0.07] text-emerald-200" : "border-amber-300/25 bg-amber-300/[0.07] text-amber-100"}`}>
                 <span className="relative flex size-1.5">
                   <span className={`absolute inset-0 animate-ping rounded-full ${availability.open ? "bg-emerald-400/70" : "bg-amber-300/70"}`} />
@@ -402,18 +401,18 @@ export default function Contact() {
           <Heading
             className="mt-7 text-[clamp(2.6rem,4.3vw,4.4rem)]"
             lines={[
-              "Porozmawiajmy",
+              t.title,
               <span key="2" className="text-muted">
-                o Twoim projekcie
+                {t.accent}
               </span>,
             ]}
           />
           <FadeUp delay={0.1}>
-            <p className="mt-6 max-w-[380px] text-[17px] leading-relaxed text-muted">Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.</p>
+            <p className="mt-6 max-w-[380px] text-[17px] leading-relaxed text-muted">{t.text}</p>
           </FadeUp>
 
           <FadeUp delay={0.15} className="mt-12">
-            <p className="text-[13px] text-dim">Wolisz bezpośrednio?</p>
+            <p className="text-[13px] text-dim">{t.direct}</p>
             <ul className="mt-5 space-y-2">
               {direct.map((c) => (
                 <DirectItem key={c.label} c={c} />
@@ -450,8 +449,8 @@ export default function Contact() {
                     />
                   </svg>
                 </div>
-                <h3 className="h-display mt-8 text-[clamp(2.4rem,5vw,3.6rem)]">Dziękuję{sender ? `, ${sender}` : ""}.</h3>
-                <p className="mt-3 max-w-sm text-[17px] text-muted">Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.</p>
+                <h3 className="h-display mt-8 text-[clamp(2.4rem,5vw,3.6rem)]">{t.successTitle}{sender ? `, ${sender}` : ""}.</h3>
+                <p className="mt-3 max-w-sm text-[17px] text-muted">{t.successText}</p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   {[serviceLabel, d.budget, d.timeline].filter(Boolean).map((t) => (
                     <span key={t} className="rounded-full border border-line-2 px-3 py-1 text-[13px] text-muted">
@@ -551,7 +550,7 @@ export default function Contact() {
                               transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease }}
                               whileTap={{ scale: 0.98 }}
                             >
-                              <ServiceIcon id={o.id} on={on} hover={hov === o.id} />
+                              <ServiceIcon icon={o.icon} on={on} hover={hov === o.id} />
                               <span className="min-w-0 flex-1">
                                 <span className="block text-[17px] text-ink">{o.name}</span>
                                 <span className={`mt-0.5 block text-[13px] ${on ? "text-accent-2" : "text-dim"}`}>{o.meta}</span>
@@ -596,12 +595,12 @@ export default function Contact() {
                         <div>
                           <Input name="message" label="Czym zajmuje się firma? Co chcesz osiągnąć?" area value={d.message} onChange={set("message")} autoFocus />
                           <div className="mt-2 flex justify-between px-1 text-[12px] text-dim">
-                            <span>np. „Piekarnia we Wrocławiu, chcemy przyjmować zamówienia online”</span>
+                            <span>{t.example}</span>
                             <span className={`tabular-nums ${d.message.trim().length >= 10 ? "text-emerald-300" : ""}`}>{d.message.trim().length >= 10 ? "✓" : `${d.message.trim().length}/10`}</span>
                           </div>
                         </div>
                         <div>
-                          <p className="mb-3 text-[14px] text-muted">Kiedy chcesz zacząć? (opcjonalnie)</p>
+                          <p className="mb-3 text-[14px] text-muted">{t.when}</p>
                           <div className="flex flex-wrap gap-2">
                             {timelines.map((t) => (
                               <button
@@ -689,7 +688,7 @@ export default function Contact() {
                         className="group relative ml-auto flex h-[60px] items-center gap-6 overflow-hidden rounded-full bg-ink pr-2 pl-7 text-[16px] font-medium text-bg transition-opacity duration-500 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <span className="absolute inset-0 bg-accent [clip-path:circle(0%_at_90%_50%)] transition-[clip-path] duration-700 ease-out-expo group-hover:[clip-path:circle(150%_at_90%_50%)]" />
-                        <span className="relative transition-colors duration-500 group-hover:text-white">{step < 3 ? "Dalej" : status.state === "sending" ? "Wysyłanie…" : "Wyślij zapytanie"}</span>
+                        <span className="relative transition-colors duration-500 group-hover:text-white">{step < 3 ? "Dalej" : status.state === "sending" ? "Wysyłanie…" : t.send}</span>
                         <span className="relative grid size-11 place-items-center overflow-hidden rounded-full bg-bg text-ink">
                           <Arrow className={`size-4 transition-transform duration-500 ease-out-expo ${step < 3 ? "rotate-45 group-hover:translate-x-0.5" : "group-hover:translate-x-5 group-hover:-translate-y-5"}`} />
                           {step === 3 && <Arrow className="absolute size-4 -translate-x-5 translate-y-5 transition-transform duration-500 ease-out-expo group-hover:translate-x-0 group-hover:translate-y-0" />}

@@ -20,6 +20,8 @@ export type Offer = {
   forWho: string[];
   includes: { title: string; text: string }[];
   faq: { q: string; a: string }[];
+  hidden?: boolean; // usługa ukryta w CMS
+  custom?: string; // id własnej usługi z CMS, która przejęła tę podstronę (np. „Animacje”)
 };
 
 // miasta, w których najczęściej szukane są usługi — współpraca zdalna z całą Polską

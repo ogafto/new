@@ -69,11 +69,11 @@ export default function Hero({ recent }: { recent: Project[] }) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Magnetic>
-                <Button href="#kontakt">Wyceń projekt</Button>
+                <Button href="#kontakt">{content().texts.hero.cta}</Button>
               </Magnetic>
               <Magnetic>
                 <Button href="#portfolio" variant="outline">
-                  Portfolio
+                  {content().texts.hero.ctaSecondary}
                 </Button>
               </Magnetic>
             </div>
@@ -88,9 +88,16 @@ export default function Hero({ recent }: { recent: Project[] }) {
             transition={{ delay: 1, duration: 1, ease }}
           >
             <span className="text-right text-[14px] leading-snug text-muted transition-colors group-hover:text-ink">
-              Ostatnie
-              <br />
-              projekty
+              {(() => {
+                const [a, ...b] = content().texts.hero.recent.split(" ");
+                return (
+                  <>
+                    {a}
+                    <br />
+                    {b.join(" ")}
+                  </>
+                );
+              })()}
             </span>
             <span className="flex">
               {recent.map((p, i) => (

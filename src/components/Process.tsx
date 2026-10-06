@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { content } from "@/lib/content";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
 import { steps } from "@/lib/site";
 import { DesignArt, DirectionArt, LaunchArt, TalkArt } from "./process/Illustrations";
@@ -341,11 +342,11 @@ export default function Process() {
     <section id="proces" aria-labelledby="proces-title" className="relative overflow-x-clip pt-32 pb-16 lg:pt-44 lg:pb-24">
       <div ref={head} className="relative mx-auto max-w-[1400px] px-5 text-center sm:px-10">
         <motion.p className="kicker justify-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-          Proces
+          {content().texts.process.kicker}
         </motion.p>
         <h2 id="proces-title" className="h-display mx-auto mt-7 max-w-[1100px] text-[clamp(2.6rem,6.2vw,5.8rem)]">
-          <FillText text="Od pierwszej rozmowy" progress={hp} className="block" />
-          <FillText text="do premiery." progress={hp} className="block text-accent-2" />
+          <FillText text={content().texts.process.title} progress={hp} className="block" />
+          <FillText text={content().texts.process.accent} progress={hp} className="block text-accent-2" />
         </h2>
         <motion.p
           className="mx-auto mt-8 max-w-[520px] text-[17px] leading-relaxed text-muted"
@@ -354,7 +355,7 @@ export default function Process() {
           viewport={{ once: true }}
           transition={{ duration: 1, ease }}
         >
-          Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej — a postęp widzisz w swoim panelu.
+          {content().texts.process.text}
         </motion.p>
       </div>
 
@@ -418,10 +419,10 @@ export default function Process() {
         transition={{ duration: 1, ease }}
       >
         <p className="h-display text-[clamp(2rem,4vw,3.2rem)]">
-          Pierwszy krok to <span className="text-accent-2">krótka rozmowa.</span>
+          {content().texts.process.ctaText} <span className="text-accent-2">{content().texts.process.ctaAccent}</span>
         </p>
         <Magnetic>
-          <Button href="#kontakt">Umów rozmowę</Button>
+          <Button href="#kontakt">{content().texts.process.ctaButton}</Button>
         </Magnetic>
       </motion.div>
     </section>

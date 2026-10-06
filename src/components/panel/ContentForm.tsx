@@ -8,13 +8,15 @@ import { setSitePreview } from "@/app/panel/actions";
 import type { Content } from "@/lib/content";
 import type { ServiceId } from "@/lib/site";
 import { Badge, Btn, Card, ConfirmBtn, ease, field, Icon, ICONS, Label, Toggle } from "./kit";
+import IconPicker from "./IconPicker";
 import { SectionCard, SectionNav, type NavItem, type NavStatus } from "./settings/SectionNav";
 
-type Section = "soon" | "hero" | "notice" | "contact" | "services" | "process" | "seo" | "legal" | "history";
+type Section = "soon" | "hero" | "texts" | "notice" | "contact" | "services" | "process" | "seo" | "legal" | "history";
 const ROCKET = "M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2M9 15l-3-3a14 14 0 017-8c2.5-1 5-1 7-1 0 2 0 4.5-1 7a14 14 0 01-8 7zM9 12H5l2-4h4M12 15v4l4-2v-4M15 9h.01";
 const SECTIONS: { value: Section; label: string; icon: string; keys: (keyof Content)[] }[] = [
   { value: "soon", label: "Tryb zapowiedzi", icon: ROCKET, keys: ["soon"] },
   { value: "hero", label: "Strona główna", icon: ICONS.home, keys: ["hero"] },
+  { value: "texts", label: "Teksty sekcji", icon: ICONS.doc, keys: ["texts", "forms"] },
   { value: "notice", label: "Ogłoszenie i status", icon: ICONS.bell, keys: ["announcement", "availability"] },
   { value: "contact", label: "Kontakt", icon: ICONS.phone, keys: ["email", "phone", "socials"] },
   { value: "services", label: "Usługi i ceny", icon: ICONS.money, keys: ["services", "customServices", "hiddenServices"] },
@@ -23,6 +25,41 @@ const SECTIONS: { value: Section; label: string; icon: string; keys: (keyof Cont
   { value: "legal", label: "Dane firmy", icon: ICONS.shield, keys: ["legal"] },
   { value: "history", label: "Historia", icon: ICONS.clock, keys: [] },
 ];
+const TEXT_GROUPS: { key: keyof Content["texts"]; title: string; text: string; icon: string; fields: Record<string, [string, "line" | "area"]> }[] = [
+  { key: "hero", title: "Pierwszy ekran", text: "Przyciski pod nagłówkiem (nagłówek i opis są w „Strona główna”).", icon: ICONS.home, fields: { cta: ["Przycisk główny", "line"], ctaSecondary: ["Przycisk drugi", "line"], recent: ["Podpis przy miniaturach projektów", "line"] } },
+  { key: "work", title: "Portfolio", text: "Sekcja z projektami na stronie głównej.", icon: ICONS.grid, fields: { label: ["Duży napis / etykieta", "line"], text: ["Opis pod sekcją", "area"], more: ["Link do całego portfolio", "line"], view: ["Przycisk na projekcie", "line"] } },
+  {
+    key: "process",
+    title: "Proces",
+    text: "Nagłówek nad etapami i wezwanie na dole (same etapy są w „Proces”).",
+    icon: ICONS.layers,
+    fields: { kicker: ["Etykieta", "line"], title: ["Nagłówek — linia 1", "line"], accent: ["Nagłówek — linia 2 (fiolet)", "line"], text: ["Opis", "area"], ctaText: ["Wezwanie — początek", "line"], ctaAccent: ["Wezwanie — wyróżnione", "line"], ctaButton: ["Przycisk", "line"] },
+  },
+  {
+    key: "contact",
+    title: "Kontakt i formularz",
+    text: "Nagłówek sekcji, pytania kolejnych kroków formularza i podziękowanie po wysłaniu.",
+    icon: ICONS.mail,
+    fields: {
+      kicker: ["Etykieta", "line"],
+      title: ["Nagłówek — linia 1", "line"],
+      accent: ["Nagłówek — linia 2", "line"],
+      text: ["Opis", "area"],
+      direct: ["Nad danymi kontaktowymi", "line"],
+      q1: ["Pytanie 1 (usługa)", "line"],
+      q2: ["Pytanie 2 (budżet)", "line"],
+      q3: ["Pytanie 3 (opis)", "line"],
+      q4: ["Pytanie 4 (kontakt)", "line"],
+      example: ["Przykład w opisie projektu", "line"],
+      when: ["Pytanie o termin", "line"],
+      send: ["Przycisk wysyłania", "line"],
+      successTitle: ["Po wysłaniu — nagłówek", "line"],
+      successText: ["Po wysłaniu — tekst", "area"],
+    },
+  },
+  { key: "footer", title: "Stopka", text: "Przewijany napis i hasło pod logo.", icon: ICONS.site, fields: { marquee: ["Przewijany napis", "line"], tagline: ["Hasło pod logo", "area"] } },
+];
+
 type Version = { ts: number; actor: string | null; section: string };
 const when = (ts: number) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Warsaw" }).format(ts);
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -519,7 +556,7 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     <Card key={s.id} delay={i * 0.04} className={hidden ? "opacity-60" : ""}>
                       <div className="mb-5 flex items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-[16px] font-medium">{s.name}</h2>
+                          <h2 className="text-[16px] font-medium">{v.name || s.name}</h2>
                           <div className="mt-2">
                             <Toggle checked={!hidden} onChange={(on) => set("hiddenServices", on ? c.hiddenServices.filter((x) => x !== s.id) : [...c.hiddenServices, s.id])} label={hidden ? "Ukryta" : "Widoczna w formularzach"} />
                           </div>
@@ -530,6 +567,12 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                         </span>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
+                        <Label label="Nazwa" className="sm:col-span-2">
+                          <input className={input} value={v.name ?? s.name} maxLength={60} onChange={(e) => upd({ name: e.target.value })} />
+                        </Label>
+                        <div className="sm:col-span-2">
+                          <IconPicker value={v.icon ?? ""} name={v.name || s.name} onChange={(icon) => upd({ icon: icon || ({ www: "web", shop: "shop", brand: "brand", ui: "ui" } as Record<string, string>)[s.id] || "other" })} />
+                        </div>
                         <Label label="Cena od (zł)">
                           <input type="number" min={0} inputMode="numeric" className={`${input} tabular-nums`} value={v.price} onChange={(e) => upd({ price: Number(e.target.value) })} />
                         </Label>
@@ -558,6 +601,9 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                         <Label label="Nazwa" className="sm:col-span-2">
                           <input className={input} value={v.name} maxLength={60} onChange={(e) => upd({ name: e.target.value })} placeholder="np. Kampania Google Ads" />
                         </Label>
+                        <div className="sm:col-span-2">
+                          <IconPicker value={v.icon ?? ""} name={v.name} onChange={(icon) => upd({ icon })} />
+                        </div>
                         <Label label="Cena od (zł)">
                           <input type="number" min={0} inputMode="numeric" className={`${input} tabular-nums`} value={v.price} onChange={(e) => upd({ price: Number(e.target.value) })} />
                         </Label>
@@ -573,7 +619,7 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                 })}
                 <button
                   type="button"
-                  onClick={() => set("customServices", [...c.customServices, { id: `c-${Math.random().toString(36).slice(2, 8)}`, name: "", price: 0, time: "", description: "" }])}
+                  onClick={() => set("customServices", [...c.customServices, { id: `c-${Math.random().toString(36).slice(2, 8)}`, name: "", price: 0, time: "", description: "", icon: "" }])}
                   disabled={c.customServices.length >= 20}
                   className="group flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-line-2 text-muted transition-colors hover:border-accent/50 hover:bg-accent/[0.04] hover:text-ink disabled:opacity-40"
                 >
@@ -581,8 +627,63 @@ export default function ContentForm({ initial, defaults, services, history }: { 
                     <Icon d={ICONS.plus} className="size-5" />
                   </span>
                   <span className="text-[15px]">Dodaj usługę</span>
-                  <span className="text-[12.5px] text-dim">Pojawi się w formularzu kontaktowym i w „Zamów usługę” u klientów</span>
+                  <span className="text-[12.5px] text-dim">Pojawi się w formularzu na stronie, na /uslugi, w stopce i w „Zamów usługę” u klientów</span>
                 </button>
+              </div>
+            )}
+
+            {tab === "texts" && (
+              <div className="grid gap-4 xl:grid-cols-2">
+                {TEXT_GROUPS.map((g) => (
+                  <SectionCard key={g.key} icon={g.icon} title={g.title} text={g.text}>
+                    <div className="space-y-4">
+                      {Object.entries(g.fields).map(([f, [label, kind]]) => {
+                        const val = (c.texts[g.key] as Record<string, string>)[f] ?? "";
+                        const upd = (v: string) => set("texts", { ...c.texts, [g.key]: { ...c.texts[g.key], [f]: v } });
+                        return (
+                          <Label key={f} label={label}>
+                            {kind === "area" ? <textarea rows={2} className={area} value={val} onChange={(e) => upd(e.target.value)} /> : <input className={input} value={val} onChange={(e) => upd(e.target.value)} />}
+                          </Label>
+                        );
+                      })}
+                    </div>
+                  </SectionCard>
+                ))}
+                <SectionCard icon={ICONS.money} title="Formularz — budżety" text="Kafelki budżetu na stronie i w „Zamów usługę” u klientów.">
+                  <div className="space-y-2">
+                    {c.forms.budgets.map((b, i) => (
+                      <div key={i} className="grid grid-cols-[1fr_1.4fr_auto] gap-2">
+                        <input className={input} value={b.v} onChange={(e) => set("forms", { ...c.forms, budgets: c.forms.budgets.map((x, j) => (j === i ? { ...x, v: e.target.value } : x)) })} placeholder="np. 500–1 000 zł" />
+                        <input className={input} value={b.hint} onChange={(e) => set("forms", { ...c.forms, budgets: c.forms.budgets.map((x, j) => (j === i ? { ...x, hint: e.target.value } : x)) })} placeholder="Podpowiedź" />
+                        <button type="button" onClick={() => set("forms", { ...c.forms, budgets: c.forms.budgets.filter((_, j) => j !== i) })} className="grid size-11 place-items-center rounded-xl text-dim hover:bg-red-400/10 hover:text-red-200" aria-label="Usuń">
+                          <Icon d={ICONS.trash} className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {c.forms.budgets.length < 10 && (
+                      <button type="button" onClick={() => set("forms", { ...c.forms, budgets: [...c.forms.budgets, { v: "", hint: "" }] })} className="flex h-10 items-center gap-2 rounded-full bg-white/[0.05] px-4 text-[13px] text-muted hover:text-ink">
+                        <Icon d={ICONS.plus} className="size-4" /> Dodaj budżet
+                      </button>
+                    )}
+                  </div>
+                </SectionCard>
+                <SectionCard icon={ICONS.clock} title="Formularz — terminy" text="Odpowiedzi na pytanie „Kiedy chcesz zacząć?” (strona i panel klienta).">
+                  <div className="space-y-2">
+                    {c.forms.timelines.map((t, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input className={input} value={t} onChange={(e) => set("forms", { ...c.forms, timelines: c.forms.timelines.map((x, j) => (j === i ? e.target.value : x)) })} />
+                        <button type="button" onClick={() => set("forms", { ...c.forms, timelines: c.forms.timelines.filter((_, j) => j !== i) })} className="grid size-11 shrink-0 place-items-center rounded-xl text-dim hover:bg-red-400/10 hover:text-red-200" aria-label="Usuń">
+                          <Icon d={ICONS.trash} className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {c.forms.timelines.length < 8 && (
+                      <button type="button" onClick={() => set("forms", { ...c.forms, timelines: [...c.forms.timelines, ""] })} className="flex h-10 items-center gap-2 rounded-full bg-white/[0.05] px-4 text-[13px] text-muted hover:text-ink">
+                        <Icon d={ICONS.plus} className="size-4" /> Dodaj termin
+                      </button>
+                    )}
+                  </div>
+                </SectionCard>
               </div>
             )}
 

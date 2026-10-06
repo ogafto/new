@@ -36,7 +36,7 @@ export const nav = [
 export type ServiceId = "www" | "shop" | "brand" | "ui";
 
 // wbudowane usługi mają stałe id (podstrony /uslugi), własne usługi z panelu dostają id „c-…”
-export type Service = { id: string; name: string; plural: string; price: number; time: string; description: string; custom?: boolean };
+export type Service = { id: string; name: string; plural: string; price: number; time: string; description: string; custom?: boolean; icon?: string };
 
 export const services: Service[] = [
   {

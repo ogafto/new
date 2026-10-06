@@ -8,6 +8,8 @@ import { Arrow } from "@/components/ui/Button";
 import { offers } from "@/lib/offer";
 import { site } from "@/lib/site";
 import { loadContent } from "@/lib/content-server";
+import { extraServices } from "@/lib/content";
+import { iconOf, iconPath } from "@/lib/service-icons";
 
 const description = "Usługi web designera i web developera: projektowanie stron internetowych, sklepy internetowe, identyfikacja wizualna, projekt UI/UX i animacje. Cała Polska.";
 
@@ -27,7 +29,7 @@ export default async function ServicesPage() {
           "@context": "https://schema.org",
           "@type": "ItemList",
           name: "Usługi afto.works",
-          itemListElement: offers.map((o, i) => ({ "@type": "ListItem", position: i + 1, url: `${site.url}/uslugi/${o.slug}`, name: o.h1 })),
+          itemListElement: offers.filter((o) => !o.hidden).map((o, i) => ({ "@type": "ListItem", position: i + 1, url: `${site.url}/uslugi/${o.slug}`, name: o.h1 })),
         }}
       />
       <Navbar />
@@ -44,7 +46,7 @@ export default async function ServicesPage() {
             Projektuję i koduję strony internetowe, sklepy, identyfikacje wizualne i interfejsy aplikacji. Jedna osoba od pomysłu do publikacji — dla firm z całej Polski.
           </p>
           <ul className="mt-16 border-t border-line">
-            {offers.map((o, i) => (
+            {offers.filter((o) => !o.hidden).map((o, i) => (
               <FadeUp as="li" key={o.slug} delay={i * 0.05} y={16}>
                 <TLink href={`/uslugi/${o.slug}`} label={o.name} className="group relative flex flex-col gap-3 border-b border-line py-8 sm:flex-row sm:items-center sm:gap-10 sm:py-10">
                   <span className="absolute inset-x-0 -bottom-px h-px origin-left scale-x-0 bg-gradient-to-r from-accent via-accent-2 to-transparent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
@@ -59,6 +61,28 @@ export default async function ServicesPage() {
                   </span>
                   <span className="flex shrink-0 items-center gap-4">
                     <span className="text-[14px] text-dim">{o.price ? `od ${o.price} zł` : "wycena indywidualna"}</span>
+                    <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-accent group-hover:text-white">
+                      <Arrow className="size-4" />
+                    </span>
+                  </span>
+                </TLink>
+              </FadeUp>
+            ))}
+            {extraServices().map((x, i) => (
+              <FadeUp as="li" key={x.id} delay={(offers.length + i) * 0.05} y={16}>
+                <TLink href="/#kontakt" label={x.name} className="group relative flex flex-col gap-3 border-b border-line py-8 sm:flex-row sm:items-center sm:gap-10 sm:py-10">
+                  <span className="absolute inset-x-0 -bottom-px h-px origin-left scale-x-0 bg-gradient-to-r from-accent via-accent-2 to-transparent transition-transform duration-700 ease-out-expo group-hover:scale-x-100" />
+                  <span className="grid size-14 shrink-0 place-items-center rounded-2xl border border-line-2 text-muted transition-colors duration-500 group-hover:border-accent/50 group-hover:bg-accent/15 group-hover:text-accent-2">
+                    <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d={iconPath(iconOf(x))} />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <h2 className="h-display text-[clamp(1.8rem,3.6vw,3rem)] transition-colors duration-500 group-hover:text-accent-2">{x.name}</h2>
+                    {x.description && <span className="mt-2 block max-w-[640px] text-[15.5px] leading-relaxed text-muted">{x.description}</span>}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-4">
+                    <span className="text-[14px] text-dim">{x.price ? `od ${x.price} zł` : "wycena indywidualna"}</span>
                     <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-accent group-hover:text-white">
                       <Arrow className="size-4" />
                     </span>

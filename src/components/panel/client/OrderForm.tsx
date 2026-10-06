@@ -5,12 +5,11 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { submitOrderRequest } from "@/app/panel/actions";
 import { Card, ease, field, Icon, ICONS } from "../kit";
+import { iconOf, iconPath } from "@/lib/service-icons";
+import { content } from "@/lib/content";
 
-type Service = { id: string; name: string; price: number; time: string; description: string };
+type Service = { id: string; name: string; price: number; time: string; description: string; icon?: string };
 
-const SERVICE_ICON: Record<string, string> = { www: ICONS.globe, shop: ICONS.card, brand: ICONS.star, ui: ICONS.grid };
-const BUDGETS = ["do 500 zł", "500–1500 zł", "1500–3000 zł", "3000+ zł", "Do ustalenia"];
-const TIMES = ["Jak najszybciej", "W ciągu miesiąca", "1–3 miesiące", "Bez pośpiechu"];
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -29,7 +28,10 @@ export default function OrderForm({ services }: { services: Service[] }) {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [pending, start] = useTransition();
-  const all = [...services.map((s) => s.name), "Animacja", "Coś innego"];
+  const all = [...services.map((s) => s.name), "Coś innego"];
+  // budżety i terminy z CMS (te same co w formularzu na stronie)
+  const BUDGETS = content().forms.budgets.map((b) => b.v);
+  const TIMES = content().forms.timelines;
   const toggle = (n: string) => setPicked((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]));
 
   if (done)
@@ -106,14 +108,21 @@ export default function OrderForm({ services }: { services: Service[] }) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className={`grid size-10 place-items-center rounded-xl transition-colors ${on ? "bg-accent text-white" : "bg-white/[0.05] text-muted group-hover:text-accent-2"}`}>
-                      <Icon d={SERVICE_ICON[s.id] ?? ICONS.layers} />
+                      <Icon d={iconPath(iconOf(s))} />
                     </span>
                     <span className={`grid size-6 place-items-center rounded-full border transition-colors ${on ? "border-accent bg-accent text-white" : "border-line-2"}`}>{on && <Icon d={ICONS.check} className="size-3.5" />}</span>
                   </div>
                   <p className="mt-4 text-[15.5px]">{s.name}</p>
                   <p className="mt-1 text-[12.5px] leading-relaxed text-dim">{s.description}</p>
                   <p className="mt-3 text-[13px] text-muted">
-                    od <span className="text-ink tabular-nums">{s.price} zł</span> · {s.time}
+                    {s.price ? (
+                      <>
+                        od <span className="text-ink tabular-nums">{s.price} zł</span>
+                      </>
+                    ) : (
+                      "wycena indywidualna"
+                    )}
+                    {s.time ? ` · ${s.time}` : ""}
                   </p>
                 </motion.button>
               );

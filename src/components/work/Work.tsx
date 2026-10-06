@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { content } from "@/lib/content";
 import Image from "next/image";
 import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useLenis } from "lenis/react";
@@ -196,7 +197,7 @@ export default function Work({ projects }: { projects: Project[] }) {
 
               {/* góra */}
               <div className="absolute inset-x-5 top-24 flex items-start justify-between sm:inset-x-10 sm:top-28">
-                <p className="text-[13px] text-white/70">Portfolio</p>
+                <p className="text-[13px] text-white/70">{content().texts.work.label}</p>
                 <p className="flex items-baseline gap-1.5 text-[13px] text-white/70 tabular-nums">
                   <Roll k={current} className="text-white">
                     0{current + 1}
@@ -227,8 +228,8 @@ export default function Work({ projects }: { projects: Project[] }) {
                   className="group pointer-events-auto flex shrink-0 items-center gap-4 self-start rounded-full bg-white py-2 pr-2 pl-6 text-[15px] font-medium text-bg md:self-auto"
                 >
                   <span className="roll">
-                    <span>Zobacz projekt</span>
-                    <span aria-hidden>Zobacz projekt</span>
+                    <span>{content().texts.work.view}</span>
+                    <span aria-hidden>{content().texts.work.view}</span>
                   </span>
                   <span className="grid size-11 place-items-center rounded-full bg-accent text-white transition-transform duration-700 ease-out-expo group-hover:rotate-45">
                     <Arrow className="size-4" />
@@ -259,7 +260,7 @@ export default function Work({ projects }: { projects: Project[] }) {
           {/* napis nad ramką (odwrócone kolory) — znika, gdy ramka wypełnia ekran */}
           <motion.div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center mix-blend-difference" style={{ scale: wordScale, opacity: wordOpacity, y: wordShift }}>
             <h2 id="portfolio-title" className="h-display text-[clamp(4.5rem,21vw,22rem)] leading-[0.8] tracking-[-0.06em] text-white">
-              Portfolio
+              {content().texts.work.label}
             </h2>
             <p className="mt-6 hidden text-[14px] text-white/70 landscape:block">Wybrane projekty · 0{N}</p>
           </motion.div>
@@ -268,9 +269,9 @@ export default function Work({ projects }: { projects: Project[] }) {
 
       {/* całe portfolio */}
       <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-6 px-5 pt-16 pb-8 sm:flex-row sm:items-center sm:px-10">
-        <p className="max-w-md text-[17px] leading-relaxed text-muted">Strony, sklepy, identyfikacje i projekty UI/UX — każdy zaprojektowany od zera, pod konkretny cel.</p>
+        <p className="max-w-md text-[17px] leading-relaxed text-muted">{content().texts.work.text}</p>
         <TLink href="/portfolio" label="Portfolio" className="group flex items-center gap-4 text-[clamp(1.4rem,2.4vw,2rem)] tracking-[-0.02em]">
-          <span className="link-u">Całe portfolio</span>
+          <span className="link-u">{content().texts.work.more}</span>
           <span className="text-[14px] text-dim">{projects.length}</span>
           <span className="grid size-12 place-items-center rounded-full border border-line-2 transition-all duration-700 ease-out-expo group-hover:rotate-45 group-hover:border-transparent group-hover:bg-ink group-hover:text-bg">
             <Arrow className="size-4" />

@@ -8,11 +8,11 @@ import { offers } from "./offer";
  * czytające te obiekty nie wymagają zmian. Plik jest wspólny dla serwera i przeglądarki.
  */
 
-export type ServiceContent = { price: number; time: string; description: string };
+export type ServiceContent = { name: string; price: number; time: string; description: string; icon: string };
 export type StepContent = { title: string; lead: string; text: string; points: string[] };
 export type Announcement = { enabled: boolean; text: string; label: string; link: string };
 export type Availability = { open: boolean; text: string };
-export type CustomService = { id: string; name: string; price: number; time: string; description: string };
+export type CustomService = { id: string; name: string; price: number; time: string; description: string; icon?: string };
 
 export type Soon = { enabled: boolean; kicker: string; title: string; accent: string; text: string; button: string; link: string; date: string };
 
@@ -30,6 +30,55 @@ export type Content = {
   availability: Availability;
   steps: StepContent[];
   soon: Soon;
+  texts: Texts;
+  forms: Forms;
+};
+
+/* Teksty sekcji strony (nagłówki, opisy, przyciski) — wszystko, co nie jest danymi powyżej */
+export const DEFAULT_TEXTS = {
+  hero: { cta: "Wyceń projekt", ctaSecondary: "Portfolio", recent: "Ostatnie projekty" },
+  work: { label: "Portfolio", text: "Strony, sklepy, identyfikacje i projekty UI/UX — każdy zaprojektowany od zera, pod konkretny cel.", more: "Całe portfolio", view: "Zobacz projekt" },
+  process: {
+    kicker: "Proces",
+    title: "Od pierwszej rozmowy",
+    accent: "do premiery.",
+    text: "Cztery etapy, jasne zasady. Na każdym wiesz, co się dzieje i co będzie dalej — a postęp widzisz w swoim panelu.",
+    ctaText: "Pierwszy krok to",
+    ctaAccent: "krótka rozmowa.",
+    ctaButton: "Umów rozmowę",
+  },
+  contact: {
+    kicker: "Kontakt",
+    title: "Porozmawiajmy",
+    accent: "o Twoim projekcie",
+    text: "Cztery krótkie pytania — zajmie to mniej niż minutę. Odezwę się z pytaniami i wyceną.",
+    direct: "Wolisz bezpośrednio?",
+    q1: "Czego potrzebujesz?",
+    q2: "Jaki masz budżet?",
+    q3: "Opowiedz o projekcie",
+    q4: "Gdzie mam odpisać?",
+    example: "np. „Piekarnia we Wrocławiu, chcemy przyjmować zamówienia online”",
+    when: "Kiedy chcesz zacząć? (opcjonalnie)",
+    send: "Wyślij zapytanie",
+    successTitle: "Dziękuję",
+    successText: "Wiadomość dotarła — odezwę się najszybciej, jak to możliwe.",
+  },
+  footer: { marquee: "Zacznijmy projekt", tagline: "Projektuję i koduję strony, które wyglądają drogo i sprzedają." },
+};
+export type Texts = { [K in keyof typeof DEFAULT_TEXTS]: { [F in keyof (typeof DEFAULT_TEXTS)[K]]: string } };
+
+/* Opcje formularzy (strona: kontakt, panel: „Zamów usługę”) */
+export type Forms = { budgets: { v: string; hint: string }[]; timelines: string[] };
+export const DEFAULT_FORMS: Forms = {
+  budgets: [
+    { v: "50–200 zł", hint: "Drobne zmiany, prosta wizytówka" },
+    { v: "200–500 zł", hint: "Strona-wizytówka, landing" },
+    { v: "500–1 000 zł", hint: "Strona firmowa, logo" },
+    { v: "1 000–3 000 zł", hint: "Sklep, rozbudowana strona" },
+    { v: "powyżej 3 000 zł", hint: "Duży projekt, marka od zera" },
+    { v: "Jeszcze nie wiem", hint: "Doradzę, co ma sens" },
+  ],
+  timelines: ["Jak najszybciej", "W ciągu miesiąca", "1–3 miesiące", "Bez pośpiechu"],
 };
 
 export const DEFAULT_HERO = {
@@ -64,7 +113,8 @@ export const DEFAULT_SOON: Soon = {
   date: "",
 };
 
-const baseServices = Object.fromEntries(BUILTIN_SERVICES.map((s) => [s.id, { price: s.price, time: s.time, description: s.description }])) as Record<ServiceId, ServiceContent>;
+const BUILTIN_ICON: Record<string, string> = { www: "web", shop: "shop", brand: "brand", ui: "ui" };
+const baseServices = Object.fromEntries(BUILTIN_SERVICES.map((s) => [s.id, { name: s.name, price: s.price, time: s.time, description: s.description, icon: BUILTIN_ICON[s.id] ?? "other" }])) as Record<ServiceId, ServiceContent>;
 
 export const defaultContent = (): Content => ({
   ...structuredClone(base),
@@ -77,6 +127,8 @@ export const defaultContent = (): Content => ({
   availability: { ...DEFAULT_AVAILABILITY },
   steps: structuredClone(baseSteps),
   soon: { ...DEFAULT_SOON },
+  texts: structuredClone(DEFAULT_TEXTS),
+  forms: structuredClone(DEFAULT_FORMS),
 });
 
 /** Scala zapisane dane z domyślnymi (brakujące pola = domyślne) */
@@ -97,12 +149,17 @@ export function mergeContent(saved: Partial<Content> | null | undefined): Conten
     customServices: (Array.isArray(saved.customServices) ? saved.customServices : [])
       .filter((x) => x && typeof x.id === "string" && typeof x.name === "string" && x.name.trim())
       .slice(0, 20)
-      .map((x) => ({ id: x.id.slice(0, 40), name: x.name.slice(0, 60), price: Math.max(0, Number(x.price) || 0), time: String(x.time ?? "").slice(0, 40), description: String(x.description ?? "").slice(0, 300) })),
+      .map((x) => ({ id: x.id.slice(0, 40), name: x.name.slice(0, 60), price: Math.max(0, Number(x.price) || 0), time: String(x.time ?? "").slice(0, 40), description: String(x.description ?? "").slice(0, 300), icon: typeof x.icon === "string" ? x.icon.slice(0, 20) : "" })),
     hiddenServices: (Array.isArray(saved.hiddenServices) ? saved.hiddenServices : []).filter((x) => BUILTIN_SERVICES.some((b) => b.id === x)),
     seo: pick(d.seo, saved.seo),
     announcement: { ...pick(d.announcement, saved.announcement), enabled: typeof saved.announcement?.enabled === "boolean" ? saved.announcement.enabled : d.announcement.enabled },
     availability: { ...pick(d.availability, saved.availability), open: typeof saved.availability?.open === "boolean" ? saved.availability.open : d.availability.open },
     soon: { ...pick(d.soon, saved.soon), enabled: typeof saved.soon?.enabled === "boolean" ? saved.soon.enabled : false, link: typeof saved.soon?.link === "string" ? saved.soon.link : "", date: typeof saved.soon?.date === "string" ? saved.soon.date : "" },
+    texts: Object.fromEntries(Object.entries(d.texts).map(([k, v]) => [k, pick(v, (saved.texts as Record<string, unknown> | undefined)?.[k])])) as Texts,
+    forms: {
+      budgets: Array.isArray(saved.forms?.budgets) && saved.forms.budgets.some((b) => b?.v) ? saved.forms.budgets.filter((b) => b && typeof b.v === "string" && b.v.trim()).slice(0, 10).map((b) => ({ v: b.v.slice(0, 40), hint: String(b.hint ?? "").slice(0, 80) })) : d.forms.budgets,
+      timelines: Array.isArray(saved.forms?.timelines) && saved.forms.timelines.some(Boolean) ? saved.forms.timelines.map(String).map((x) => x.trim()).filter(Boolean).slice(0, 8) : d.forms.timelines,
+    },
     steps: d.steps.map((st, i) => {
       const v = saved.steps?.[i];
       return { ...pick({ title: st.title, lead: st.lead, text: st.text }, v), points: Array.isArray(v?.points) && v.points.length ? v.points.map(String).slice(0, 5) : st.points };
@@ -122,14 +179,27 @@ export function applyContent(c: Content) {
   Object.assign(site.legal, c.legal);
   for (const s of BUILTIN_SERVICES) Object.assign(s, c.services[s.id as ServiceId]);
   // widoczne wbudowane + własne (formularz kontaktowy, „Zamów usługę” w panelu)
-  const next = [...BUILTIN_SERVICES.filter((s) => !c.hiddenServices.includes(s.id)), ...c.customServices.map((x) => ({ ...x, plural: x.name, custom: true }))];
+  const next = [...BUILTIN_SERVICES.filter((s) => !c.hiddenServices.includes(s.id)), ...c.customServices.map((x) => ({ ...x, icon: x.icon || undefined, plural: x.name, custom: true }))];
   services.splice(0, services.length, ...next);
   c.steps.forEach((st, i) => steps[i] && Object.assign(steps[i], { ...st, points: [...st.points] }));
+  // podstrony /uslugi: cena, czas i widoczność z CMS; podstrona bez wbudowanej usługi (np. „Animacje”)
+  // przejmuje cenę własnej usługi o podobnej nazwie — wtedy obie są jednym wpisem na stronie
+  const loose = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z]/g, "");
   for (const o of offers) {
     const s = o.service && c.services[o.service];
     if (s) {
       o.price = s.price;
       o.time = s.time;
+      o.hidden = c.hiddenServices.includes(o.service!);
+    } else {
+      const k = loose(o.name).slice(0, 5);
+      const cs = c.customServices.find((x) => loose(x.name).startsWith(k));
+      o.custom = cs?.id;
+      o.price = cs?.price ?? o.price;
+      o.time = cs?.time ?? o.time;
     }
   }
 }
+
+/** Własne usługi z CMS, które nie mają osobnej podstrony /uslugi (karty i stopka linkują do formularza) */
+export const extraServices = () => services.filter((s) => s.custom && !offers.some((o) => o.custom === s.id));

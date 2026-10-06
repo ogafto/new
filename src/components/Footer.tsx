@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { content } from "@/lib/content";
 import { useEffect, useRef } from "react";
 import { useInView, useScroll, useVelocity } from "motion/react";
 import { useLenis } from "lenis/react";
@@ -9,6 +10,7 @@ import { Mark } from "./brand/Logo";
 import { openCookieSettings } from "./CookieConsent";
 import { TLink } from "./Transition";
 import { offers } from "@/lib/offer";
+import { extraServices } from "@/lib/content";
 
 // Pasek przewijany: ruch liczy GPU (Web Animations API), JS tylko płynnie zmienia prędkość (najechanie, przewijanie strony).
 // Poza ekranem animacja stoi; gdy prędkość się ustali, nie ma żadnej pracy na głównym wątku (wcześniej pętla co klatkę cały czas).
@@ -93,7 +95,7 @@ function Marquee({ href }: { href: string }) {
 
   const item = (k: number) => (
     <span key={k} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
-      Zacznijmy projekt
+      {content().texts.footer.marquee}
       <span className="inline-block size-[0.16em] bg-accent" />
     </span>
   );
@@ -103,7 +105,7 @@ function Marquee({ href }: { href: string }) {
       href={href}
       label="Kontakt"
       className="group block overflow-hidden border-y border-line py-8 sm:py-12"
-      aria-label="Zacznijmy projekt — przejdź do kontaktu"
+      aria-label={`${content().texts.footer.marquee} — przejdź do kontaktu`}
       onPointerEnter={() => {
         target.current = 0.25;
         kick.current();
@@ -127,7 +129,7 @@ export default function Footer() {
 
   const cols = [
     { title: "Nawigacja", links: nav.map((n) => ({ label: n.label, href: href(n.href) })) },
-    { title: "Usługi", links: offers.map((o) => ({ label: o.name, href: `/uslugi/${o.slug}` })) },
+    { title: "Usługi", links: [...offers.filter((o) => !o.hidden).map((o) => ({ label: o.name, href: `/uslugi/${o.slug}` })), ...extraServices().map((x) => ({ label: x.name, href: href("#kontakt") }))] },
     { title: "Social", links: site.socials.map((s) => ({ label: s.label, href: s.href, ext: true })) },
   ];
 
@@ -141,7 +143,7 @@ export default function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
             <Mark className="size-10" />
-            <p className="mt-6 max-w-[300px] text-[15px] leading-relaxed text-muted">Projektuję i koduję strony, które wyglądają drogo i sprzedają.</p>
+            <p className="mt-6 max-w-[300px] text-[15px] leading-relaxed text-muted">{content().texts.footer.tagline}</p>
             <address className="not-italic">
             <a href={`mailto:${site.email}`} className="link-u mt-6 inline-block text-[17px]">
               {site.email}

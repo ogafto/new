@@ -20,7 +20,7 @@ const ITEMS: Item[] = [
   { id: "finanse", label: "Finanse", icon: ICONS.wallet, href: "/panel/admin/finanse", group: "Przejdź do", keywords: "płatności przychód koszty stripe" },
   { id: "tresci", label: "Treści strony", icon: ICONS.doc, href: "/panel/admin/tresci", group: "Przejdź do", keywords: "cms hero ceny seo ogłoszenie" },
   { id: "portfolio", label: "Portfolio", icon: ICONS.grid, href: "/panel/admin/portfolio", group: "Przejdź do", keywords: "projekty realizacje" },
-  { id: "marka", label: "Marka i logo", icon: ICONS.brand, href: "/panel/admin/marka", group: "Przejdź do", keywords: "animacje grafiki kolory banery" },
+  { id: "marka", label: "Marka i logo", icon: ICONS.brand, href: "/panel/admin/marka", group: "Przejdź do", keywords: "animacje grafiki kolory banery generator gif discord weryfikacja" },
   { id: "ustawienia", label: "Ustawienia", icon: ICONS.gear, href: "/panel/admin/ustawienia", group: "Przejdź do", keywords: "resend discord stripe klucze env" },
   { id: "logi", label: "Logi", icon: ICONS.logs, href: "/panel/admin/logi", group: "Przejdź do", keywords: "dziennik zdarzenia błędy" },
   { id: "platnosc", label: "Nowa płatność", hint: "link Stripe, przelew", icon: ICONS.card, href: "/panel/admin/finanse?nowa=1", group: "Akcje" },

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import type { BrandAsset, BrandColor } from "@/lib/brand";
 import { Btn, ConfirmBtn, ease, Empty, field, Icon, ICONS, spotMove } from "@/components/panel/kit";
+import BannerMaker from "@/components/panel/BannerMaker";
 import { addBrandColor, deleteBrandAsset, deleteBrandColor, registerBrandAsset, renameBrandAsset, uploadBrandLocal } from "./actions";
 
 /* ---------- typy ---------- */
@@ -13,7 +14,7 @@ import { addBrandColor, deleteBrandAsset, deleteBrandColor, registerBrandAsset, 
 export type GenFile = { kind: string; url: string; bytes?: number; label?: string };
 export type Generated = { id: string; category: "animacje" | "grafiki"; section?: string; group: string; title: string; description?: string; w?: number; h?: number; duration?: number; poster?: string; bg?: string; files: GenFile[] };
 export type PaletteColor = { name: string; hex: string; note?: string };
-type Tab = "animacje" | "grafiki" | "kolory";
+type Tab = "animacje" | "grafiki" | "kolory" | "generator";
 type Slide = { id: string; title: string; url: string; kind: string; poster?: string; bg?: string; description?: string; meta?: string; files: GenFile[] };
 
 // Podkategorie (kolejność i opisy); nieznane sekcje trafiają na koniec
@@ -480,13 +481,13 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
 
   useEffect(() => {
     const h = location.hash.slice(1) as Tab;
-    if (["animacje", "grafiki", "kolory"].includes(h)) setTimeout(() => setTab(h), 0);
+    if (["animacje", "grafiki", "kolory", "generator"].includes(h)) setTimeout(() => setTab(h), 0);
   }, []);
 
   const [section, setSection] = useState<string>("all");
   // sekcje → grupy → elementy
   const sections = useMemo(() => {
-    if (tab === "kolory") return [];
+    if (tab === "kolory" || tab === "generator") return [];
     const known = SECTIONS[tab];
     const m = new Map<string, Map<string, Generated[]>>();
     for (const g of generated.filter((x) => x.category === tab)) {
@@ -529,10 +530,11 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
   };
   const count = (t: "animacje" | "grafiki") => generated.filter((g) => g.category === t).length + own.filter((a) => a.category === t).length;
 
-  const tabs: { id: Tab; label: string; icon: string; n: number }[] = [
+  const tabs: { id: Tab; label: string; icon: string; n?: number }[] = [
     { id: "animacje", label: "Animacje", icon: FILM, n: count("animacje") },
     { id: "grafiki", label: "Grafiki", icon: ICONS.grid, n: count("grafiki") },
     { id: "kolory", label: "Kolory", icon: SWATCH, n: palette.length + colors.length },
+    { id: "generator", label: "Generator banerów", icon: ICONS.edit },
   ];
 
   return (
@@ -545,7 +547,7 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
                 {tab === t.id && <motion.span layoutId="brand-tab" className="absolute inset-0 rounded-xl border border-white/[0.08] bg-white/[0.07] shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
                 <Icon d={t.icon} className={`relative size-4 ${tab === t.id ? "text-accent-2" : ""}`} />
                 <span className="relative">{t.label}</span>
-                <span className={`relative rounded-full px-1.5 text-[11px] tabular-nums ${tab === t.id ? "bg-accent/20 text-accent-2" : "bg-white/[0.05] text-dim"}`}>{t.n}</span>
+                {t.n !== undefined && <span className={`relative rounded-full px-1.5 text-[11px] tabular-nums ${tab === t.id ? "bg-accent/20 text-accent-2" : "bg-white/[0.05] text-dim"}`}>{t.n}</span>}
               </button>
             ))}
           </div>
@@ -554,7 +556,9 @@ export default function BrandBoard({ generated, own, palette, colors, blob }: { 
 
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease }}>
-          {tab === "kolory" ? (
+          {tab === "generator" ? (
+            <BannerMaker />
+          ) : tab === "kolory" ? (
             <div className="space-y-10">
               <section>
                 <h2 className="mb-4 flex items-center gap-2 text-[14px] text-muted">

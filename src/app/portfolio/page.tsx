@@ -9,7 +9,7 @@ import { getProjects } from "@/lib/projects";
 const description = "Portfolio: strony internetowe, sklepy internetowe, identyfikacje wizualne i projekty UI/UX zaprojektowane od zera.";
 
 export const metadata: Metadata = {
-  title: "Portfolio | strony internetowe, sklepy i identyfikacje wizualne",
+  title: "Portfolio: strony, sklepy i identyfikacje",
   description,
   alternates: { canonical: "/portfolio" },
   openGraph: { title: "Portfolio | afto.works", description, url: "/portfolio", images: ["/opengraph-image"] },

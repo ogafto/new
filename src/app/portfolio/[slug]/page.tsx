@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const p = await getProjectBySlug(slug);
   if (!p) return {};
   const ap = p as typeof p & { seoTitle?: string | null; seoDescription?: string | null };
-  const title = ap.seoTitle || `${p.name} | ${serviceName(p.category).toLowerCase()} · ${p.client}`;
+  const title = ap.seoTitle?.trim().replace(/\s+[—–-]\s+/, ": ") || `${p.name}: ${serviceName(p.category).toLowerCase()} · ${p.client}`;
   return {
     title,
     description: ap.seoDescription || `${p.description} ${serviceName(p.category)}, projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,

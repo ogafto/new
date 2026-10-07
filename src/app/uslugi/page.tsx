@@ -14,7 +14,7 @@ import { iconOf, iconPath } from "@/lib/service-icons";
 const description = "Usługi web designera i web developera: projektowanie stron internetowych, sklepy internetowe, identyfikacja wizualna, projekt UI/UX i animacje. Cała Polska.";
 
 export const metadata: Metadata = {
-  title: "Usługi | strony internetowe, sklepy, logo, UI/UX, animacje",
+  title: "Usługi: strony, sklepy, logo i UI/UX",
   description,
   alternates: { canonical: "/uslugi" },
   openGraph: { title: "Usługi | afto.works", description, url: "/uslugi", images: ["/opengraph-image"] },

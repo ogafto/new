@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CaseStudy from "@/components/work/CaseStudy";
@@ -33,7 +33,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const projects = await getProjects();
   const i = projects.findIndex((x) => x.slug === slug);
-  if (i < 0) notFound();
+  if (i < 0) {
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    const want = norm(decodeURIComponent(slug));
+    const near = want.length >= 3 ? projects.find((x) => { const s = norm(x.slug), n = norm(x.name); return s.startsWith(want) || want.startsWith(s) || want.startsWith(n) || n.startsWith(want); }) : undefined;
+    permanentRedirect(near ? `/portfolio/${near.slug}` : "/portfolio");
+  }
   return (
     <>
       <JsonLd data={projectSchema(projects[i])} />

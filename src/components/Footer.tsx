@@ -203,7 +203,7 @@ export default function Footer() {
 
         <div className="mt-16 flex flex-col gap-3 border-t border-line pt-6 text-[13px] text-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {site.domain}
+            © {new Date().getFullYear()} {site.domain} · {site.legal.owner}
           </p>
           <button type="button" onClick={() => lenis?.scrollTo(0, { duration: 1.8 })} className="link-u self-start transition-colors hover:text-ink">
             Do góry ↑

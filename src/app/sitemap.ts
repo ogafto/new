@@ -4,6 +4,9 @@ import { getProjects } from "@/lib/projects";
 import { offers } from "@/lib/offer";
 import { loadContent } from "@/lib/content-server";
 
+// zawsze świeża: projekty dodane albo usunięte w panelu od razu trafiają do mapy strony
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await loadContent();
   const now = new Date();

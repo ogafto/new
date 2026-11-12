@@ -7,16 +7,17 @@ import { AnimatePresence, motion, Reorder } from "motion/react";
 import { deleteCategory, deleteWork, quickWork, reorderWorks, saveCategory, toggleWork } from "@/app/panel/admin/portfolio/actions";
 import type { Category, Work } from "@/lib/projects";
 import { ACCEPT_MEDIA, isGif, isMediaType, isVideo } from "@/lib/media";
-import { attachMedia, type BlobMode } from "@/lib/upload";
+import { attachMedia, type BlobMode, type Stage } from "@/lib/upload";
 import { plural } from "@/lib/format";
 import { Alert } from "../../account/ui";
 import { Btn, ConfirmBtn, field, ICONS, Icon, Label, Toggle } from "../kit";
 import { SectionCard } from "../settings/SectionNav";
 import Media from "../../ui/Media";
 import Drop from "./Drop";
+import GifFix from "./GifFix";
 import { MoveButtons, moveItem, SortItem } from "./Sortable";
 
-type Upload = { key: string; name: string; preview: string; video: boolean; state: "wait" | "send" | "done" | "error"; progress?: number; error?: string };
+type Upload = { key: string; name: string; preview: string; video: boolean; state: "wait" | "send" | "done" | "error"; progress?: number; stage?: Stage; error?: string };
 
 const kind = (src: string) => (isVideo(src) ? "Wideo" : isGif(src) ? "GIF" : null);
 
@@ -53,7 +54,7 @@ export default function CategoryView({ category, works, blob }: { category: Cate
         const fd = new FormData();
         fd.set("category", category.id);
         fd.set("name", list[i].name);
-        await attachMedia(fd, "image", list[i], blob, (p) => set(jobs[i].key, { progress: p }));
+        await attachMedia(fd, "image", list[i], blob, (p, stage) => set(jobs[i].key, { progress: p, stage }));
         const r = await quickWork(fd);
         set(jobs[i].key, r.error ? { state: "error", error: r.error } : { state: "done" });
       } catch (e) {
@@ -80,6 +81,8 @@ export default function CategoryView({ category, works, blob }: { category: Cate
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-6">
       <div className="min-w-0 space-y-4">
+        <GifFix gifs={items.filter((w) => isGif(w.image)).map((w) => ({ id: w.id, name: w.name, image: w.image }))} blob={blob} />
+
         {/* wrzucanie plików */}
         <div
           role="button"
@@ -118,7 +121,7 @@ export default function CategoryView({ category, works, blob }: { category: Cate
             <div className="min-w-0">
               <p className="text-[15px]">{over ? "Puść, wrzucam" : busy ? "Wgrywam…" : "Upuść pliki albo kliknij"}</p>
               <p className="mt-0.5 text-[12.5px] text-dim">
-                Zdjęcia (JPG, PNG, WebP), GIF-y i wideo (MP4, WebM). Każdy plik to nowa praca w „{category.name}”, od razu na stronie, na samym dole. Zdjęcia do 1920 × 1080, większe zmniejszę automatycznie. Pierwsza praca jest okładką kategorii.
+                Zdjęcia (JPG, PNG, WebP), GIF-y i wideo (MP4, WebM). GIF-y zamieniam na lżejsze wideo MP4. Każdy plik to nowa praca w „{category.name}”, od razu na stronie, na samym dole. Zdjęcia do 1920 × 1080, większe zmniejszę automatycznie. Pierwsza praca jest okładką kategorii.
               </p>
             </div>
           </div>
@@ -134,7 +137,15 @@ export default function CategoryView({ category, works, blob }: { category: Cate
                       <img src={u.preview} alt="" className={`size-full object-cover transition-opacity ${u.state === "done" ? "" : "opacity-50"}`} />
                     )}
                     <span className="absolute inset-0 grid place-items-center">
-                      {u.state === "send" && (u.progress && u.progress < 100 ? <span className="rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white tabular-nums">{Math.round(u.progress)}%</span> : <span className="size-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />)}
+                      {u.state === "send" &&
+                        (u.progress && u.progress < 100 ? (
+                          <span className="rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white tabular-nums" title={u.stage === "convert" ? "Zamieniam GIF na wideo" : "Wgrywam"}>
+                            {u.stage === "convert" ? "→ MP4 " : ""}
+                            {Math.round(u.progress)}%
+                          </span>
+                        ) : (
+                          <span className="size-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ))}
                       {u.state === "done" && (
                         <span className="grid size-7 place-items-center rounded-full bg-emerald-400 text-bg">
                           <Icon d={ICONS.check} className="size-4" />

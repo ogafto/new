@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { saveWork } from "@/app/panel/admin/portfolio/actions";
 import type { Work } from "@/lib/projects";
 import { ACCEPT_MEDIA, isRawType, isVideo } from "@/lib/media";
-import { attachMedia, type BlobMode } from "@/lib/upload";
+import { attachMedia, type BlobMode, type Stage } from "@/lib/upload";
 import { Alert } from "../../account/ui";
 import { Btn, Card, ease, field, ICONS, Icon, Label, Toggle } from "../kit";
 import { SectionCard } from "../settings/SectionNav";
@@ -20,7 +20,7 @@ export default function WorkForm({ work, categories, initialCategory, blob }: { 
   const [state, action, pending] = useActionState(saveWork, undefined);
   const [img, setImg] = useState({ url: work?.image ?? "", video: isVideo(work?.image) });
   const [mainFile, setMainFile] = useState<File | null>(null);
-  const [sending, setSending] = useState<number | null>(null); // postęp wgrywania GIF-a / wideo
+  const [sending, setSending] = useState<{ p: number; stage: Stage } | null>(null); // postęp zamiany GIF-a i wgrywania
   const [upError, setUpError] = useState("");
   const [keep, setKeep] = useState<string[]>(work?.gallery ?? []);
   const [added, setAdded] = useState<string[]>([]);
@@ -55,8 +55,8 @@ export default function WorkForm({ work, categories, initialCategory, blob }: { 
   const catName = categories.find((c) => c.id === v.category)?.name ?? "Kategoria";
 
   const submit = (
-    <Btn type="submit" variant="primary" disabled={pending || sending !== null} icon={ICONS.check} className="flex-1">
-      {sending !== null ? `Wgrywam… ${Math.round(sending)}%` : pending ? "Zapisuję…" : work ? "Zapisz zmiany" : "Dodaj pracę"}
+    <Btn type="submit" variant="primary" disabled={pending || !!sending} icon={ICONS.check} className="flex-1">
+      {sending ? `${sending.stage === "convert" ? "Zamieniam GIF na wideo…" : "Wgrywam…"} ${Math.round(sending.p)}%` : pending ? "Zapisuję…" : work ? "Zapisz zmiany" : "Dodaj pracę"}
     </Btn>
   );
 
@@ -69,9 +69,9 @@ export default function WorkForm({ work, categories, initialCategory, blob }: { 
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         setUpError("");
-        setSending(0);
+        setSending({ p: 0, stage: mainFile.type === "image/gif" ? "convert" : "upload" });
         try {
-          await attachMedia(fd, "image", mainFile, blob, setSending);
+          await attachMedia(fd, "image", mainFile, blob, (p, stage) => setSending({ p, stage }));
           startTransition(() => action(fd));
         } catch (err) {
           setUpError(err instanceof Error ? err.message : "Nie udało się wgrać pliku.");

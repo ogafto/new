@@ -1,12 +1,17 @@
 import { isRawType } from "./media";
 import { shrinkImage } from "./shrink";
+import { gifToMp4 } from "./gif-video";
 
 /*
  * Wgrywanie plików portfolio z przeglądarki.
  * Zdjęcia: zmniejszane tutaj do 1920 × 1080 i wysyłane w formularzu.
+ * GIF-y: najpierw zamieniane na wideo MP4 (wygląda tak samo, waży dużo mniej i nie zacina strony);
+ * jeśli przeglądarka tego nie umie, idzie zwykły GIF.
  * GIF / wideo: przeglądarka odczytuje wymiary; gdy strona używa Vercel Blob, plik idzie prosto do Blob
  * (duże pliki), a do formularza trafia tylko jego adres. Bez Blob (lokalnie) plik jedzie w formularzu.
  */
+
+export type Stage = "convert" | "upload";
 
 export type BlobMode = "public" | "private" | null;
 
@@ -44,7 +49,9 @@ const safeName = (name: string) =>
     .slice(-80) || "plik";
 
 /** Dokłada plik do formularza pod `key` (albo, dla GIF / wideo na Vercel Blob, wgrywa go i dokłada adres w polu „media”) */
-export async function attachMedia(fd: FormData, key: string, f: File, blob: BlobMode, onProgress?: (p: number) => void) {
+export async function attachMedia(fd: FormData, key: string, file: File, blob: BlobMode, onProgress?: (p: number, stage: Stage) => void) {
+  let f = file;
+  if (f.type === "image/gif") f = (await gifToMp4(f, (p) => onProgress?.(p, "convert")).catch(() => null)) ?? f;
   if (!isRawType(f.type)) {
     fd.set(key, await shrinkImage(f));
     return;
@@ -63,7 +70,7 @@ export async function attachMedia(fd: FormData, key: string, f: File, blob: Blob
     access: blob,
     handleUploadUrl: "/api/portfolio/upload",
     multipart: f.size > 8_000_000,
-    onUploadProgress: (e) => onProgress?.(e.percentage),
+    onUploadProgress: (e) => onProgress?.(e.percentage, "upload"),
   });
   fd.delete(key);
   fd.set("media", JSON.stringify({ url: r.url, pathname: r.pathname }));

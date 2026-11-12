@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Media from "../ui/Media";
-import { isVideo } from "@/lib/media";
+import { isGif, isVideo } from "@/lib/media";
 import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useLenis } from "lenis/react";
 import { copy } from "@/lib/site";
@@ -43,7 +43,7 @@ function cardRect(w: number, h: number) {
 
 // zdjęcia warstwy ładują się dopiero, gdy pokaz jest blisko niej (przy wielu kategoriach nie ściągamy wszystkiego naraz);
 // raz wczytane zostają, żeby przewijanie w górę nie mrugało
-function Layer({ c, i, n, progress, near }: { c: ShowCategory; i: number; n: number; progress: MotionValue<number>; near: boolean }) {
+function Layer({ c, i, n, progress, near, live }: { c: ShowCategory; i: number; n: number; progress: MotionValue<number>; near: boolean; live: boolean }) {
   const [on, setOn] = useState(near);
   useEffect(() => {
     if (!near || on) return;
@@ -65,19 +65,20 @@ function Layer({ c, i, n, progress, near }: { c: ShowCategory; i: number; n: num
     <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: clip, zIndex: i }}>
       {/* ekran poziomy: okładka na cały kadr */}
       <motion.div className="absolute inset-0 hidden landscape:block" style={{ y, scale }}>
-        {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} />}
+        {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} active={live} />}
       </motion.div>
 
       {/* ekran pionowy (telefon, tablet): okładka jako karta na rozmytym tle z niej samej */}
       <div className="absolute inset-0 overflow-hidden bg-bg landscape:hidden">
-        {on && !isVideo(c.image) && <Media src={c.image} fill sizes="40vw" className="scale-125 object-cover opacity-45 blur-3xl saturate-150" />}
+        {/* rozmyte tło tylko ze zdjęcia: rozmywanie każdej klatki GIF-a / wideo zacina telefon */}
+        {on && !isVideo(c.image) && !isGif(c.image) && <Media src={c.image} fill sizes="40vw" className="scale-125 object-cover opacity-45 blur-3xl saturate-150" />}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_7_10/0.2),rgb(7_7_10/0.9)_85%)]" />
         <div className="absolute grid place-items-center [container-type:size] [perspective:1100px]" style={{ top: STAGE.top, bottom: STAGE.bottom, left: STAGE.side, right: STAGE.side }}>
           <motion.div
             className="relative aspect-[4/3] w-[min(100cqw,133.33cqh)] overflow-hidden rounded-[18px] ring-1 ring-white/15"
             style={{ y: cardY, rotateX: cardTilt, scale: cardScale, transformOrigin: "50% 100%", boxShadow: "0 40px 90px -30px rgb(139 108 255 / 0.45), 0 20px 40px -20px rgb(0 0 0 / 0.8)" }}
           >
-            {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} />}
+            {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} active={live} />}
             <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-[linear-gradient(160deg,rgb(255_255_255/0.14),transparent_35%)]" />
           </motion.div>
         </div>
@@ -178,7 +179,7 @@ export default function Showcase({ categories }: { categories: ShowCategory[] })
         <div className="sticky top-0 h-[100svh] overflow-hidden">
           <motion.div className="absolute inset-0 bg-surface" style={{ clipPath: frame }}>
             {list.map((cat, i) => (
-              <Layer key={cat.id} c={cat} i={i} n={N} progress={scrollYProgress} near={i >= current - 1 && i <= current + 2} />
+              <Layer key={cat.id} c={cat} i={i} n={N} progress={scrollYProgress} near={i >= current - 1 && i <= current + 2} live={i >= current - 1 && i <= current + 1} />
             ))}
 
             {/* cały kadr prowadzi do kategorii */}

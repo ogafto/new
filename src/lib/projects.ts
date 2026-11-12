@@ -7,7 +7,7 @@ import { defaultProjects } from "./site";
 import { slugify } from "./slug";
 import { UPLOAD_DIR } from "./storage";
 import { setting } from "./settings";
-import { isVideo } from "./media";
+import { isGif, isVideo } from "./media";
 
 /*
  * Portfolio: kategorie (Logo, Strony, Banery…) i prace w nich. Wszystko edytowane w panelu admina.
@@ -267,6 +267,13 @@ export async function adminCategories(): Promise<AdminCategory[]> {
       updatedAt: Number(r.updated_at),
     };
   });
+}
+
+/** Prace, których plik to GIF (w panelu: propozycja zamiany na lżejsze wideo) */
+export async function adminGifs() {
+  await prepare();
+  const rows = await all<{ id: string; name: string; image: string }>(`SELECT id, name, image FROM projects ${ORDER}`);
+  return rows.filter((r) => isGif(r.image)).map((r) => ({ id: r.id, name: r.name, image: r.image }));
 }
 
 export async function adminCategory(cid: string) {

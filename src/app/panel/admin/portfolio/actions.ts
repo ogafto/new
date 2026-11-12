@@ -232,6 +232,24 @@ export async function quickWork(form: FormData): Promise<{ error?: string; id?: 
   }
 }
 
+/** Podmienia sam plik pracy (np. GIF zamieniony w przeglądarce na wideo) — reszta pracy zostaje */
+export async function swapMedia(wid: string, form: FormData): Promise<{ error?: string; image?: string }> {
+  await requireAdmin();
+  const prev = await one<{ image: string; name: string }>("SELECT image, name FROM projects WHERE id = ?", [wid]);
+  if (!prev) return { error: "Praca nie istnieje." };
+  try {
+    const s = await storeMain(form);
+    if (!s) return { error: "Brak pliku." };
+    await run("UPDATE projects SET image = ?, w = ?, h = ?, updated_at = ? WHERE id = ?", [s.url, s.w, s.h, Date.now(), wid]);
+    if (prev.image !== s.url) await removeLocal(prev.image);
+    await log("content", `GIF zamieniony na wideo: ${prev.name}`);
+    await refresh();
+    return { image: s.url };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nie udało się zapisać." };
+  }
+}
+
 export async function toggleWork(wid: string) {
   await requireAdmin();
   await run("UPDATE projects SET published = 1 - published, updated_at = ? WHERE id = ?", [Date.now(), wid]);

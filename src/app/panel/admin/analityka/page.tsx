@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/session";
-import { breakdown, campaigns, exitSections, formFunnel, heatmap, kpis, liveNow, projectStats, RANGES, recentSessions, returning, scrollDepth, sectionReach, series, sources, topClicks, topPages } from "@/lib/analytics";
-import { getProjects } from "@/lib/projects";
+import { breakdown, campaigns, discordClicks, exitSections, heatmap, kpis, liveNow, projectStats, RANGES, recentSessions, returning, scrollDepth, sectionReach, series, sources, topClicks, topPages } from "@/lib/analytics";
+import { adminCategories } from "@/lib/projects";
 import { AutoRefresh, Heatmap, Returning } from "@/components/panel/AnalyticsExtras";
-import { Card, CardHead, Icon, PageHead } from "@/components/panel/kit";
+import { BarList, Card, CardHead, Count, Icon, PageHead } from "@/components/panel/kit";
 import { ICONS } from "@/components/panel/icons";
 import Sessions from "@/components/panel/Sessions";
 import Traffic from "@/components/panel/analytics/Traffic";
 import RangeTabs from "@/components/panel/analytics/RangeTabs";
-import { FunnelBars, PagesTable, TabCard } from "@/components/panel/analytics/Breakdown";
+import { PagesTable, TabCard } from "@/components/panel/analytics/Breakdown";
 import { deviceIcon } from "@/components/panel/analytics/icons";
 
-export const metadata: Metadata = { title: "Analityka" };
+export const metadata: Metadata = { title: "Statystyki" };
 
 function ago(ms: number) {
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min`;
 }
 
-const SECTIONS: Record<string, string> = { start: "Start", portfolio: "Portfolio", proces: "Proces", kontakt: "Kontakt" };
+const SECTIONS: Record<string, string> = { start: "Start", portfolio: "Portfolio" };
 const SOURCE_ICON: Record<string, string> = { Bezpośrednio: ICONS.link };
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ zakres?: string }> }) {
   await requireAdmin();
   const { zakres } = await searchParams;
   const days = RANGES.find((r) => String(r.days) === zakres)?.days ?? 30;
-  const [k, s, pages, src, devices, browsers, os, countries, reach, funnel, depth, clicks, exits, sessions, heat, online, camps, ret, projStats, projects] = await Promise.all([
+  const [k, s, pages, src, devices, browsers, os, countries, reach, discord, depth, clicks, exits, sessions, heat, online, camps, ret, projStats, categories] = await Promise.all([
     kpis(days),
     series(days),
     topPages(days),
@@ -35,7 +35,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     breakdown(days, "os"),
     breakdown(days, "country"),
     sectionReach(days),
-    formFunnel(days),
+    discordClicks(days),
     scrollDepth(days),
     topClicks(days),
     exitSections(days),
@@ -45,7 +45,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     campaigns(days),
     returning(days),
     projectStats(days),
-    getProjects(),
+    adminCategories(),
   ]);
   const regions = new Intl.DisplayNames(["pl"], { type: "region" });
   const flag = (cc: string | null) => (cc && /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0))) : "🌐");
@@ -56,14 +56,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       return cc;
     }
   };
-  const projName = new Map(projects.map((p) => [p.slug, p.name]));
+  const catName = new Map(categories.map((c) => [c.slug, c.name]));
+  const pageName = (path: string) => (path === "/" ? "Strona główna" : path.startsWith("/portfolio/") ? (catName.get(path.slice(11)) ?? path) : path);
   const map = (rows: { name: string; visitors: number }[], icon?: (n: string) => string | undefined) => rows.map((r) => ({ name: r.name, n: Number(r.visitors), icon: icon?.(r.name) }));
   const range = RANGES.find((r) => r.days === days)!.label;
 
   return (
     <>
       <AutoRefresh every={20000} />
-      <PageHead kicker="Biznes" title="Analityka">
+      <PageHead kicker="Strona" title="Statystyki">
         <a href={`/panel/admin/analityka/eksport?zakres=${days}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink">
           <Icon d={ICONS.download} className="size-4" /> CSV
         </a>
@@ -165,8 +166,14 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card delay={0.16}>
-          <CardHead title="Formularz kontaktowy" sub="Lejek konwersji" />
-          <FunnelBars steps={funnel} />
+          <CardHead title="Discord" sub={`Kliknięcia w zaproszenie · ${range}`} />
+          <p className="flex items-baseline gap-2">
+            <Count value={discord.total} className="h-display text-[44px] leading-none" />
+            <span className="text-[13px] text-dim">{discord.people} {discord.people === 1 ? "osoba" : "os."}</span>
+          </p>
+          <div className="mt-5">
+            <BarList items={discord.pages.map((p) => ({ name: pageName(p.path), n: p.n }))} empty="Nikt jeszcze nie kliknął" />
+          </div>
         </Card>
         <TabCard
           id="home"
@@ -193,15 +200,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         />
         <TabCard
           id="proj"
-          title="Projekty w portfolio"
+          title="Kategorie portfolio"
           delay={0.24}
           tabs={[
             {
               key: "p",
-              label: "Projekty",
-              rows: projStats.map((p) => ({ name: projName.get(p.slug) ?? p.slug, n: Number(p.views), extra: `${Number(p.visitors)} os. · ${Number(p.time)} s · ${Number(p.scroll)}%` })),
-              head: ["Projekt", "Odsłony"],
-              empty: "Brak odsłon projektów w tym okresie",
+              label: "Kategorie",
+              rows: projStats.map((p) => ({ name: catName.get(p.slug.split("?")[0]) ?? p.slug, n: Number(p.views), extra: `${Number(p.visitors)} os. · ${Number(p.time)} s · ${Number(p.scroll)}%` })),
+              head: ["Kategoria", "Odsłony"],
+              empty: "Brak wejść w kategorie w tym okresie",
             },
           ]}
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactLenis, useLenis } from "lenis/react";
 import { MotionConfig } from "motion/react";
@@ -8,8 +8,6 @@ import Loader from "./Loader";
 import CookieConsent from "./CookieConsent";
 import { TransitionProvider } from "./Transition";
 import Analytics from "./Analytics";
-import Announcement from "./Announcement";
-import { applyContent, type Content } from "@/lib/content";
 
 const LoadedContext = createContext(false);
 export const useLoaded = () => useContext(LoadedContext);
@@ -76,9 +74,7 @@ function LenisLoop() {
   return null;
 }
 
-export default function Providers({ children, content, gaId }: { children: React.ReactNode; content: Content; gaId: string }) {
-  // treści z panelu (kontakt, ceny, hero…) — podmieniane zanim wyrenderują się komponenty strony
-  useMemo(() => applyContent(content), [content]);
+export default function Providers({ children, gaId }: { children: React.ReactNode; gaId: string }) {
   // konto i panel — bez ekranu ładowania
   const app = /^\/(konto|panel)/.test(usePathname());
   const [loaded, setLoaded] = useState(app);
@@ -94,7 +90,6 @@ export default function Providers({ children, content, gaId }: { children: React
             <Analytics />
             <TransitionProvider>
               {children}
-              <Announcement />
             </TransitionProvider>
           </CookieConsent>
         </LoadedContext.Provider>

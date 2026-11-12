@@ -70,6 +70,18 @@ const SCHEMA = [
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
+  // kategorie portfolio (Logo, Strony, Banery…) — tworzone w panelu, prace należą do jednej kategorii
+  `CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    cover TEXT NOT NULL DEFAULT '',
+    published INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
   // zapytania z formularza
   `CREATE TABLE IF NOT EXISTS inquiries (
     id TEXT PRIMARY KEY,
@@ -289,7 +301,7 @@ const SCHEMA = [
  * dokleja się automatycznie.
  */
 const PREFIX = "afto_";
-const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors", "order_files", "offers"];
+const TABLES = ["users", "sessions", "invites", "verification_codes", "projects", "categories", "inquiries", "pageviews", "events", "orders", "cms_sites", "cms_collections", "cms_entries", "meta", "settings", "logs", "payments", "expenses", "brand_assets", "brand_colors", "order_files", "offers"];
 // tylko odwołania do tabel (po FROM/JOIN/INTO/UPDATE/…), nie aliasy kolumn typu „COUNT(*) pageviews”
 const TABLE_RE = new RegExp(`\\b(FROM|JOIN|INTO|UPDATE|EXISTS|REFERENCES|ON|TABLE)(\\s+)(${TABLES.join("|")})\\b`, "gi");
 export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${sp}${PREFIX}${t}`);
@@ -297,7 +309,7 @@ export const sql = (q: string) => q.replace(TABLE_RE, (_, kw, sp, t) => `${kw}${
 const COLUMNS: Record<string, Record<string, string>> = {
   users: { phone: "TEXT" },
   pageviews: { seen: "INTEGER" },
-  projects: { seo_title: "TEXT", seo_description: "TEXT" },
+  projects: { seo_title: "TEXT", seo_description: "TEXT", category_id: "TEXT", w: "INTEGER", h: "INTEGER" },
   inquiries: { user_id: "TEXT", source: "TEXT", order_id: "TEXT" },
   orders: { site_id: "TEXT", client_note: "TEXT", done_at: "INTEGER" },
   payments: { offer_id: "TEXT", kind: "TEXT" },
@@ -314,7 +326,7 @@ async function migrate(client: Client) {
 }
 
 // podbij przy zmianie schematu — serwer dev przeładuje połączenie i dopisze tabele
-const VERSION = 14;
+const VERSION = 15;
 const g = globalThis as unknown as { __afto_db?: Promise<Client>; __afto_v?: number };
 
 async function init() {

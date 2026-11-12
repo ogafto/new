@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import JsonLd from "./JsonLd";
-import { site } from "@/lib/site";
+import { DISCORD, site } from "@/lib/site";
 import { CookieButton, LegalToc, LegalTocMobile, ReadingProgress } from "./LegalToc";
 import { FadeUp } from "./ui/Reveal";
 
@@ -12,10 +12,7 @@ export type LegalSection = {
   table?: { head: string[]; rows: string[][] };
 };
 
-const docs = [
-  { href: "/regulamin", label: "Regulamin" },
-  { href: "/polityka-prywatnosci", label: "Polityka prywatności" },
-];
+const docs = [{ href: "/polityka-prywatnosci", label: "Polityka prywatności" }];
 
 export default function LegalPage({ title, intro, summary, sections, current }: { title: string; intro: string; summary: string[]; sections: LegalSection[]; current: string }) {
   const { owner, street, city, updated } = site.legal;
@@ -143,8 +140,8 @@ export default function LegalPage({ title, intro, summary, sections, current }: 
                     <a href={`mailto:${site.email}`} className="max-w-full truncate rounded-full bg-ink px-4 py-2.5 text-[14px] font-medium text-bg transition-colors hover:bg-white">
                       Napisz e-mail
                     </a>
-                    <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="rounded-full border border-line-2 px-4 py-2.5 text-[14px] transition-colors hover:border-white/40">
-                      {site.phone}
+                    <a href={DISCORD} target="_blank" rel="noopener noreferrer" className="rounded-full border border-line-2 px-4 py-2.5 text-[14px] transition-colors hover:border-white/40">
+                      Discord
                     </a>
                   </div>
                 </div>

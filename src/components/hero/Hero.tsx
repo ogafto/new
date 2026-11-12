@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
+import Media from "../ui/Media";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useLoaded } from "../Providers";
 import { useCovering } from "../Transition";
-import type { Project } from "@/lib/site";
+import { copy } from "@/lib/site";
 import Button, { Magnetic } from "../ui/Button";
-import { content } from "@/lib/content";
+import DiscordButton from "../ui/Discord";
+import { TLink } from "../Transition";
+
+type Recent = { id: string; slug: string; name: string; image: string; category: string };
 
 const LogoScene = dynamic(() => import("./LogoScene"), { ssr: false });
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -23,7 +26,7 @@ function Line({ children, i, show }: { children: React.ReactNode; i: number; sho
   );
 }
 
-export default function Hero({ recent }: { recent: Project[] }) {
+export default function Hero({ recent }: { recent: Recent[] }) {
   const show = useLoaded();
   // po przejściu z podstrony scena 3D startuje dopiero, gdy kurtyna zjedzie (bez szarpania animacji)
   const covering = useCovering();
@@ -39,7 +42,7 @@ export default function Hero({ recent }: { recent: Project[] }) {
   const y = useTransform(scrollYProgress, [0, 1], [0, 140]);
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
-  const hero = content().hero;
+  const hero = copy.hero;
 
   return (
     <section ref={ref} id="start" className="relative h-[100svh] min-h-[680px] overflow-hidden">
@@ -69,48 +72,47 @@ export default function Hero({ recent }: { recent: Project[] }) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Magnetic>
-                <Button href="#kontakt">{content().texts.hero.cta}</Button>
+                <DiscordButton>{hero.cta}</DiscordButton>
               </Magnetic>
               <Magnetic>
                 <Button href="#portfolio" variant="outline">
-                  {content().texts.hero.ctaSecondary}
+                  {hero.secondary}
                 </Button>
               </Magnetic>
             </div>
           </motion.div>
 
-          {/* ostatnie projekty — miniatury rozsuwają się po najechaniu */}
-          <motion.a
-            href="#portfolio"
-            className="group hidden items-center gap-5 md:flex"
-            initial={{ opacity: 0, y: 16 }}
-            animate={show ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 1, duration: 1, ease }}
-          >
-            <span className="text-right text-[14px] leading-snug text-muted transition-colors group-hover:text-ink">
-              {(() => {
-                const [a, ...b] = content().texts.hero.recent.split(" ");
-                return (
-                  <>
-                    {a}
-                    <br />
-                    {b.join(" ")}
-                  </>
-                );
-              })()}
-            </span>
-            <span className="flex">
-              {recent.map((p, i) => (
-                <span
-                  key={p.slug}
-                  className="relative -ml-8 block h-[78px] w-[104px] overflow-hidden rounded-[12px] ring-1 ring-white/15 transition-all duration-700 ease-out-expo first:ml-0 group-hover:-ml-1"
-                  style={{ zIndex: 4 - i, transform: `rotate(${(i - 1.5) * 3}deg)` }}
-                >
-                  <Image src={p.image} alt="" fill sizes="104px" className="object-cover object-top" />
-                </span>
-              ))}
-            </span>
-          </motion.a>
+          {/* ostatnie projekty — miniatury rozsuwają się po najechaniu, każda otwiera swoją kategorię */}
+          {recent.length > 0 && (
+            <motion.div className="group hidden items-center gap-5 md:flex" initial={{ opacity: 0, y: 16 }} animate={show ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1, duration: 1, ease }}>
+              <a href="#portfolio" className="text-right text-[14px] leading-snug text-muted transition-colors group-hover:text-ink">
+                {(() => {
+                  const [a, ...b] = hero.recent.split(" ");
+                  return (
+                    <>
+                      {a}
+                      <br />
+                      {b.join(" ")}
+                    </>
+                  );
+                })()}
+              </a>
+              <span className="flex">
+                {recent.map((p, i) => (
+                  <TLink
+                    key={p.id}
+                    href={`/portfolio/${p.category}#praca-${p.slug}`}
+                    label={p.name}
+                    aria-label={p.name}
+                    className="relative -ml-8 block h-[78px] w-[104px] overflow-hidden rounded-[12px] bg-surface ring-1 ring-white/15 transition-all duration-700 ease-out-expo first:ml-0 group-hover:-ml-1 hover:!-translate-y-1.5 hover:ring-white/40"
+                    style={{ zIndex: 4 - i, transform: `rotate(${(i - 1.5) * 3}deg)` }}
+                  >
+                    <Media src={p.image} fill sizes="104px" className="object-cover" />
+                  </TLink>
+                ))}
+              </span>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </section>

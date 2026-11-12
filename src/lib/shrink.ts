@@ -1,9 +1,10 @@
 // Zmniejsza zdjęcie w przeglądarce przed wysłaniem (Vercel przyjmuje max ~4,5 MB na żądanie).
-export async function shrinkImage(file: File, max = 2400, quality = 0.88): Promise<File> {
+// Mieści się w 1920 × 1080 jak na serwerze (szerokość do 1920, wysokość do 1080), bez powiększania.
+export async function shrinkImage(file: File, maxW = 1920, maxH = 1080, quality = 0.92): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml") return file;
   try {
     const bmp = await createImageBitmap(file);
-    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const scale = Math.min(1, maxW / bmp.width, maxH / bmp.height);
     if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bmp.width * scale);

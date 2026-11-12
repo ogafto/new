@@ -1,102 +1,52 @@
-// Wszystkie treści strony w jednym miejscu — edytuj tutaj, a nie w komponentach.
+// Ustawienia i teksty strony w jednym miejscu — edytuj tutaj, a nie w komponentach.
+
+export const DISCORD = "https://discord.gg/cmxqNvjfS3";
 
 export const site = {
   brand: "afto",
   domain: "afto.works",
   url: "https://afto.works",
-  tagline: "Od piksela do zysku.",
-  role: "Web designer & developer",
+  role: "Designer & Web Developer",
   email: "lubojanskiwojciech1@gmail.com",
-  phone: "+48 518 323 533",
-  timezone: "Europe/Warsaw",
   socials: [
-    { label: "Instagram", href: "https://instagram.com/" },
-    { label: "Behance", href: "https://behance.net/" },
-    { label: "Dribbble", href: "https://dribbble.com/" },
-    { label: "Discord", href: "https://discord.com/" }, // podmień na swój link zaproszenia / profil
+    { label: "Discord", href: DISCORD },
+    { label: "Instagram", href: "https://www.instagram.com/w.lubo33" },
+    { label: "Behance", href: "https://behance.net/wojciechdesigner" },
+    { label: "Dribbble", href: "https://dribbble.com/afto" },
   ],
-  // Dane do regulaminu i polityki prywatności
+  // Dane do polityki prywatności
   legal: {
     owner: "Wojciech Lubojański",
-    form: "działalność nierejestrowana",
     street: "ul. Stalowa 92/5a",
     city: "53-440 Wrocław",
-    updated: "2 października 2026",
+    updated: "12 listopada 2026",
   },
 };
 
-export const nav = [
-  { href: "#portfolio", label: "Portfolio" },
-  { href: "#proces", label: "Proces" },
-  { href: "#kontakt", label: "Kontakt" },
-];
-
-/* ---------- Usługi (ceny minimalne — dostosuj) ---------- */
-
-export type ServiceId = "www" | "shop" | "brand" | "ui";
-
-// wbudowane usługi mają stałe id (podstrony /uslugi), własne usługi z panelu dostają id „c-…”
-export type Service = { id: string; name: string; plural: string; price: number; time: string; description: string; custom?: boolean; icon?: string };
-
-export const services: Service[] = [
-  {
-    id: "www",
-    name: "Strona internetowa",
-    plural: "Strony",
-    price: 200,
-    time: "od 3 dni",
-    description: "Wizytówka, landing lub strona firmowa. Projekt, kod i publikacja.",
+export const copy = {
+  seo: {
+    title: "Developer & Designer | afto.works",
+    description: "Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla firm z całej Polski.",
   },
-  {
-    id: "shop",
-    name: "Sklep internetowy",
-    plural: "Sklepy",
-    price: 800,
-    time: "od 10 dni",
-    description: "Sklep z koszykiem i płatnościami online, gotowy do sprzedaży.",
+  hero: {
+    line1: "Strony, które",
+    line2: "wyglądają drogo.",
+    accent: "I sprzedają.",
+    text: "Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla marek, które chcą być zapamiętane.",
+    cta: "Zamów projekt",
+    secondary: "Portfolio",
+    recent: "Ostatnie projekty",
   },
-  {
-    id: "brand",
-    name: "Identyfikacja wizualna",
-    plural: "Identyfikacja",
-    price: 300,
-    time: "od 5 dni",
-    description: "Logo, kolory, typografia i materiały, które budują rozpoznawalność.",
-  },
-  {
-    id: "ui",
-    name: "Projekt UI/UX",
-    plural: "UI/UX",
-    price: 250,
-    time: "od 3 dni",
-    description: "Makiety i klikalny prototyp aplikacji lub strony w Figmie.",
-  },
-];
-
-export const serviceName = (id: string) => services.find((s) => s.id === id)?.name ?? id;
-
-// lista wbudowanych (przed zmianami z panelu) — punkt odniesienia dla applyContent
-export const BUILTIN_SERVICES = services.slice();
-
-/* ---------- Prace ---------- */
-
-export type Project = {
-  id?: string;
-  url?: string | null; // adres gotowej strony (opcjonalnie)
-  name: string;
-  slug: string;
-  category: ServiceId;
-  year: string;
-  client: string;
-  description: string;
-  scope: string[];
-  palette: string[];
-  image: string; // zdjęcie realizacji w /public/prace (najlepiej 1600×1200, JPG)
-  gallery?: string[]; // dodatkowe zdjęcia na podstronie realizacji
+  work: { label: "Portfolio", open: "Otwórz kategorię" },
+  footer: { cta: "Masz pomysł?", accent: "Pogadajmy na Discordzie." },
 };
+
+/* ---------- Projekty startowe (tylko pusta baza przy pierwszym uruchomieniu) ---------- */
+
+type DemoProject = { name: string; slug: string; image: string; category: string; year: string; client: string; description: string; scope: string[]; palette: string[]; gallery?: string[] };
 
 // Startowe projekty — trafiają do bazy przy pierwszym uruchomieniu. Potem portfolio edytujesz w panelu admina.
-export const defaultProjects: Project[] = [
+export const defaultProjects: DemoProject[] = [
   {
     name: "Ziarno",
     slug: "ziarno",
@@ -173,34 +123,5 @@ export const defaultProjects: Project[] = [
     description: "Edytorialowe portfolio, w którym zdjęcia grają pierwsze skrzypce.",
     scope: ["Portfolio", "Galeria", "Motion"],
     palette: ["#111111", "#3B342C", "#8A7A68", "#EAE6DF"],
-  },
-];
-
-/* ---------- Proces zamówienia ---------- */
-
-export const steps = [
-  {
-    title: "Rozmowa",
-    lead: "Poznaję Twoją firmę i potrzeby",
-    text: "Krótka rozmowa o celu, klientach i budżecie. Zadaję pytania, które oszczędzą nam poprawek później. Po niej dostajesz konkretną wycenę i termin.",
-    points: ["Cel i grupa docelowa", "Zakres i budżet", "Wycena i termin"],
-  },
-  {
-    title: "Kierunek",
-    lead: "Ustalamy, jak marka ma wyglądać",
-    text: "Moodboard, kolory i typografia. Wybieramy styl, który wyróżni Cię na tle konkurencji, zanim powstanie choćby jeden ekran.",
-    points: ["Moodboard", "Paleta i typografia", "Akceptacja stylu"],
-  },
-  {
-    title: "Projekt",
-    lead: "Każdy ekran dopracowany co do piksela",
-    text: "Pełny projekt w Figmie, na komputer i telefon. Klikasz prototyp, zgłaszasz uwagi, a ja dopracowuję szczegóły aż do akceptacji.",
-    points: ["Makiety i prototyp", "Wersja mobilna", "Poprawki do akceptacji"],
-  },
-  {
-    title: "Wdrożenie",
-    lead: "Kod, animacje i publikacja",
-    text: "Koduję projekt z animacjami, optymalizuję szybkość i SEO, podpinam domenę i publikuję. Strona od pierwszego dnia pracuje na Twój wynik.",
-    points: ["Kod i animacje", "Szybkość i SEO", "Publikacja na domenie"],
   },
 ];

@@ -50,14 +50,13 @@ export const currentUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser() {
   const user = await currentUser();
-  if (!user) redirect("/konto/logowanie?sesja=0");
-  if (!user.verified_at) redirect("/konto/weryfikacja");
+  if (!user || !user.verified_at) redirect("/konto/logowanie?sesja=0");
   return user;
 }
 
 export async function requireAdmin() {
   const user = await requireUser();
-  if (!isAdmin(user)) redirect("/panel");
+  if (!isAdmin(user)) redirect("/konto/logowanie?sesja=0"); // panel jest tylko dla administratora
   return user;
 }
 

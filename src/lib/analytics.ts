@@ -95,23 +95,18 @@ export async function sectionReach(days: number) {
   const order = [
     ["start", "Start"],
     ["portfolio", "Portfolio"],
-    ["proces", "Proces"],
-    ["kontakt", "Kontakt"],
   ];
   const map = new Map(rows.map((r) => [r.label, Number(r.n)]));
   return { total, items: order.map(([k, name]) => ({ key: k, name, n: k === "start" ? total : (map.get(k) ?? 0) })) };
 }
 
-// Lejek formularza kontaktowego
-export async function formFunnel(days: number) {
-  const rows = await all<{ label: string; n: number }>("SELECT label, COUNT(DISTINCT session) n FROM events WHERE type = 'form' AND ts >= ? GROUP BY label", [since(days)]);
-  const map = new Map(rows.map((r) => [r.label, Number(r.n)]));
-  const reach = await one<{ n: number }>("SELECT COUNT(DISTINCT session) n FROM events WHERE type = 'section' AND label = 'kontakt' AND ts >= ?", [since(days)]);
-  return [
-    { name: "Zobaczyli formularz", n: Number(reach?.n ?? 0) },
-    { name: "Zaczęli wypełniać", n: map.get("start") ?? 0 },
-    { name: "Wysłali", n: map.get("submit") ?? 0 },
-  ];
+// Kliknięcia w zaproszenie na Discorda (jedyna forma kontaktu): łącznie i z której podstrony
+export async function discordClicks(days: number) {
+  const rows = await all<{ path: string; n: number; s: number }>(
+    "SELECT path, COUNT(*) n, COUNT(DISTINCT session) s FROM events WHERE type = 'click' AND value LIKE '%discord.gg%' AND ts >= ? GROUP BY path ORDER BY n DESC",
+    [since(days)],
+  );
+  return { total: rows.reduce((a, r) => a + Number(r.n), 0), people: rows.reduce((a, r) => a + Number(r.s), 0), pages: rows.map((r) => ({ path: r.path, n: Number(r.n) })) };
 }
 
 export async function scrollDepth(days: number) {
@@ -232,7 +227,7 @@ export async function returning(days: number) {
   return { total, back, fresh: total - back };
 }
 
-// Projekty z portfolio: odsłony, osoby, czas, przewinięcie
+// Kategorie portfolio (/portfolio/<kategoria>): odsłony, osoby, czas, przewinięcie
 export async function projectStats(days: number) {
   return all<{ slug: string; views: number; visitors: number; time: number; scroll: number }>(
     `SELECT substr(path, 12) slug, COUNT(*) views, COUNT(DISTINCT visitor) visitors, CAST(AVG(duration) / 1000 AS INTEGER) time, CAST(AVG(scroll) AS INTEGER) scroll

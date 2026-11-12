@@ -13,6 +13,7 @@ const TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
+  ".mov": "video/quicktime",
   ".pdf": "application/pdf",
 };
 

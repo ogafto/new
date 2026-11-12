@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Providers from "@/components/Providers";
-import { site } from "@/lib/site";
-import { loadContent } from "@/lib/content-server";
+import { copy, site } from "@/lib/site";
 import { setting } from "@/lib/settings";
 import "./globals.css";
 
@@ -32,10 +31,10 @@ const keywords = [
   "strony internetowe Gdańsk",
 ];
 
-// tytuł i opis edytowalne w Panel → Treści strony; weryfikacja Google w Panel → Ustawienia
+// tytuł i opis: copy.seo w lib/site.ts; weryfikacja Google: zmienna NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
 export async function generateMetadata(): Promise<Metadata> {
-  const [{ seo }, google] = await Promise.all([loadContent(), setting("google_verification")]);
-  const { title, description } = seo;
+  const google = await setting("google_verification");
+  const { title, description } = copy.seo;
   return {
     metadataBase: new URL(site.url),
     title: { default: title, template: `%s | ${site.domain}` },
@@ -62,11 +61,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [content, gaId] = await Promise.all([loadContent(), setting("ga_id")]);
+  const gaId = await setting("ga_id");
   return (
     <html lang="pl" className={satoshi.variable}>
       <body>
-        <Providers content={content} gaId={gaId}>
+        <Providers gaId={gaId}>
           {children}
         </Providers>
         <div className="grain" aria-hidden />

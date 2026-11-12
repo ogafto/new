@@ -2,48 +2,59 @@ import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import CaseStudy from "@/components/work/CaseStudy";
-import { serviceName } from "@/lib/site";
-import { getProjectBySlug, getProjects } from "@/lib/projects";
+import Gallery from "@/components/work/Gallery";
 import JsonLd from "@/components/JsonLd";
-import { projectSchema } from "@/lib/seo";
-import { loadContent } from "@/lib/content-server";
+import { categorySchema } from "@/lib/seo";
+import { findWork, getPortfolio } from "@/lib/projects";
+import { plural } from "@/lib/format";
+import { isVideo } from "@/lib/media";
 
 export async function generateStaticParams() {
-  return (await getProjects()).map((p) => ({ slug: p.slug }));
+  return (await getPortfolio()).map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const p = await getProjectBySlug(slug);
-  if (!p) return {};
-  const ap = p as typeof p & { seoTitle?: string | null; seoDescription?: string | null };
-  const title = ap.seoTitle?.trim().replace(/\s+[—–-]\s+/, ": ") || `${p.name}: ${serviceName(p.category).toLowerCase()} · ${p.client}`;
+  const c = (await getPortfolio()).find((x) => x.slug === slug);
+  if (!c) return {};
+  const n = c.works.length;
+  const title = c.name; // w karcie: „Nazwa kategorii | afto.works” (szablon z layoutu)
+  const cover = c.works.find((w) => !isVideo(w.image))?.image; // podgląd linku: pierwsze zdjęcie (nie wideo)
+  const description = c.description || `${c.name}: ${n} ${plural(n, "praca", "prace", "prac")} w portfolio afto.works. Zobacz projekty w pełnym rozmiarze.`;
   return {
     title,
-    description: ap.seoDescription || `${p.description} ${serviceName(p.category)}, projekt ${p.year}. Zakres: ${p.scope.join(", ")}.`,
-    alternates: { canonical: `/portfolio/${p.slug}` },
-    openGraph: { title, description: p.description, url: `/portfolio/${p.slug}`, type: "article", images: [{ url: p.image, width: 1600, height: 1200, alt: p.name }] },
-    twitter: { card: "summary_large_image", title, description: p.description, images: [p.image] },
+    description,
+    alternates: { canonical: `/portfolio/${c.slug}` },
+    openGraph: { title: `${title} | afto.works`, description, url: `/portfolio/${c.slug}`, images: cover ? [{ url: cover, alt: c.name }] : undefined },
+    twitter: { card: "summary_large_image", title: `${title} | afto.works`, description, images: cover ? [cover] : undefined },
   };
 }
 
-export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
-  await loadContent();
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const projects = await getProjects();
-  const i = projects.findIndex((x) => x.slug === slug);
+  const cats = await getPortfolio();
+  const i = cats.findIndex((c) => c.slug === slug);
   if (i < 0) {
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    // stary adres pojedynczej pracy (/portfolio/nazwa-pracy) → jej kategoria z otwartą pracą
+    const legacy = await findWork(decodeURIComponent(slug));
+    if (legacy) permanentRedirect(`/portfolio/${legacy.category}#praca-${legacy.work.slug}`);
     const want = norm(decodeURIComponent(slug));
-    const near = want.length >= 3 ? projects.find((x) => { const s = norm(x.slug), n = norm(x.name); return s.startsWith(want) || want.startsWith(s) || want.startsWith(n) || n.startsWith(want); }) : undefined;
-    permanentRedirect(near ? `/portfolio/${near.slug}` : "/portfolio");
+    const near = want.length >= 3 ? cats.find((c) => norm(c.slug).startsWith(want) || want.startsWith(norm(c.slug)) || norm(c.name).startsWith(want)) : undefined;
+    permanentRedirect(near ? `/portfolio/${near.slug}` : "/#portfolio");
   }
+  const c = cats[i];
   return (
     <>
-      <JsonLd data={projectSchema(projects[i])} />
+      <JsonLd data={categorySchema(c)} />
       <Navbar />
-      <CaseStudy p={projects[i]} next={projects[(i + 1) % projects.length]} />
+      <Gallery category={{ name: c.name, works: c.works }} />
       <Footer />
     </>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
 import { login } from "@/app/konto/actions";
 import Input from "../ui/Input";
@@ -32,7 +31,7 @@ export default function LoginForm({ next, signedIn }: { next: string; signedIn?:
         <Success key="ok" title={returning ? "Jesteś zalogowany." : "Witaj ponownie."} text="Otwieram Twój panel…" bar={returning ? 0.9 : 1.4} />
       ) : (
         <motion.div key="form" exit={{ opacity: 0, y: -10, filter: "blur(6px)" }} transition={{ duration: 0.25 }}>
-          <AuthTitle kicker="Logowanie" title="Witaj ponownie" text="Zaloguj się, żeby zobaczyć swój projekt." />
+          <AuthTitle kicker="Panel" title="Witaj ponownie" text="Zaloguj się, żeby dodawać prace i sprawdzać statystyki." />
           <form
             ref={scope}
             className="space-y-3"
@@ -58,12 +57,6 @@ export default function LoginForm({ next, signedIn }: { next: string; signedIn?:
               <Submit pending={pending}>Zaloguj się</Submit>
             </div>
           </form>
-          <p className="mt-8 text-center text-[14px] text-muted">
-            Masz kod z zaproszenia?{" "}
-            <Link href="/konto/rejestracja" className="text-ink underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-accent">
-              Załóż konto
-            </Link>
-          </p>
         </motion.div>
       )}
     </AnimatePresence>

@@ -21,7 +21,11 @@ function RouteScroll() {
     const hash = window.location.hash;
     if (hash) {
       // strona jest jeszcze pod kurtyną — od razu do kotwicy
-      const t = setTimeout(() => lenis.scrollTo(hash, { offset: -80, immediate: true, force: true }), 60);
+      // (resize: Lenis pamięta wysokość poprzedniej strony; po krótkiej, np. 404, ucinał przewinięcie do zera)
+      const t = setTimeout(() => {
+        lenis.resize();
+        lenis.scrollTo(hash, { offset: -80, immediate: true, force: true });
+      }, 60);
       return () => clearTimeout(t);
     }
     lenis.scrollTo(0, { immediate: true, force: true });

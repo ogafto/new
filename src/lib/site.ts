@@ -26,12 +26,12 @@ export const site = {
 export const copy = {
   seo: {
     title: "Developer & Designer | afto.works",
-    description: "Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla firm z całej Polski.",
+    description: "Robię wszystko, czego potrzebuje Twój serwer, marka albo pomysł, od grafiki po gotowy kod. Zobacz portfolio i napisz na Discordzie.",
   },
   hero: {
-    line1: "Strony, które",
-    line2: "wyglądają drogo.",
-    accent: "I sprzedają.",
+    line1: "Projekty,",
+    line2: "które robią",
+    accent: "wrażenie.",
     text: "Projektuję i koduję strony internetowe, sklepy i identyfikacje wizualne dla marek, które chcą być zapamiętane.",
     cta: "Zamów projekt",
     secondary: "Portfolio",

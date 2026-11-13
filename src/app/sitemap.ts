@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const cats = await getPortfolio();
   return [
-    { url: site.url, lastModified: now, changeFrequency: "weekly", priority: 1, images: [`${site.url}/opengraph-image`] },
+    { url: site.url, lastModified: now, changeFrequency: "weekly", priority: 1, images: [`${site.url}/opengraph-image.jpg`] },
     ...cats.map((c) => ({
       url: `${site.url}/portfolio/${c.slug}`,
       lastModified: new Date(Math.max(...c.works.map((w) => w.createdAt), c.createdAt)),

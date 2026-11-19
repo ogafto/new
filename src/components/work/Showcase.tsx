@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Media from "../ui/Media";
 import { isGif, isVideo } from "@/lib/media";
 import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
@@ -50,6 +50,20 @@ function Layer({ c, i, n, progress, near, live }: { c: ShowCategory; i: number; 
     const t = setTimeout(() => setOn(true), 0);
     return () => clearTimeout(t);
   }, [near, on]);
+  // wideo: jedna nieruchoma klatka jako rozmyte tło (jak przy zdjęciach); rozmywanie samego wideo co klatkę zacinało telefon
+  const [still, setStill] = useState<string | null>(null);
+  const grab = useCallback((v: HTMLVideoElement) => {
+    if (!v.videoWidth) return;
+    try {
+      const cv = document.createElement("canvas");
+      cv.width = 64;
+      cv.height = Math.max(1, Math.round((64 * v.videoHeight) / v.videoWidth));
+      cv.getContext("2d")?.drawImage(v, 0, 0, cv.width, cv.height);
+      setStill(cv.toDataURL("image/jpeg", 0.85));
+    } catch {
+      // wideo z innej domeny bez zgody na odczyt — zostaje ciemne tło
+    }
+  }, []);
   const reveal = useTransform(progress, (v) => revealOf(slideOf(v, n), i));
   const covered = useTransform(progress, (v) => (i < n - 1 ? revealOf(slideOf(v, n), i + 1) : 0));
   const clip = useTransform(reveal, (r) => `inset(${(1 - r) * 100}% 0% 0% 0%)`);
@@ -70,15 +84,16 @@ function Layer({ c, i, n, progress, near, live }: { c: ShowCategory; i: number; 
 
       {/* ekran pionowy (telefon, tablet): okładka jako karta na rozmytym tle z niej samej */}
       <div className="absolute inset-0 overflow-hidden bg-bg landscape:hidden">
-        {/* rozmyte tło tylko ze zdjęcia: rozmywanie każdej klatki GIF-a / wideo zacina telefon */}
+        {/* rozmyte tło z okładki; przy wideo z jednej nieruchomej klatki (rozmywanie każdej klatki zacina telefon) */}
         {on && !isVideo(c.image) && !isGif(c.image) && <Media src={c.image} fill sizes="40vw" className="scale-125 object-cover opacity-45 blur-3xl saturate-150" />}
+        {still && <motion.img src={still} alt="" aria-hidden className="absolute inset-0 size-full scale-125 object-cover blur-3xl saturate-150" initial={{ opacity: 0 }} animate={{ opacity: 0.45 }} transition={{ duration: 0.8 }} />}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_7_10/0.2),rgb(7_7_10/0.9)_85%)]" />
         <div className="absolute grid place-items-center [container-type:size] [perspective:1100px]" style={{ top: STAGE.top, bottom: STAGE.bottom, left: STAGE.side, right: STAGE.side }}>
           <motion.div
             className="relative aspect-[4/3] w-[min(100cqw,133.33cqh)] overflow-hidden rounded-[18px] ring-1 ring-white/15"
-            style={{ y: cardY, rotateX: cardTilt, scale: cardScale, transformOrigin: "50% 100%", boxShadow: "0 40px 90px -30px rgb(139 108 255 / 0.45), 0 20px 40px -20px rgb(0 0 0 / 0.8)" }}
+            style={{ y: cardY, rotateX: cardTilt, scale: cardScale, transformOrigin: "50% 100%", boxShadow: "0 40px 90px -30px rgb(0 0 0 / 0.7), 0 20px 40px -20px rgb(0 0 0 / 0.8)" }}
           >
-            {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} active={live} />}
+            {on && <Media src={c.image} alt={`${c.name}: portfolio`} fill sizes="100vw" className="object-cover" loading={i === 0 ? "eager" : "lazy"} active={live} onFrame={grab} />}
             <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-[linear-gradient(160deg,rgb(255_255_255/0.14),transparent_35%)]" />
           </motion.div>
         </div>

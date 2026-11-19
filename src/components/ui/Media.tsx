@@ -23,10 +23,13 @@ type Props = {
   style?: React.CSSProperties;
   /** false = wideo stoi (np. warstwa pokazu przykryta inną); domyślnie gra, gdy jest na ekranie */
   active?: boolean;
+  /** wideo: wywoływane z elementem, gdy jest pierwsza klatka (np. żeby zrobić z niej nieruchome tło) */
+  onFrame?: (v: HTMLVideoElement) => void;
 };
 
-function Video({ src, alt, w, h, fill, className = "", style, eager, active = true }: Props & { eager?: boolean }) {
+function Video({ src, alt, w, h, fill, className = "", style, eager, active = true, onFrame }: Props & { eager?: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const frames = useRef(0); // pierwsza klatka: przy wczytaniu i jeszcze raz przy starcie (iOS bywa wtedy czarny)
   const [near, setNear] = useState(false);
   const [seen, setSeen] = useState(false);
   useEffect(() => {
@@ -62,14 +65,16 @@ function Video({ src, alt, w, h, fill, className = "", style, eager, active = tr
       width={w ?? undefined}
       height={h ?? undefined}
       aria-label={alt || undefined}
+      onLoadedData={(e) => onFrame && frames.current < 2 && (frames.current++, onFrame(e.currentTarget))}
+      onTimeUpdate={(e) => onFrame && frames.current === 1 && e.currentTarget.currentTime > 0 && (frames.current++, onFrame(e.currentTarget))}
       className={`${fill ? "absolute inset-0 size-full" : ""} ${className}`}
       style={!fill && w && h ? { aspectRatio: `${w} / ${h}`, ...style } : style}
     />
   );
 }
 
-export default function Media({ src, alt = "", w, h, fill, sizes, className = "", quality, loading, style, active }: Props) {
-  if (isVideo(src)) return <Video src={src} alt={alt} w={w} h={h} fill={fill} className={className} style={style} eager={loading === "eager"} active={active} />;
+export default function Media({ src, alt = "", w, h, fill, sizes, className = "", quality, loading, style, active, onFrame }: Props) {
+  if (isVideo(src)) return <Video src={src} alt={alt} w={w} h={h} fill={fill} className={className} style={style} eager={loading === "eager"} active={active} onFrame={onFrame} />;
   const common = { src, sizes, quality, loading, className, style, unoptimized: isGif(src) };
   return fill ? <Image fill alt={alt} {...common} /> : <Image width={w ?? 1920} height={h ?? 1080} alt={alt} {...common} />;
 }
